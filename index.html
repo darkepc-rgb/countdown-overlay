@@ -63,6 +63,7 @@
             opacity: 1;
         }
 
+        /* --- Animations --- */
         @keyframes pulse-soft {
             0% { transform: scale(1); filter: brightness(1); }
             50% { transform: scale(1.02); filter: brightness(1.1); }
@@ -144,12 +145,11 @@
         <button id="startBtn" onclick="startTimer()">เริ่ม</button>
     </div>
     
-<!-- 1. ดึง Library แบบ Compat -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
-    // --- 1. Firebase Setup (แบบ Compat) ---
+    // --- 1. Firebase Setup ---
     const firebaseConfig = {
         apiKey: "AIzaSyCTqaj2D4b5p_loXgh7jjIW9D5zfi_2dUk",
         authDomain: "countdown-timer-8dd4c.firebaseapp.com",
@@ -165,11 +165,13 @@
     const db = firebase.database();
     const timerRef = db.ref('timer_data');
 
-    function syncToFirebase() {
+    // แก้ไข: เพิ่มการส่ง activeEffect ไปยัง Firebase
+    function syncToFirebase(effectName = "") {
         timerRef.set({
             remainingTime: window.countdownTime,
             isRunning: window.interval !== null,
-            lastUpdate: Date.now()
+            lastUpdate: Date.now(),
+            activeEffect: effectName // เพิ่มตัวแปรแจ้งเครื่องอื่น
         }).catch(err => console.error("Firebase Sync Error:", err));
     }
 
@@ -204,15 +206,23 @@
         timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
         
         if (window.countdownTime <= 1800) { 
-            timerElement.classList.add('red');
             fadeChangeImage(CAT_ANGRY);
+            timerElement.classList.add('red');
         } else if (window.countdownTime > 1800 && window.countdownTime <= 7200) {
-            timerElement.classList.remove('red');
             fadeChangeImage(CAT_NORMAL);
-        } else if (window.countdownTime > 7200) {
             timerElement.classList.remove('red');
+        } else {
             fadeChangeImage(CAT_HAPPY);
+            timerElement.classList.remove('red');
         }
+    }
+
+    // ฟังก์ชันเล่น Animation สั้นๆ (ใช้ทั้งตอนกดเอง และตอนรับค่าจากเครื่องอื่น)
+    function triggerAnimation(effectClass, duration) {
+        catLayer.classList.add(effectClass);
+        setTimeout(() => {
+            catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
+        }, duration);
     }
 
     window.smartBoost = function(totalSeconds, durationMs, effectClass) {
@@ -226,7 +236,7 @@
         let accumulatedChange = 0;
 
         timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
-        catLayer.classList.add(effectClass);
+        triggerAnimation(effectClass, durationMs); // เล่นที่เครื่องตัวเอง
 
         let boostTask = setInterval(() => {
             stepsTaken++;
@@ -245,9 +255,8 @@
                 if (activeBoosts <= 0) {
                     activeBoosts = 0;
                     timerElement.classList.remove('boost-up', 'boost-down');
-                    catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
                     localStorage.setItem('countdownTime', Math.round(window.countdownTime));
-                    syncToFirebase(); 
+                    syncToFirebase(effectClass); // ส่งชื่อ effect ไปบอกเครื่องอื่น
                 }
             }
         }, 1000 / fps);
@@ -291,26 +300,37 @@
         syncToFirebase();
     };
 
-    // --- 3. Sync Logic (Listener แบบ Compat) ---
+    // --- 3. Sync Logic (เพิ่มการรับค่า Effect) ---
     timerRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            // ถ้าเวลาในเครื่องต่างจาก Firebase มากเกินไป (เช่นโดนกดจากเครื่องอื่น) ให้ปรับตาม
-            if (!window.interval) {
+            // ซิงค์เวลา (เฉพาะตอนที่เครื่องนี้ไม่ได้รัน Boost อยู่ เพื่อป้องกันตัวเลขกระโดด)
+            if (activeBoosts === 0) {
                 window.countdownTime = data.remainingTime;
                 updateTimerDisplay();
             }
 
-            // สั่งเริ่มหรือหยุดตาม Firebase
+            // ซิงค์ปุ่ม Start/Stop
             if (data.isRunning && !window.interval) {
                 window.startTimer(false); 
             } else if (!data.isRunning && window.interval) {
                 window.stopTimer(false);
             }
+
+            // ใหม่: สั่งเล่น Animation ตามเครื่องที่กด
+            if (data.activeEffect) {
+                let duration = 1000; // default
+                if (data.activeEffect === 'effect-30') duration = 2000;
+                if (data.activeEffect === 'effect-60') duration = 4000;
+                
+                triggerAnimation(data.activeEffect, duration);
+                
+                // เคลียร์ค่า effect ใน Firebase ทันทีเพื่อไม่ให้มันเล่นวนซ้ำ
+                timerRef.update({ activeEffect: "" });
+            }
         }
     });
 
-    // เริ่มต้นแสดงผลครั้งแรก
     updateTimerDisplay();
 </script>
 </body>
