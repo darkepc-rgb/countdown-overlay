@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer - TikTok Live</title>
+    <title>Countdown Timer - Firebase Realtime</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
         body {
@@ -37,8 +37,6 @@
             transition: color 0.3s ease;
             margin-top: 22px;   
             margin-left: 125px; 
-            
-            /* ขอบตัวอักษรสีดำชัดๆ และดรอปเงา */
             text-shadow: 
                 -2px -2px 0 #000,  
                  2px -2px 0 #000,
@@ -90,7 +88,6 @@
         .boost-up { color: #2ecc71 !important; }
         .boost-down { color: #ff4757 !important; }
 
-        /* ปรับแต่งปุ่มให้ดูหนาและชัด */
         .buttons { margin-top: 20px; z-index: 10; position: relative; }
         .buttons button {
             margin: 5px;
@@ -124,7 +121,7 @@
 <body>
 
     <div class="timer-stack-wrapper">
-        <div id="timer">03:00:00</div>
+        <div id="timer">03 : 00 : 00</div>
         <div class="cat-overlay-layer" id="catLayer">
             <img src="cat3-3.png" id="catImage">
         </div>
@@ -148,14 +145,40 @@
         <button id="startBtn" onclick="startTimer()">เริ่ม</button>
     </div>
     
-    <script>
-        // เริ่มต้นที่ 3 ชั่วโมง (10800 วินาที)
-        let countdownTime = localStorage.getItem('countdownTime') ? parseInt(localStorage.getItem('countdownTime')) : 3 * 60 * 60;
-        
+    <script type="module">
+        // --- 1. Firebase Setup ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTqaj2D4b5p_loXgh7jjIW9D5zfi_2dUk",
+            authDomain: "countdown-timer-8dd4c.firebaseapp.com",
+            databaseURL: "https://countdown-timer-8dd4c-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "countdown-timer-8dd4c",
+            storageBucket: "countdown-timer-8dd4c.firebasestorage.app",
+            messagingSenderId: "1086221236719",
+            appId: "1:1086221236719:web:5e3148af69cb7303c1de1a",
+            measurementId: "G-P2TLY8RGZV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const timerRef = ref(db, 'timer_data');
+
+        function syncToFirebase() {
+            set(timerRef, {
+                remainingTime: window.countdownTime,
+                isRunning: window.interval !== null,
+                lastUpdate: Date.now()
+            });
+        }
+
+        // --- 2. Timer Logic ---
+        window.countdownTime = localStorage.getItem('countdownTime') ? parseInt(localStorage.getItem('countdownTime')) : 3 * 60 * 60;
         const timerElement = document.getElementById('timer');
         const catImage = document.getElementById('catImage');
         const catLayer = document.getElementById('catLayer');
-        let interval = null;
+        window.interval = null;
         let activeBoosts = 0;
         let isChangingImage = false;
 
@@ -175,24 +198,26 @@
         }
 
         function updateTimerDisplay() {
-            let hours = Math.floor(countdownTime / 3600);
-            let minutes = Math.floor((countdownTime % 3600) / 60);
-            let seconds = Math.round(countdownTime % 60);
+            let hours = Math.floor(window.countdownTime / 3600);
+            let minutes = Math.floor((window.countdownTime % 3600) / 60);
+            let seconds = Math.round(window.countdownTime % 60);
             timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
             
-            if (countdownTime <= 1800) { 
+            if (window.countdownTime <= 1800) { 
                 timerElement.classList.add('red');
                 fadeChangeImage(CAT_ANGRY);
-            } else if (countdownTime > 1800 && countdownTime <= 7200) {
+            } else if (window.countdownTime > 1800 && window.countdownTime <= 7200) {
                 timerElement.classList.remove('red');
                 fadeChangeImage(CAT_NORMAL);
-            } else if (countdownTime > 7200) {
+            } else if (window.countdownTime > 7200) {
                 timerElement.classList.remove('red');
                 fadeChangeImage(CAT_HAPPY);
             }
+            syncToFirebase();
         }
 
-        function smartBoost(totalSeconds, durationMs, effectClass) {
+        // แก้ไข: ผูกฟังก์ชันเข้ากับ window เพื่อให้ปุ่ม HTML เรียกใช้ได้
+        window.smartBoost = function(totalSeconds, durationMs, effectClass) {
             activeBoosts++;
             const fps = 30; 
             const totalSteps = (durationMs / 1000) * fps;
@@ -213,7 +238,7 @@
                 let diff = currentIntegerChange - lastIntegerChange;
                 lastIntegerChange = currentIntegerChange;
 
-                countdownTime = Math.max(0, countdownTime + diff);
+                window.countdownTime = Math.max(0, window.countdownTime + diff);
                 updateTimerDisplay();
 
                 if (stepsTaken >= totalSteps) {
@@ -223,56 +248,51 @@
                         activeBoosts = 0;
                         timerElement.classList.remove('boost-up', 'boost-down');
                         catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-                        localStorage.setItem('countdownTime', Math.round(countdownTime));
+                        localStorage.setItem('countdownTime', Math.round(window.countdownTime));
                     }
                 }
             }, 1000 / fps);
         }
 
         function countdown() {
-            if (countdownTime > 0) {
-                countdownTime--;
+            if (window.countdownTime > 0) {
+                window.countdownTime--;
                 updateTimerDisplay();
-                localStorage.setItem('countdownTime', Math.round(countdownTime));
+                localStorage.setItem('countdownTime', Math.round(window.countdownTime));
+            } else {
+                window.stopTimer();
             }
         }
 
-        function startTimer() {
-            if (!interval) {
-                interval = setInterval(countdown, 1000);
+        window.startTimer = function() {
+            if (!window.interval) {
+                window.interval = setInterval(countdown, 1000);
                 document.getElementById('startBtn').classList.add('active');
                 document.getElementById('stopBtn').classList.remove('active');
+                syncToFirebase();
             }
         }
 
-        function stopTimer() {
-            clearInterval(interval);
-            interval = null;
+        window.stopTimer = function() {
+            clearInterval(window.interval);
+            window.interval = null;
             document.getElementById('startBtn').classList.remove('active');
             document.getElementById('stopBtn').classList.add('active');
+            syncToFirebase();
         }
 
-        function resetTimer() {
-            stopTimer();
+        window.resetTimer = function() {
+            window.stopTimer();
             activeBoosts = 0;
             timerElement.classList.remove('boost-up', 'boost-down', 'red');
             catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-            countdownTime = 3 * 60 * 60; // รีเซตที่ 3 ชั่วโมง
+            window.countdownTime = 3 * 60 * 60;
             updateTimerDisplay();
-            localStorage.setItem('countdownTime', countdownTime);
-        }
-
-        updateTimerDisplay();
-
-        const socket = new WebSocket("ws://localhost:8080");
-        socket.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            if (data.type === "gift") {
-                if (data.gift === "Rose") smartBoost(10, 1000, 'effect-5-10');
-                else if (data.gift === "Panda") smartBoost(30, 1000, 'effect-5-10');
-                else if (data.gift === "Lion") smartBoost(60, 1000, 'effect-30');
-            }
+            localStorage.setItem('countdownTime', window.countdownTime);
         };
+
+        // เริ่มต้นแสดงผลครั้งแรก
+        updateTimerDisplay();
     </script>
 </body>
 </html>
