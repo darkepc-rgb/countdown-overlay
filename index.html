@@ -63,10 +63,22 @@
             opacity: 1;
         }
 
-        /* Animations */
-        @keyframes pulse-soft { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
-        @keyframes pulse-medium { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        @keyframes pulse-strong { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+        /* --- Animations --- */
+        @keyframes pulse-soft {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.02); filter: brightness(1.1); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        @keyframes pulse-medium {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.05); filter: brightness(1.2); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        @keyframes pulse-strong {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.08); filter: brightness(1.3); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
 
         .effect-5-10 { animation: pulse-soft 0.8s infinite ease-in-out; }
         .effect-30 { animation: pulse-medium 0.5s infinite ease-in-out; }
@@ -78,10 +90,32 @@
 
         .buttons { margin-top: 20px; z-index: 10; position: relative; }
         .buttons button {
-            margin: 5px; padding: 10px 18px; font-size: 1rem; font-weight: bold; cursor: pointer;
-            border: 2px solid #333; background: #ffffff; border-radius: 8px; font-family: 'Itim', cursive;
-            box-shadow: 0 4px 0 #999;
+            margin: 5px;
+            padding: 10px 18px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid #333;
+            background: #ffffff;
+            color: #000;
+            border-radius: 8px;
+            transition: all 0.1s ease;
+            font-family: 'Itim', cursive;
+            box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3);
         }
+        .buttons button:hover { 
+            transform: translateY(-1px); 
+            background: #f8f8f8;
+            box-shadow: 0 5px 0 #888, 0 7px 12px rgba(0,0,0,0.3);
+        }
+        .buttons button:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #777;
+        }
+        
+        #startBtn.active { background: #27ae60; color: white; border-color: #1e8449; box-shadow: 0 4px 0 #1e8449; }
+        #stopBtn.active { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: 0 4px 0 #c0392b; }
+        #resetBtn { background: #f39c12; color: white; border-color: #d35400; box-shadow: 0 4px 0 #d35400; }
     </style>
 </head>
 <body>
@@ -130,7 +164,7 @@
     const db = firebase.database();
     const timerRef = db.ref('timer_data');
 
-    // ส่งสัญญาณไป Firebase ทันทีที่เริ่ม Boost
+    // --- ส่วนที่แก้ไข: ส่งสัญญาณ Boost ไปยังทุกเครื่อง ---
     function syncBoostStart(totalSeconds, durationMs, effectClass) {
         timerRef.update({
             boostData: {
@@ -143,19 +177,21 @@
         });
     }
 
-    function syncState() {
+    function syncToFirebase() {
         timerRef.update({
             remainingTime: window.countdownTime,
             isRunning: window.interval !== null,
             lastUpdate: Date.now()
-        });
+        }).catch(err => console.error("Firebase Sync Error:", err));
     }
 
-    window.countdownTime = localStorage.getItem('countdownTime') ? parseInt(localStorage.getItem('countdownTime')) : 10800;
+    // --- Timer Logic ---
+    window.countdownTime = localStorage.getItem('countdownTime') ? parseInt(localStorage.getItem('countdownTime')) : 3 * 60 * 60;
     const timerElement = document.getElementById('timer');
-    const catLayer = document.getElementById('catLayer');
     const catImage = document.getElementById('catImage');
+    const catLayer = document.getElementById('catLayer');
     window.interval = null;
+    let activeBoosts = 0;
     let isChangingImage = false;
 
     function fadeChangeImage(newSrc) {
@@ -170,15 +206,15 @@
     }
 
     function updateTimerDisplay() {
-        let h = Math.floor(window.countdownTime / 3600);
-        let m = Math.floor((window.countdownTime % 3600) / 60);
-        let s = Math.round(window.countdownTime % 60);
-        timerElement.innerHTML = `${String(h).padStart(2, '0')} : ${String(m).padStart(2, '0')} : ${String(s).padStart(2, '0')}`;
+        let hours = Math.floor(window.countdownTime / 3600);
+        let minutes = Math.floor((window.countdownTime % 3600) / 60);
+        let seconds = Math.round(window.countdownTime % 60);
+        timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
         
-        if (window.countdownTime <= 1800) {
+        if (window.countdownTime <= 1800) { 
             timerElement.classList.add('red');
             fadeChangeImage("cat3-1.png");
-        } else if (window.countdownTime <= 7200) {
+        } else if (window.countdownTime > 1800 && window.countdownTime <= 7200) {
             timerElement.classList.remove('red');
             fadeChangeImage("cat3-2.png");
         } else {
@@ -187,93 +223,122 @@
         }
     }
 
-    // ฟังก์ชันรัน Boost (เรียกใช้ทั้งเครื่องที่กด และเครื่องที่ซิงค์)
+    // ฟังก์ชันรัน Boost Animation (เรียกใช้ทั้งเครื่องที่กด และเครื่องที่รับสัญญาณ)
     window.runBoostAnimation = function(totalSeconds, durationMs, effectClass) {
-        const fps = 30;
+        activeBoosts++;
+        const fps = 30; 
         const totalSteps = (durationMs / 1000) * fps;
-        const increment = totalSeconds / totalSteps;
-        let steps = 0;
+        const incrementPerStep = totalSeconds / totalSteps;
+        
+        let stepsTaken = 0;
         let lastIntegerChange = 0;
-        let accumulated = 0;
+        let accumulatedChange = 0;
 
         timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
         catLayer.classList.add(effectClass);
 
-        let boostInterval = setInterval(() => {
-            steps++;
-            accumulated += increment;
-            let currentInt = Math.round(accumulated);
-            let diff = currentInt - lastIntegerChange;
-            lastIntegerChange = currentInt;
+        let boostTask = setInterval(() => {
+            stepsTaken++;
+            accumulatedChange += incrementPerStep;
+            
+            let currentIntegerChange = Math.round(accumulatedChange);
+            let diff = currentIntegerChange - lastIntegerChange;
+            lastIntegerChange = currentIntegerChange;
 
             window.countdownTime = Math.max(0, window.countdownTime + diff);
             updateTimerDisplay();
 
-            if (steps >= totalSteps) {
-                clearInterval(boostInterval);
-                timerElement.classList.remove('boost-up', 'boost-down');
-                catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-                localStorage.setItem('countdownTime', Math.round(window.countdownTime));
+            if (stepsTaken >= totalSteps) {
+                clearInterval(boostTask);
+                activeBoosts--;
+                if (activeBoosts <= 0) {
+                    activeBoosts = 0;
+                    timerElement.classList.remove('boost-up', 'boost-down');
+                    catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
+                    localStorage.setItem('countdownTime', Math.round(window.countdownTime));
+                }
             }
         }, 1000 / fps);
     }
 
     window.smartBoost = function(totalSeconds, durationMs, effectClass) {
-        window.runBoostAnimation(totalSeconds, durationMs, effectClass); // เล่นที่เครื่องตัวเอง
-        syncBoostStart(totalSeconds, durationMs, effectClass); // ส่งสัญญาณบอกเครื่องอื่น
+        // 1. เล่นที่เครื่องตัวเองทันที
+        window.runBoostAnimation(totalSeconds, durationMs, effectClass);
+        // 2. ส่งสัญญาณบอกเครื่องอื่นๆ
+        syncBoostStart(totalSeconds, durationMs, effectClass);
     }
 
-    window.startTimer = function(local = true) {
-        if (!window.interval) {
-            window.interval = setInterval(() => {
-                if (window.countdownTime > 0) {
-                    window.countdownTime--;
-                    updateTimerDisplay();
-                    localStorage.setItem('countdownTime', window.countdownTime);
-                }
-            }, 1000);
-            document.getElementById('startBtn').classList.add('active');
-            if (local) syncState();
+    function countdown() {
+        if (window.countdownTime > 0) {
+            window.countdownTime--;
+            updateTimerDisplay();
+            localStorage.setItem('countdownTime', Math.round(window.countdownTime));
+        } else {
+            window.stopTimer();
         }
     }
 
-    window.stopTimer = function(local = true) {
+    window.startTimer = function(isLocalClick = true) {
+        if (!window.interval) {
+            window.interval = setInterval(countdown, 1000);
+            document.getElementById('startBtn').classList.add('active');
+            document.getElementById('stopBtn').classList.remove('active');
+            if (isLocalClick) syncToFirebase();
+        }
+    }
+
+    window.stopTimer = function(isLocalClick = true) {
         clearInterval(window.interval);
         window.interval = null;
         document.getElementById('startBtn').classList.remove('active');
-        if (local) syncState();
+        document.getElementById('stopBtn').classList.add('active');
+        if (isLocalClick) syncToFirebase();
     }
 
     window.resetTimer = function() {
         window.stopTimer();
-        window.countdownTime = 10800;
+        activeBoosts = 0;
+        timerElement.classList.remove('boost-up', 'boost-down', 'red');
+        catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
+        window.countdownTime = 3 * 60 * 60;
         updateTimerDisplay();
-        syncState();
-    }
+        localStorage.setItem('countdownTime', window.countdownTime);
+        syncToFirebase();
+    };
 
-    // --- Listener ---
-    let lastBoostTime = 0;
+    // --- Sync Logic ---
+    let lastBoostTimestamp = 0;
+
     timerRef.on('value', (snapshot) => {
         const data = snapshot.val();
-        if (!data) return;
+        if (data) {
+            // ซิงค์เวลาปกติ (เฉพาะเมื่อไม่มี Boost รันอยู่)
+            if (activeBoosts === 0) {
+                window.countdownTime = data.remainingTime;
+                updateTimerDisplay();
+            }
 
-        // ซิงค์เวลาปกติ (ถ้าเครื่องไม่ได้กำลัง Boost อยู่)
-        if (!document.querySelector('.boost-up') && !document.querySelector('.boost-down')) {
-            window.countdownTime = data.remainingTime || window.countdownTime;
-            updateTimerDisplay();
-        }
+            // ตรวจจับสัญญาณ Boost ใหม่จากเครื่องอื่น
+            if (data.boostData && data.boostData.timestamp > lastBoostTimestamp) {
+                const now = Date.now();
+                // เล่นแอนิเมชันถ้าเป็นสัญญาณใหม่ (ไม่เกิน 2 วินาที)
+                if (now - data.boostData.timestamp < 2000) {
+                    window.runBoostAnimation(
+                        data.boostData.totalSeconds, 
+                        data.boostData.durationMs, 
+                        data.boostData.effectClass
+                    );
+                }
+                lastBoostTimestamp = data.boostData.timestamp;
+            }
 
-        // เช็คการเริ่ม Boost จากเครื่องอื่น
-        if (data.boostData && data.boostData.timestamp > lastBoostTime) {
-            lastBoostTime = data.boostData.timestamp;
-            // ถ้าเป็นเครื่องที่ไม่ได้กดปุ่มเอง (เช่นหน้าจอ TikTok) ให้รัน Boost ตาม
-            if (Date.now() - data.boostData.timestamp < 1000) {
-                 window.runBoostAnimation(data.boostData.totalSeconds, data.boostData.durationMs, data.boostData.effectClass);
+            // สั่งเริ่มหรือหยุดตาม Firebase
+            if (data.isRunning && !window.interval) {
+                window.startTimer(false); 
+            } else if (!data.isRunning && window.interval) {
+                window.stopTimer(false);
             }
         }
-
-        if (data.isRunning && !window.interval) window.startTimer(false);
-        else if (!data.isRunning && window.interval) window.stopTimer(false);
     });
 
     updateTimerDisplay();
