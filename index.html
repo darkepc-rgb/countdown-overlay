@@ -3,36 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer - TikTok Live Sync</title>
+    <title>Countdown Timer - TikTok Live</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
-    
-    <!-- เชื่อมต่อ Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <style>
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: transparent; color: white; font-family: 'Itim', cursive; text-align: center; margin: 0; overflow: hidden; }
-        .timer-stack-wrapper { position: relative; display: flex; align-items: center; justify-content: center; width: 576px; height: 324px; }
-        #timer { position: relative; z-index: 1; font-size: 3.5rem; font-weight: bold; transition: color 0.3s ease; margin-top: 22px; margin-left: 125px; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0px 4px 12px rgba(0,0,0,0.9); }
-        .cat-overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
-        .cat-overlay-layer img { width: 100%; height: 100%; object-fit: contain; transition: opacity 0.5s ease-in-out, transform 0.3s ease-out; opacity: 1; }
-        
-        /* Keyframes สำหรับอนิเมชั่น */
-        @keyframes pulse-soft { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.02); filter: brightness(1.1); } 100% { transform: scale(1); filter: brightness(1); } }
-        @keyframes pulse-medium { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.05); filter: brightness(1.2); } 100% { transform: scale(1); filter: brightness(1); } }
-        @keyframes pulse-strong { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.08); filter: brightness(1.3); } 100% { transform: scale(1); filter: brightness(1); } }
-        
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: transparent; 
+            color: white;
+            font-family: 'Itim', cursive;
+            text-align: center;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .timer-stack-wrapper {
+            position: relative; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 576px;  
+            height: 324px; 
+        }
+
+        #timer {
+            position: relative;
+            z-index: 1; 
+            font-size: 3.5rem; 
+            font-weight: bold;
+            transition: color 0.3s ease;
+            margin-top: 22px;   
+            margin-left: 125px; 
+            
+            /* ขอบตัวอักษรสีดำชัดๆ และดรอปเงา */
+            text-shadow: 
+                -2px -2px 0 #000,  
+                 2px -2px 0 #000,
+                -2px  2px 0 #000,
+                 2px  2px 0 #000,
+                 0px  4px 12px rgba(0,0,0,0.9);
+        }
+
+        .cat-overlay-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2; 
+            pointer-events: none; 
+        }
+
+        .cat-overlay-layer img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: opacity 0.5s ease-in-out, transform 0.3s ease-out;
+            opacity: 1;
+        }
+
+        /* Animations */
+        @keyframes pulse-soft {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.02); filter: brightness(1.1); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        @keyframes pulse-medium {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.05); filter: brightness(1.2); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        @keyframes pulse-strong {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.08); filter: brightness(1.3); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+
         .effect-5-10 { animation: pulse-soft 0.8s infinite ease-in-out; }
         .effect-30 { animation: pulse-medium 0.5s infinite ease-in-out; }
         .effect-60 { animation: pulse-strong 0.4s infinite ease-in-out; }
-        
+
         .red { color: #ff3e3e !important; }
         .boost-up { color: #2ecc71 !important; }
         .boost-down { color: #ff4757 !important; }
 
+        /* ปรับแต่งปุ่มให้ดูหนาและชัด */
         .buttons { margin-top: 20px; z-index: 10; position: relative; }
-        .buttons button { margin: 5px; padding: 10px 18px; font-size: 1rem; font-weight: bold; cursor: pointer; border: 2px solid #333; background: #ffffff; color: #000; border-radius: 8px; transition: all 0.1s ease; font-family: 'Itim', cursive; box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3); }
-        .buttons button:active { transform: translateY(3px); box-shadow: 0 1px 0 #777; }
+        .buttons button {
+            margin: 5px;
+            padding: 10px 18px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid #333;
+            background: #ffffff;
+            color: #000;
+            border-radius: 8px;
+            transition: all 0.1s ease;
+            font-family: 'Itim', cursive;
+            box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3);
+        }
+        .buttons button:hover { 
+            transform: translateY(-1px); 
+            background: #f8f8f8;
+            box-shadow: 0 5px 0 #888, 0 7px 12px rgba(0,0,0,0.3);
+        }
+        .buttons button:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #777;
+        }
+        
         #startBtn.active { background: #27ae60; color: white; border-color: #1e8449; box-shadow: 0 4px 0 #1e8449; }
         #stopBtn.active { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: 0 4px 0 #c0392b; }
         #resetBtn { background: #f39c12; color: white; border-color: #d35400; box-shadow: 0 4px 0 #d35400; }
@@ -47,99 +130,38 @@
         </div>
     </div>
     
-    <!-- ปุ่มเพิ่มเวลา -->
     <div class="buttons">
         <button onclick="smartBoost(5 * 60, 1000, 'effect-5-10')">+5 นาที</button>
         <button onclick="smartBoost(10 * 60, 1000, 'effect-5-10')">+10 นาที</button>
         <button onclick="smartBoost(30 * 60, 2000, 'effect-30')">+30 นาที</button>
         <button onclick="smartBoost(60 * 60, 4000, 'effect-60')">+1 ชม.</button>
     </div>
-
-    <!-- ปุ่มลบเวลา -->
     <div class="buttons">
         <button onclick="smartBoost(-5 * 60, 1000, 'effect-5-10')">-5 นาที</button>
         <button onclick="smartBoost(-10 * 60, 1000, 'effect-5-10')">-10 นาที</button>
         <button onclick="smartBoost(-30 * 60, 2000, 'effect-30')">-30 นาที</button>
         <button onclick="smartBoost(-60 * 60, 4000, 'effect-60')">-1 ชม.</button>
     </div>
-
-    <!-- ปุ่มควบคุมระบบ -->
     <div class="buttons">
-        <button id="stopBtn" onclick="syncControl('stopped')">หยุด</button>
-        <button id="resetBtn" onclick="syncControl('reset')">รีเซต</button>
-        <button id="startBtn" onclick="syncControl('running')">เริ่ม</button>
+        <button id="stopBtn" onclick="stopTimer()">หยุด</button>
+        <button id="resetBtn" onclick="resetTimer()">รีเซต</button>
+        <button id="startBtn" onclick="startTimer()">เริ่ม</button>
     </div>
-
+    
     <script>
-        // --- 1. การตั้งค่า FIREBASE ---
-        const firebaseConfig = {
-            databaseURL: "https://countdown-timer-97dd0-default-rtdb.asia-southeast1.firebasedatabase.app/"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database().ref('timer_data');
-
-        // --- 2. ตัวแปรเริ่มต้น ---
-        let countdownTime = 10800; 
-        let isRunning = false;
+        // เริ่มต้นที่ 3 ชั่วโมง (10800 วินาที)
+        let countdownTime = localStorage.getItem('countdownTime') ? parseInt(localStorage.getItem('countdownTime')) : 3 * 60 * 60;
+        
+        const timerElement = document.getElementById('timer');
+        const catImage = document.getElementById('catImage');
+        const catLayer = document.getElementById('catLayer');
         let interval = null;
         let activeBoosts = 0;
         let isChangingImage = false;
 
-        const timerElement = document.getElementById('timer');
-        const catImage = document.getElementById('catImage');
-        const catLayer = document.getElementById('catLayer');
-
         const CAT_ANGRY = "cat3-1.png";
         const CAT_NORMAL = "cat3-2.png";
         const CAT_HAPPY = "cat3-3.png";
-
-        // --- 3. การเชื่อมต่อข้อมูล (Sync) ---
-        db.on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                // ดักจับสถานะรีเซต
-                if (data.status === 'stopped' && data.timeLeft === 10800) {
-                    localStop();
-                    countdownTime = 10800;
-                    updateTimerDisplay();
-                    return;
-                }
-
-                // อัปเดตเวลาถ้าความต่างมากกว่า 2 วินาที
-                if (Math.abs(countdownTime - data.timeLeft) > 2) {
-                    countdownTime = data.timeLeft;
-                    updateTimerDisplay();
-                }
-                
-                if (data.status === 'running' && !isRunning) {
-                    localStart();
-                } else if (data.status === 'stopped' && isRunning) {
-                    localStop();
-                }
-            } else {
-                db.set({ timeLeft: 10800, status: 'stopped' });
-            }
-        });
-
-        // --- 4. ฟังก์ชันการทำงานหลัก ---
-        function updateTimerDisplay() {
-            let hours = Math.floor(countdownTime / 3600);
-            let minutes = Math.floor((countdownTime % 3600) / 60);
-            let seconds = Math.round(countdownTime % 60);
-            timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
-            
-            // อนิเมชั่นสีและรูปภาพตามเวลาที่เหลือ
-            if (countdownTime <= 1800) { 
-                timerElement.classList.add('red');
-                fadeChangeImage(CAT_ANGRY);
-            } else if (countdownTime > 1800 && countdownTime <= 7200) {
-                timerElement.classList.remove('red');
-                fadeChangeImage(CAT_NORMAL);
-            } else {
-                timerElement.classList.remove('red');
-                fadeChangeImage(CAT_HAPPY);
-            }
-        }
 
         function fadeChangeImage(newSrc) {
             if (catImage.src.includes(newSrc) || isChangingImage) return;
@@ -152,7 +174,24 @@
             }, 500);
         }
 
-        // ฟังก์ชัน Boost (รองรับทั้งบวกและลบ)
+        function updateTimerDisplay() {
+            let hours = Math.floor(countdownTime / 3600);
+            let minutes = Math.floor((countdownTime % 3600) / 60);
+            let seconds = Math.round(countdownTime % 60);
+            timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
+            
+            if (countdownTime <= 1800) { 
+                timerElement.classList.add('red');
+                fadeChangeImage(CAT_ANGRY);
+            } else if (countdownTime > 1800 && countdownTime <= 7200) {
+                timerElement.classList.remove('red');
+                fadeChangeImage(CAT_NORMAL);
+            } else if (countdownTime > 7200) {
+                timerElement.classList.remove('red');
+                fadeChangeImage(CAT_HAPPY);
+            }
+        }
+
         function smartBoost(totalSeconds, durationMs, effectClass) {
             activeBoosts++;
             const fps = 30; 
@@ -163,13 +202,13 @@
             let lastIntegerChange = 0;
             let accumulatedChange = 0;
 
-            // เพิ่มสีตอนกด
             timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
             catLayer.classList.add(effectClass);
 
             let boostTask = setInterval(() => {
                 stepsTaken++;
                 accumulatedChange += incrementPerStep;
+                
                 let currentIntegerChange = Math.round(accumulatedChange);
                 let diff = currentIntegerChange - lastIntegerChange;
                 lastIntegerChange = currentIntegerChange;
@@ -184,63 +223,56 @@
                         activeBoosts = 0;
                         timerElement.classList.remove('boost-up', 'boost-down');
                         catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-                        db.update({ timeLeft: Math.round(countdownTime) });
+                        localStorage.setItem('countdownTime', Math.round(countdownTime));
                     }
                 }
             }, 1000 / fps);
         }
 
-        // --- 5. ฟังก์ชันควบคุมระบบ Sync ---
-        function syncControl(status) {
-            if (status === 'reset') {
-                db.set({ timeLeft: 10800, status: 'stopped' });
-            } else {
-                db.update({ status: status, timeLeft: Math.round(countdownTime) });
+        function countdown() {
+            if (countdownTime > 0) {
+                countdownTime--;
+                updateTimerDisplay();
+                localStorage.setItem('countdownTime', Math.round(countdownTime));
             }
         }
 
-        function localStart() {
-            if (isRunning) return;
-            isRunning = true;
-            document.getElementById('startBtn').classList.add('active');
-            document.getElementById('stopBtn').classList.remove('active');
-            
-            if (interval) clearInterval(interval);
-            interval = setInterval(() => {
-                if (countdownTime > 0) {
-                    countdownTime--;
-                    updateTimerDisplay();
-                    if (countdownTime % 5 === 0) {
-                        db.update({ timeLeft: countdownTime });
-                    }
-                } else {
-                    syncControl('stopped');
-                }
-            }, 1000);
+        function startTimer() {
+            if (!interval) {
+                interval = setInterval(countdown, 1000);
+                document.getElementById('startBtn').classList.add('active');
+                document.getElementById('stopBtn').classList.remove('active');
+            }
         }
 
-        function localStop() {
-            isRunning = false;
+        function stopTimer() {
+            clearInterval(interval);
+            interval = null;
             document.getElementById('startBtn').classList.remove('active');
             document.getElementById('stopBtn').classList.add('active');
-            if (interval) {
-                clearInterval(interval);
-                interval = null;
-            }
         }
 
-        // --- 6. TikTok WebSocket ---
+        function resetTimer() {
+            stopTimer();
+            activeBoosts = 0;
+            timerElement.classList.remove('boost-up', 'boost-down', 'red');
+            catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
+            countdownTime = 3 * 60 * 60; // รีเซตที่ 3 ชั่วโมง
+            updateTimerDisplay();
+            localStorage.setItem('countdownTime', countdownTime);
+        }
+
+        updateTimerDisplay();
+
         const socket = new WebSocket("ws://localhost:8080");
         socket.onmessage = function(event) {
             const data = JSON.parse(event.data);
             if (data.type === "gift") {
                 if (data.gift === "Rose") smartBoost(10, 1000, 'effect-5-10');
                 else if (data.gift === "Panda") smartBoost(30, 1000, 'effect-5-10');
-                else if (data.gift === "Lion") smartBoost(300, 2000, 'effect-30');
+                else if (data.gift === "Lion") smartBoost(60, 1000, 'effect-30');
             }
         };
-
-        updateTimerDisplay();
     </script>
 </body>
 </html>
