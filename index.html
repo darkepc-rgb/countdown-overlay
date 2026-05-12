@@ -148,7 +148,7 @@
     <script type="module">
         // --- 1. Firebase Setup ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCTqaj2D4b5p_loXgh7jjIW9D5zfi_2dUk",
@@ -164,9 +164,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        // ฟังก์ชัน Sync ที่ปลอดภัยขึ้น
         function syncToFirebase() {
-            if (!db) return; // เช็คว่า db มาหรือยัง
+            if (!db) return;
             const timerRef = ref(db, 'timer_data');
             set(timerRef, {
                 remainingTime: window.countdownTime,
@@ -215,10 +214,8 @@
                 timerElement.classList.remove('red');
                 fadeChangeImage(CAT_HAPPY);
             }
-            syncToFirebase();
         }
 
-        // แก้ไข: ผูกฟังก์ชันเข้ากับ window เพื่อให้ปุ่ม HTML เรียกใช้ได้
         window.smartBoost = function(totalSeconds, durationMs, effectClass) {
             activeBoosts++;
             const fps = 30; 
@@ -251,6 +248,7 @@
                         timerElement.classList.remove('boost-up', 'boost-down');
                         catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
                         localStorage.setItem('countdownTime', Math.round(window.countdownTime));
+                        syncToFirebase(); // Sync ค่าหลังจบ Boost
                     }
                 }
             }, 1000 / fps);
@@ -261,26 +259,27 @@
                 window.countdownTime--;
                 updateTimerDisplay();
                 localStorage.setItem('countdownTime', Math.round(window.countdownTime));
+                // ไม่ต้องเรียก syncToFirebase ทุกวินาทีเพื่อประหยัด Quota (ตัวจัดการใน TikTok จะคำนวณวินาทีเอง)
             } else {
                 window.stopTimer();
             }
         }
 
-        window.startTimer = function() {
+        window.startTimer = function(isLocalClick = true) {
             if (!window.interval) {
                 window.interval = setInterval(countdown, 1000);
                 document.getElementById('startBtn').classList.add('active');
                 document.getElementById('stopBtn').classList.remove('active');
-                syncToFirebase();
+                if (isLocalClick) syncToFirebase();
             }
         }
 
-        window.stopTimer = function() {
+        window.stopTimer = function(isLocalClick = true) {
             clearInterval(window.interval);
             window.interval = null;
             document.getElementById('startBtn').classList.remove('active');
             document.getElementById('stopBtn').classList.add('active');
-            syncToFirebase();
+            if (isLocalClick) syncToFirebase();
         }
 
         window.resetTimer = function() {
@@ -291,7 +290,29 @@
             window.countdownTime = 3 * 60 * 60;
             updateTimerDisplay();
             localStorage.setItem('countdownTime', window.countdownTime);
+            syncToFirebase();
         };
+
+        // --- 3. Sync Logic (Listener) ---
+        // ฟังก์ชันนี้จะทำให้นาฬิกาขยับตามข้อมูลใน Firebase อัตโนมัติ
+        const timerRefView = ref(db, 'timer_data');
+        onValue(timerRefView, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                // ถ้าในคอมพิวเตอร์ (ที่เปิด Live) ไม่ได้รันนาฬิกาอยู่ ให้ซิงค์เวลาตาม Firebase
+                if (!window.interval) {
+                    window.countdownTime = data.remainingTime;
+                    updateTimerDisplay();
+                }
+
+                // สั่งเริ่มหรือหยุดตามสถานะใน Firebase
+                if (data.isRunning && !window.interval) {
+                    window.startTimer(false); // ใส่ false เพื่อไม่ให้มัน Sync กลับไปกลับมา (Infinite Loop)
+                } else if (!data.isRunning && window.interval) {
+                    window.stopTimer(false);
+                }
+            }
+        });
 
         // เริ่มต้นแสดงผลครั้งแรก
         updateTimerDisplay();
