@@ -163,14 +163,16 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const timerRef = ref(db, 'timer_data');
-
+        
+        // ฟังก์ชัน Sync ที่ปลอดภัยขึ้น
         function syncToFirebase() {
+            if (!db) return; // เช็คว่า db มาหรือยัง
+            const timerRef = ref(db, 'timer_data');
             set(timerRef, {
                 remainingTime: window.countdownTime,
                 isRunning: window.interval !== null,
                 lastUpdate: Date.now()
-            });
+            }).catch(err => console.error("Firebase Sync Error:", err));
         }
 
         // --- 2. Timer Logic ---
