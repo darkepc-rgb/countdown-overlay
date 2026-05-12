@@ -150,7 +150,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // ใส่ค่าจริงจากรูปภาพของคุณให้เรียบร้อยแล้วครับ
         const firebaseConfig = {
             apiKey: "AIzaSyCTqaj2D4b5p_loXgh7jjIW9D5zfi_2dUk",
             authDomain: "countdown-timer-8dd4c.firebaseapp.com",
@@ -168,8 +167,8 @@
 
         function syncToFirebase() {
             set(timerRef, {
-                remainingTime: countdownTime,
-                isRunning: interval !== null,
+                remainingTime: window.countdownTime,
+                isRunning: window.interval !== null,
                 lastUpdate: Date.now()
             });
         }
@@ -199,25 +198,25 @@
         }
 
         function updateTimerDisplay() {
-            let hours = Math.floor(countdownTime / 3600);
-            let minutes = Math.floor((countdownTime % 3600) / 60);
-            let seconds = Math.round(countdownTime % 60);
+            let hours = Math.floor(window.countdownTime / 3600);
+            let minutes = Math.floor((window.countdownTime % 3600) / 60);
+            let seconds = Math.round(window.countdownTime % 60);
             timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
             
-            if (countdownTime <= 1800) { 
+            if (window.countdownTime <= 1800) { 
                 timerElement.classList.add('red');
                 fadeChangeImage(CAT_ANGRY);
-            } else if (countdownTime > 1800 && countdownTime <= 7200) {
+            } else if (window.countdownTime > 1800 && window.countdownTime <= 7200) {
                 timerElement.classList.remove('red');
                 fadeChangeImage(CAT_NORMAL);
-            } else if (countdownTime > 7200) {
+            } else if (window.countdownTime > 7200) {
                 timerElement.classList.remove('red');
                 fadeChangeImage(CAT_HAPPY);
             }
-            // ส่งข้อมูลไป Firebase ทุกครั้งที่มีการอัปเดตจอ
             syncToFirebase();
         }
 
+        // แก้ไข: ผูกฟังก์ชันเข้ากับ window เพื่อให้ปุ่ม HTML เรียกใช้ได้
         window.smartBoost = function(totalSeconds, durationMs, effectClass) {
             activeBoosts++;
             const fps = 30; 
@@ -239,7 +238,7 @@
                 let diff = currentIntegerChange - lastIntegerChange;
                 lastIntegerChange = currentIntegerChange;
 
-                countdownTime = Math.max(0, countdownTime + diff);
+                window.countdownTime = Math.max(0, window.countdownTime + diff);
                 updateTimerDisplay();
 
                 if (stepsTaken >= totalSteps) {
@@ -249,25 +248,25 @@
                         activeBoosts = 0;
                         timerElement.classList.remove('boost-up', 'boost-down');
                         catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-                        localStorage.setItem('countdownTime', Math.round(countdownTime));
+                        localStorage.setItem('countdownTime', Math.round(window.countdownTime));
                     }
                 }
             }, 1000 / fps);
         }
 
         function countdown() {
-            if (countdownTime > 0) {
-                countdownTime--;
+            if (window.countdownTime > 0) {
+                window.countdownTime--;
                 updateTimerDisplay();
-                localStorage.setItem('countdownTime', Math.round(countdownTime));
+                localStorage.setItem('countdownTime', Math.round(window.countdownTime));
             } else {
-                stopTimer();
+                window.stopTimer();
             }
         }
 
         window.startTimer = function() {
-            if (!interval) {
-                interval = setInterval(countdown, 1000);
+            if (!window.interval) {
+                window.interval = setInterval(countdown, 1000);
                 document.getElementById('startBtn').classList.add('active');
                 document.getElementById('stopBtn').classList.remove('active');
                 syncToFirebase();
@@ -275,21 +274,21 @@
         }
 
         window.stopTimer = function() {
-            clearInterval(interval);
-            interval = null;
+            clearInterval(window.interval);
+            window.interval = null;
             document.getElementById('startBtn').classList.remove('active');
             document.getElementById('stopBtn').classList.add('active');
             syncToFirebase();
         }
 
         window.resetTimer = function() {
-            stopTimer();
+            window.stopTimer();
             activeBoosts = 0;
             timerElement.classList.remove('boost-up', 'boost-down', 'red');
             catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-            countdownTime = 3 * 60 * 60;
+            window.countdownTime = 3 * 60 * 60;
             updateTimerDisplay();
-            localStorage.setItem('countdownTime', countdownTime);
+            localStorage.setItem('countdownTime', window.countdownTime);
         };
 
         // เริ่มต้นแสดงผลครั้งแรก
