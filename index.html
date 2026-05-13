@@ -119,14 +119,15 @@
     
     let isMaster = false; 
     let activeBoosts = 0;
-    let lastEventId = "INIT"; // ตั้งค่าเริ่มต้นไม่ให้เป็น null เพื่อเลี่ยง Event เก่าใน Firebase
+    let lastEventId = "INIT"; 
     let isChangingImage = false;
 
+    // ซิงค์ข้อมูลไป Firebase เฉพาะตอนมี Action สำคัญ (เริ่ม, หยุด, เพิ่ม/ลดเวลาเสร็จ)
     function syncToFirebase() {
         timerRef.update({
             remainingTime: window.countdownTime,
             isRunning: window.interval !== null,
-            lastUpdate: Date.now()
+            lastActionTime: firebase.database.ServerValue.TIMESTAMP
         });
     }
 
@@ -144,10 +145,11 @@
     function updateTimerDisplay() {
         let hours = Math.floor(window.countdownTime / 3600);
         let minutes = Math.floor((window.countdownTime % 3600) / 60);
-        let seconds = Math.round(window.countdownTime % 60);
+        let seconds = Math.floor(window.countdownTime % 60);
+        if (seconds < 0) seconds = 0;
+
         timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
         
-        // เช็คเงื่อนไขสีและรูปแมว
         if (window.countdownTime <= 1800) { 
             timerElement.classList.add('red'); fadeChangeImage("cat3-1.png");
         } else if (window.countdownTime <= 7200) {
@@ -179,10 +181,10 @@
 
                 window.countdownTime = Math.max(0, window.countdownTime + diff);
                 updateTimerDisplay();
-                syncToFirebase(); 
 
                 if (stepsTaken >= totalSteps) {
                     clearInterval(boostTask);
+                    syncToFirebase(); // ซิงค์ค่าสุดท้ายเมื่อจบแอนิเมชัน
                     finishBoost(effectClass);
                 }
             }, 1000 / fps);
@@ -207,7 +209,6 @@
         const eventId = "ev_" + Date.now();
         lastEventId = eventId;
         isMaster = true; 
-
         window.runBoostAnimation(totalSeconds, durationMs, effectClass, true);
 
         timerRef.update({
@@ -219,17 +220,14 @@
         if (window.countdownTime > 0) {
             window.countdownTime--;
             updateTimerDisplay();
-            // ซิงค์ค่าทุกวินาทีเฉพาะเครื่องที่เป็น Master
-            if (window.interval) syncToFirebase();
+            // นำ syncToFirebase() ออกจากตรงนี้แล้ว เพื่อไม่ให้ยิงข้อมูลขึ้น Firebase ทุกวินาที
         } else {
             window.stopTimer();
         }
     }
 
     window.startTimer = function(isLocal = true) {
-        // เคลียร์ Interval เก่าออกก่อนเริ่มใหม่เสมอ กันเวลาไหลเร็ว
         if (window.interval) clearInterval(window.interval); 
-        
         window.interval = setInterval(countdown, 1000);
         document.getElementById('startBtn').classList.add('active');
         document.getElementById('stopBtn').classList.remove('active');
@@ -249,31 +247,37 @@
     window.resetTimer = function() {
         window.stopTimer();
         window.countdownTime = 3 * 60 * 60;
-        lastEventId = "RESET_" + Date.now(); // ป้องกันการรันแอนิเมชันเก่าหลังรีเซต
+        lastEventId = "RESET_" + Date.now();
         updateTimerDisplay();
-        
-        // ล้างข้อมูล Boost ใน Firebase ด้วย
-        timerRef.update({
+        timerRef.set({ // ใช้ set เพื่อล้างค่าทั้งหมดให้เริ่มใหม่
             remainingTime: window.countdownTime,
             isRunning: false,
-            boostEvent: null 
+            boostEvent: null,
+            lastActionTime: firebase.database.ServerValue.TIMESTAMP
         });
     };
 
     // --- Firebase Sync ---
     timerRef.on('value', (snapshot) => {
         const data = snapshot.val();
-        if (!data) return;
+        if (!data || isMaster) return; // ถ้าเครื่องนี้เป็นคนกด Boost หรือเริ่มคำสั่ง ไม่ต้องรับค่ามาทับตัวเอง
 
-        // ซิงค์เวลา (เฉพาะเครื่องที่ไม่ใช่คนกด Boost)
-        if (!isMaster) {
+        // ซิงค์สถานะ Start/Stop และ เวลา
+        if (data.isRunning && !window.interval) {
+            window.countdownTime = data.remainingTime;
+            window.startTimer(false);
+        } else if (!data.isRunning && window.interval) {
+            window.stopTimer(false);
+            window.countdownTime = data.remainingTime;
+            updateTimerDisplay();
+        } else if (!window.interval) {
+            // กรณีเปิดหน้าเว็บมาใหม่แล้วไม่ได้รันอยู่
             window.countdownTime = data.remainingTime;
             updateTimerDisplay();
         }
 
-        // จัดการเรื่องแอนิเมชัน
+        // จัดการแอนิเมชัน
         if (data.boostEvent && data.boostEvent.id !== lastEventId) {
-            // ถ้าเป็นการโหลดหน้าเว็บครั้งแรก (lastEventId คือ INIT) ให้จำ ID ไว้เฉยๆ ไม่ต้องรัน
             if (lastEventId === "INIT") {
                 lastEventId = data.boostEvent.id;
             } else {
@@ -285,13 +289,6 @@
                     false
                 );
             }
-        }
-
-        // ซิงค์สถานะ Start/Stop ให้ตรงกัน
-        if (data.isRunning && !window.interval) {
-            window.startTimer(false);
-        } else if (!data.isRunning && window.interval) {
-            window.stopTimer(false);
         }
     });
 
