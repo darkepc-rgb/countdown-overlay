@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer - Sync Fixed</title>
+    <title>Countdown Timer - Stable Version</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
         body {
@@ -117,9 +117,9 @@
     const catLayer = document.getElementById('catLayer');
     window.interval = null;
     
-    let isMaster = false; // จะเป็น true เฉพาะเครื่องที่กดปุ่ม
+    let isMaster = false; 
     let activeBoosts = 0;
-    let lastEventId = null;
+    let lastEventId = "INIT"; // ตั้งค่าเริ่มต้นไม่ให้เป็น null เพื่อเลี่ยง Event เก่าใน Firebase
     let isChangingImage = false;
 
     function syncToFirebase() {
@@ -147,6 +147,7 @@
         let seconds = Math.round(window.countdownTime % 60);
         timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
         
+        // เช็คเงื่อนไขสีและรูปแมว
         if (window.countdownTime <= 1800) { 
             timerElement.classList.add('red'); fadeChangeImage("cat3-1.png");
         } else if (window.countdownTime <= 7200) {
@@ -156,16 +157,12 @@
         }
     }
 
-    // ฟังก์ชันรันแอนิเมชัน
     window.runBoostAnimation = function(totalSeconds, durationMs, effectClass, isThisMachineMaster) {
         activeBoosts++;
-        
-        // ใส่ Effect ทันที
         timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
         catLayer.classList.add(effectClass);
 
         if (isThisMachineMaster) {
-            // เครื่อง Master: คำนวณเลขทีละ Step แล้วส่ง Firebase
             const fps = 30; 
             const totalSteps = (durationMs / 1000) * fps;
             const incrementPerStep = totalSeconds / totalSteps;
@@ -182,7 +179,7 @@
 
                 window.countdownTime = Math.max(0, window.countdownTime + diff);
                 updateTimerDisplay();
-                syncToFirebase(); // ส่งค่าที่คำนวณได้ให้ Slave
+                syncToFirebase(); 
 
                 if (stepsTaken >= totalSteps) {
                     clearInterval(boostTask);
@@ -190,7 +187,6 @@
                 }
             }, 1000 / fps);
         } else {
-            // เครื่อง Slave: แค่แสดงแอนิเมชัน แล้วรอรับเลขจาก Firebase (syncToFirebase ของ Master)
             setTimeout(() => {
                 finishBoost(effectClass);
             }, durationMs);
@@ -210,12 +206,10 @@
     window.smartBoost = function(totalSeconds, durationMs, effectClass) {
         const eventId = "ev_" + Date.now();
         lastEventId = eventId;
-        isMaster = true; // เครื่องนี้เป็นคนคุมเลข
+        isMaster = true; 
 
-        // 1. รันแอนิเมชันแบบ Master
         window.runBoostAnimation(totalSeconds, durationMs, effectClass, true);
 
-        // 2. บอกเครื่องอื่นให้รันแอนิเมชันแบบ Slave
         timerRef.update({
             boostEvent: { totalSeconds, durationMs, effectClass, id: eventId }
         });
@@ -225,7 +219,7 @@
         if (window.countdownTime > 0) {
             window.countdownTime--;
             updateTimerDisplay();
-            // เครื่องที่รัน Countdown หลัก (ปกติคือคนกดเริ่ม) จะเป็นคนส่งเวลา
+            // ซิงค์ค่าทุกวินาทีเฉพาะเครื่องที่เป็น Master
             if (window.interval) syncToFirebase();
         } else {
             window.stopTimer();
@@ -233,17 +227,20 @@
     }
 
     window.startTimer = function(isLocal = true) {
-        if (!window.interval) {
-            window.interval = setInterval(countdown, 1000);
-            document.getElementById('startBtn').classList.add('active');
-            document.getElementById('stopBtn').classList.remove('active');
-            if (isLocal) syncToFirebase();
-        }
+        // เคลียร์ Interval เก่าออกก่อนเริ่มใหม่เสมอ กันเวลาไหลเร็ว
+        if (window.interval) clearInterval(window.interval); 
+        
+        window.interval = setInterval(countdown, 1000);
+        document.getElementById('startBtn').classList.add('active');
+        document.getElementById('stopBtn').classList.remove('active');
+        if (isLocal) syncToFirebase();
     }
 
     window.stopTimer = function(isLocal = true) {
-        clearInterval(window.interval);
-        window.interval = null;
+        if (window.interval) {
+            clearInterval(window.interval);
+            window.interval = null;
+        }
         document.getElementById('startBtn').classList.remove('active');
         document.getElementById('stopBtn').classList.add('active');
         if (isLocal) syncToFirebase();
@@ -252,8 +249,15 @@
     window.resetTimer = function() {
         window.stopTimer();
         window.countdownTime = 3 * 60 * 60;
+        lastEventId = "RESET_" + Date.now(); // ป้องกันการรันแอนิเมชันเก่าหลังรีเซต
         updateTimerDisplay();
-        syncToFirebase();
+        
+        // ล้างข้อมูล Boost ใน Firebase ด้วย
+        timerRef.update({
+            remainingTime: window.countdownTime,
+            isRunning: false,
+            boostEvent: null 
+        });
     };
 
     // --- Firebase Sync ---
@@ -261,26 +265,34 @@
         const data = snapshot.val();
         if (!data) return;
 
-        // ถ้าไม่ใช่เครื่อง Master ให้รับค่าเวลาตาม Firebase เสมอ
+        // ซิงค์เวลา (เฉพาะเครื่องที่ไม่ใช่คนกด Boost)
         if (!isMaster) {
             window.countdownTime = data.remainingTime;
             updateTimerDisplay();
         }
 
-        // ตรวจเช็คแอนิเมชัน
+        // จัดการเรื่องแอนิเมชัน
         if (data.boostEvent && data.boostEvent.id !== lastEventId) {
-            lastEventId = data.boostEvent.id;
-            // เครื่องอื่นๆ ที่ไม่ใช่คนกด ให้รันแอนิเมชันแบบ Slave (ไม่คำนวณเลขเอง)
-            window.runBoostAnimation(
-                data.boostEvent.totalSeconds, 
-                data.boostEvent.durationMs, 
-                data.boostEvent.effectClass,
-                false
-            );
+            // ถ้าเป็นการโหลดหน้าเว็บครั้งแรก (lastEventId คือ INIT) ให้จำ ID ไว้เฉยๆ ไม่ต้องรัน
+            if (lastEventId === "INIT") {
+                lastEventId = data.boostEvent.id;
+            } else {
+                lastEventId = data.boostEvent.id;
+                window.runBoostAnimation(
+                    data.boostEvent.totalSeconds, 
+                    data.boostEvent.durationMs, 
+                    data.boostEvent.effectClass,
+                    false
+                );
+            }
         }
 
-        if (data.isRunning && !window.interval) window.startTimer(false);
-        else if (!data.isRunning && window.interval) window.stopTimer(false);
+        // ซิงค์สถานะ Start/Stop ให้ตรงกัน
+        if (data.isRunning && !window.interval) {
+            window.startTimer(false);
+        } else if (!data.isRunning && window.interval) {
+            window.stopTimer(false);
+        }
     });
 
     updateTimerDisplay();
