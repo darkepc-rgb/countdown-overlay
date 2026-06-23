@@ -496,19 +496,19 @@
         if (isLocal) syncToFirebase();
     }
 
-    window.resetTimer = function() {
+window.resetTimer = function() {
         window.stopTimer();
         window.countdownTime = 3 * 60 * 60;
         lastEventId = "RESET_" + Date.now();
-        lastSpinId = "RESET_" + Date.now();
         updateTimerDisplay();
-        timerRef.set({ 
+        
+        // 🟢 แก้ไขตรงนี้: ใช้ update แทน set เพื่อเก็บค่า lastRandomValue เอาไว้
+        timerRef.update({ 
             remainingTime: window.countdownTime,
             isRunning: false,
-            boostEvent: null,
-            spinEvent: null,
-            lastRandomValue: "-",
+            boostEvent: null, // รีเซตแค่ค่า boost
             lastActionTime: firebase.database.ServerValue.TIMESTAMP
+            // ไม่ต้องใส่ lastRandomValue ตรงนี้ ค่าเดิมจะยังคงค้างอยู่ที่ฐานข้อมูลครับ
         });
     };
 
