@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Roulette - Fixed Sync Version</title>
+    <title>Countdown Timer with Roulette - Clean Version</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
         body {
@@ -224,6 +224,7 @@
     function playTickSequence(duration = 4000) {
         const startTime = Date.now();
         function tickLoop() {
+            if (!isSpinning) return; // ป้องกันเสียงดังค้างถ้าจบสปินก่อน
             playTick();
             const elapsed = Date.now() - startTime;
             const progress = Math.min(elapsed / duration, 1);
@@ -255,18 +256,19 @@
         for (let i = 0; i < 60; i++) {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item';
-            let currentVal = (i === 50) ? value : '+ 10 S';
+            let currentVal = (i === 50) ? value : secondsPool[Math.floor(Math.random() * secondsPool.length)];
             itemDiv.innerText = `[ ${currentVal} ]`;
             itemDiv.classList.add(currentVal.includes('+') ? 'plus' : 'minus');
             track.appendChild(itemDiv);
         }
         track.style.transition = 'none';
-        const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH);
+        // ป้องกันบั๊กขยับตำแหน่งตอนกว้างเป็น 0
+        const windowWidth = windowDiv.offsetWidth || 576;
+        const finalTranslateX = (windowWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH);
         track.style.transform = `translateX(${finalTranslateX}px)`;
     }
 
-    // 🟢 แก้ไขฟังก์ชันให้รับ fullList อาเรย์ชุดเดียวกันจากเบสมาแสดงผล
-    function startSpin(fullList, targetValue) {
+    function startSpin(modeName, targetPool, targetValue) {
         if (isSpinning) return;
         isSpinning = true;
         
@@ -274,7 +276,7 @@
         for (let i = 0; i < 60; i++) {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item';
-            let currentVal = fullList[i];
+            let currentVal = (i === 50) ? targetValue : targetPool[Math.floor(Math.random() * targetPool.length)];
             itemDiv.innerText = `[ ${currentVal} ]`;
             itemDiv.classList.add(currentVal.includes('+') ? 'plus' : 'minus');
             track.appendChild(itemDiv);
@@ -284,7 +286,8 @@
         track.style.transform = 'translateX(0)';
         track.offsetHeight; 
         
-        const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH); 
+        const windowWidth = windowDiv.offsetWidth || 576;
+        const finalTranslateX = (windowWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH); 
         track.style.transition = 'transform 4s cubic-bezier(0.05, 0.9, 0.1, 1)';
         track.style.transform = `translateX(${finalTranslateX}px)`;
 
@@ -293,18 +296,21 @@
         setTimeout(() => { 
             playWin();
             isSpinning = false; 
-            parseAndTriggerBoost(targetValue);
+            if (track.children[50]) {
+                parseAndTriggerBoost(track.children[50].innerText);
+            }
         }, 4000);
     }
 
-    function parseAndTriggerBoost(targetValue) {
-        currentDisplayedValue = targetValue;
+    function parseAndTriggerBoost(resultText) {
+        const cleaned = resultText.replace('[', '').replace(']', '').trim();
+        currentDisplayedValue = cleaned;
         
         if (isMaster) {
-            timerRef.update({ lastRandomValue: targetValue });
+            timerRef.update({ lastRandomValue: cleaned });
         }
         
-        const parts = targetValue.split(/\s+/);
+        const parts = cleaned.split(/\s+/);
         const sign = parts[0];
         const val = parseInt(parts[1]);
         const unit = parts[2];
@@ -312,38 +318,32 @@
         if (sign === '-') totalSeconds = -totalSeconds;
         
         if (isMaster) {
-            window.smartBoost(totalSeconds, 2000, 'effect-30');
+            // ไม่ปรับเป็น false ทันที ให้ smartBoost คุมต่อ
+            window.smartBoost(totalSeconds, 2000, 'effect-30', true); 
         }
     }
 
     window.addEventListener('keydown', (e) => {
         if (isSpinning) return;
 
+        let modeName = "";
         let pool = null;
+        let poolType = "";
 
-        if (e.altKey && e.key === '1') { pool = secondsPool; }
-        if (e.altKey && e.key === '2') { pool = minutesLargePool; }
-        if (e.altKey && e.key === '3') { pool = minutesSmallPool; }
+        if (e.altKey && e.key === '1') { modeName = 'วินาที'; pool = secondsPool; poolType = 'seconds'; }
+        if (e.altKey && e.key === '2') { modeName = 'นาทีใหญ่'; pool = minutesLargePool; poolType = 'minutesLarge'; }
+        if (e.altKey && e.key === '3') { modeName = '10 Pok'; pool = minutesSmallPool; poolType = 'minutesSmall'; }
 
         if (pool) {
-            isMaster = true; 
+            isMaster = true; // ล็อกความเป็น Master ก่อนส่งค่าขึ้น Firebase เสมอ
             const chosenValue = pool[Math.floor(Math.random() * pool.length)];
-            
-            // 🟢 สร้างอาเรย์ข้อมูลรูเล็ตต์ 60 ช่องจากฝั่งคอนโทรลส่งไปพร้อมกันเลย
-            let fullList = [];
-            for(let i=0; i<60; i++){
-                if(i === 50) {
-                    fullList.push(chosenValue);
-                } else {
-                    fullList.push(pool[Math.floor(Math.random() * pool.length)]);
-                }
-            }
-
             const spinId = "spin_" + Date.now();
+
             timerRef.update({
                 spinEvent: {
+                    modeName: modeName,
                     chosenValue: chosenValue,
-                    fullList: fullList,
+                    poolType: poolType,
                     id: spinId
                 }
             });
@@ -424,14 +424,14 @@
             activeBoosts = 0;
             timerElement.classList.remove('boost-up', 'boost-down');
             catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-            isMaster = false; 
+            isMaster = false; // เคลียร์ Master เมื่อสิ้นสุดแอนิเมชันทั้งหมดจริง ๆ
         }
     }
 
-    window.smartBoost = function(totalSeconds, durationMs, effectClass) {
+    window.smartBoost = function(totalSeconds, durationMs, effectClass, keepMaster = false) {
         const eventId = "ev_" + Date.now();
         lastEventId = eventId;
-        isMaster = true; 
+        if (!keepMaster) isMaster = true; 
         window.runBoostAnimation(totalSeconds, durationMs, effectClass, true);
 
         timerRef.update({
@@ -453,7 +453,7 @@
         window.interval = setInterval(countdown, 1000);
         document.getElementById('startBtn').classList.add('active');
         document.getElementById('stopBtn').classList.remove('active');
-        if (isLocal) syncToFirebase();
+        if (isLocal) { isMaster = true; syncToFirebase(); }
     }
 
     window.stopTimer = function(isLocal = true) {
@@ -463,18 +463,22 @@
         }
         document.getElementById('startBtn').classList.remove('active');
         document.getElementById('stopBtn').classList.add('active');
-        if (isLocal) syncToFirebase();
+        if (isLocal) { isMaster = true; syncToFirebase(); }
     }
 
     window.resetTimer = function() {
         window.stopTimer();
         window.countdownTime = 3 * 60 * 60;
         lastEventId = "RESET_" + Date.now();
+        currentDisplayedValue = "-";
         updateTimerDisplay();
         
+        // เคลียร์ค่าทั้งหมดใน Firebase เพื่อให้จอบน OBS หรือจออื่น ๆ เคลียร์ตามด้วย
         timerRef.update({ 
             remainingTime: window.countdownTime,
             isRunning: false,
+            lastRandomValue: "-",
+            spinEvent: null,
             boostEvent: { totalSeconds: 0, durationMs: 0, effectClass: '', id: lastEventId }, 
             lastActionTime: firebase.database.ServerValue.TIMESTAMP
         });
@@ -486,8 +490,12 @@
 
         if (data.spinEvent && data.spinEvent.id !== lastSpinId) {
             lastSpinId = data.spinEvent.id;
-            // 🟢 ดึงโครงสร้างข้อมูลก้อนเดียวกันที่ส่งมาจาก Master ไปหมุนพร้อมกัน
-            startSpin(data.spinEvent.fullList, data.spinEvent.chosenValue);
+            
+            let targetPool = secondsPool;
+            if (data.spinEvent.poolType === 'minutesLarge') targetPool = minutesLargePool;
+            if (data.spinEvent.poolType === 'minutesSmall') targetPool = minutesSmallPool;
+
+            startSpin(data.spinEvent.modeName, targetPool, data.spinEvent.chosenValue);
         }
 
         if (data.lastRandomValue && !isSpinning) {
@@ -530,7 +538,8 @@
         }
     });
 
-    updateTimerDisplay();
+    // ดีเลย์เล็กน้อยตอนเริ่มต้น เพื่อให้แน่ใจว่าได้ความกว้าง windowDiv ที่ถูกต้อง
+    setTimeout(updateTimerDisplay, 100);
 </script>
 </body>
 </html>
