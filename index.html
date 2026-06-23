@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Auto Roulette (Stable Engine)</title>
+    <title>Countdown Timer with Auto Roulette (Fixed Sync)</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
         body {
@@ -36,7 +36,7 @@
         .mode-indicator {
             font-size: 22px; 
             margin-top: 15px;
-            margin-bottom: 10px;
+            margin-bottom: 30px; /* 👈 เพิ่มระยะห่างด้านล่างอักษร (ก่อนถึงหน้าจอสุ่ม) */
             font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
             letter-spacing: 1px;
         }
@@ -46,7 +46,7 @@
         .roulette-container {
             position: relative; width: 576px; 
             padding: 12px 0;
-            margin-bottom: 15px;
+            margin-bottom: 35px; /* 👈 เพิ่มระยะห่างด้านล่างหน้าจอสุ่ม (ก่อนถึงคำอธิบายปุ่ม) */
             display: flex; justify-content: center;
         }
 
@@ -125,12 +125,12 @@
     <div class="timer-stack-wrapper">
         <div id="timer">03 : 00 : 00</div>
         <div class="cat-overlay-layer" id="catLayer">
-            <img src="cat3-3.png" id="catImage">
+            <img id="catImage" style="opacity: 0;">
         </div>
     </div>
     
     <div class="mode-indicator" id="modeIndicator">วงล้อพร้อมสุ่ม: <span>รอสัญญาณปุ่ม G1 - G3</span></div>
-    
+  
     <div class="roulette-container">
         <div class="pointer">▼</div>
         <div class="window" id="windowDiv">
@@ -193,8 +193,11 @@
     let isMaster = false; 
     let activeBoosts = 0;
     let lastEventId = "INIT"; 
-    let isChangingImage = false;
+    
+    let isChangingImage = false; 
+    let currentCatSrc = ""; 
     let isSpinning = false;
+    let currentDisplayedValue = ""; 
 
     // --- ข้อมูลและ Pool สำหรับระบบวงล้อสุ่ม ---
     const secondsOptions = [
@@ -280,13 +283,34 @@
         }
     }
 
+    function setRouletteToValue(value) {
+        if (!value || value === "-") {
+            track.innerHTML = '';
+            track.style.transition = 'none';
+            track.style.transform = 'translateX(0)';
+            return;
+        }
+        track.innerHTML = '';
+        for (let i = 0; i < 60; i++) {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'item';
+            let currentVal = (i === 50) ? value : secondsPool[Math.floor(Math.random() * secondsPool.length)];
+            itemDiv.innerText = `[ ${currentVal} ]`;
+            itemDiv.classList.add(currentVal.includes('+') ? 'plus' : 'minus');
+            track.appendChild(itemDiv);
+        }
+        track.style.transition = 'none';
+        const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * 140) + 70);
+        track.style.transform = `translateX(${finalTranslateX}px)`;
+    }
+
     function startSpin(modeName, targetPool) {
         if (isSpinning) return;
         isSpinning = true;
         modeIndicator.innerHTML = `กำลังสุ่มโหมด: <span>${modeName}</span>`;
         track.style.transition = 'none';
         track.style.transform = 'translateX(0)';
-        track.offsetHeight; // Force reflow
+        track.offsetHeight; 
         generateTrackItems(60, targetPool);
         
         const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * 140) + 70); 
@@ -307,6 +331,9 @@
 
     function parseAndTriggerBoost(resultText) {
         const cleaned = resultText.replace('[', '').replace(']', '').trim();
+        currentDisplayedValue = cleaned;
+        timerRef.update({ lastRandomValue: cleaned });
+        
         const parts = cleaned.split(/\s+/);
         const sign = parts[0];
         const val = parseInt(parts[1]);
@@ -314,18 +341,16 @@
         let totalSeconds = (unit === 'M' ? val * 60 : val);
         if (sign === '-') totalSeconds = -totalSeconds;
         
-        // เรียกใช้ฟังก์ชันดั้งเดิม เพื่อให้แอนิเมชันเวลาวิ่งสมดุล
         window.smartBoost(totalSeconds, 2000, 'effect-30');
     }
 
-    // ฟังคีย์บอร์ดลัด Alt+1, Alt+2, Alt+3
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.key === '1') startSpin('วินาที', secondsPool);
         if (e.altKey && e.key === '2') startSpin('นาทีใหญ่', minutesLargePool);
         if (e.altKey && e.key === '3') startSpin('10 Pok', minutesSmallPool);
     });
 
-    // --- โครงสร้างฟังก์ชันเวลาจากเวอร์ชันสเตเบิล (ไม่มีการแก้ลอจิกภายใน) ---
+    // --- ระบบควบคุมเวลาและสลับรูปดั้งเดิม ---
     function syncToFirebase() {
         timerRef.update({
             remainingTime: window.countdownTime,
@@ -335,8 +360,17 @@
     }
 
     function fadeChangeImage(newSrc) {
-        if (catImage.src.includes(newSrc) || isChangingImage) return;
+        if (currentCatSrc === newSrc || isChangingImage) return;
+        
+        if (currentCatSrc === "") {
+            currentCatSrc = newSrc;
+            catImage.src = newSrc;
+            catImage.style.opacity = 1;
+            return;
+        }
+
         isChangingImage = true;
+        currentCatSrc = newSrc; 
         catImage.style.opacity = 0;
         setTimeout(() => {
             catImage.src = newSrc;
@@ -354,11 +388,14 @@
         timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
         
         if (window.countdownTime <= 1800) { 
-            timerElement.classList.add('red'); fadeChangeImage("cat3-1.png");
+            timerElement.classList.add('red'); 
+            fadeChangeImage("cat3-1.png");
         } else if (window.countdownTime <= 7200) {
-            timerElement.classList.remove('red'); fadeChangeImage("cat3-2.png");
+            timerElement.classList.remove('red'); 
+            fadeChangeImage("cat3-2.png");
         } else {
-            timerElement.classList.remove('red'); fadeChangeImage("cat3-3.png");
+            timerElement.classList.remove('red'); 
+            fadeChangeImage("cat3-3.png");
         }
     }
 
@@ -451,7 +488,8 @@
         window.countdownTime = 3 * 60 * 60;
         lastEventId = "RESET_" + Date.now();
         updateTimerDisplay();
-        timerRef.set({ 
+
+        timerRef.update({ 
             remainingTime: window.countdownTime,
             isRunning: false,
             boostEvent: null,
@@ -459,22 +497,29 @@
         });
     };
 
-    // --- Firebase Sync Engine จากโค้ดสเตเบิล ---
+    // --- ระบบ Firebase Sync Engine ---
     timerRef.on('value', (snapshot) => {
         const data = snapshot.val();
-        if (!data || isMaster) return; 
+        if (!data) return; 
+
+        if (data.lastRandomValue && !isSpinning) {
+            if (currentDisplayedValue !== data.lastRandomValue) {
+                currentDisplayedValue = data.lastRandomValue;
+                setRouletteToValue(data.lastRandomValue);
+            }
+        }
+
+        if (isMaster) return; 
+
+        window.countdownTime = data.remainingTime;
 
         if (data.isRunning && !window.interval) {
-            window.countdownTime = data.remainingTime;
             window.startTimer(false);
         } else if (!data.isRunning && window.interval) {
             window.stopTimer(false);
-            window.countdownTime = data.remainingTime;
-            updateTimerDisplay();
-        } else if (!window.interval) {
-            window.countdownTime = data.remainingTime;
-            updateTimerDisplay();
         }
+        
+        updateTimerDisplay();
 
         if (data.boostEvent && data.boostEvent.id !== lastEventId) {
             if (lastEventId === "INIT") {
