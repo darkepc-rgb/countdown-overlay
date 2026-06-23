@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Roulette - Clean Version</title>
+    <title>Countdown Timer with Roulette - Fixed Sync Version</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
         body {
@@ -109,8 +109,6 @@
         </div>
     </div>
 
-    <!-- 🟢 ลบกล่องดิฟโหมดดแสดงผลออกแล้ว -->
-
     <div class="roulette-container">
         <div class="pointer">▼</div>
         <div class="window" id="windowDiv">
@@ -167,7 +165,6 @@
     const catLayer = document.getElementById('catLayer');
     const track = document.getElementById('track');
     const windowDiv = document.getElementById('windowDiv');
-    // 🟢 ลบการผูกตัวแปร modeIndicator ออกแล้วเพื่อไม่ให้เกิด Error
     window.interval = null;
     
     let isMaster = false; 
@@ -258,7 +255,7 @@
         for (let i = 0; i < 60; i++) {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item';
-            let currentVal = (i === 50) ? value : secondsPool[Math.floor(Math.random() * secondsPool.length)];
+            let currentVal = (i === 50) ? value : '+ 10 S';
             itemDiv.innerText = `[ ${currentVal} ]`;
             itemDiv.classList.add(currentVal.includes('+') ? 'plus' : 'minus');
             track.appendChild(itemDiv);
@@ -268,16 +265,16 @@
         track.style.transform = `translateX(${finalTranslateX}px)`;
     }
 
-    function startSpin(modeName, targetPool, targetValue) {
+    // 🟢 แก้ไขฟังก์ชันให้รับ fullList อาเรย์ชุดเดียวกันจากเบสมาแสดงผล
+    function startSpin(fullList, targetValue) {
         if (isSpinning) return;
         isSpinning = true;
-        // 🟢 นำโค้ดที่อัปเดตข้อความกล่องโหมดออกแล้ว
         
         track.innerHTML = '';
         for (let i = 0; i < 60; i++) {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item';
-            let currentVal = (i === 50) ? targetValue : targetPool[Math.floor(Math.random() * targetPool.length)];
+            let currentVal = fullList[i];
             itemDiv.innerText = `[ ${currentVal} ]`;
             itemDiv.classList.add(currentVal.includes('+') ? 'plus' : 'minus');
             track.appendChild(itemDiv);
@@ -296,22 +293,18 @@
         setTimeout(() => { 
             playWin();
             isSpinning = false; 
-            if (track.children[50]) {
-                parseAndTriggerBoost(track.children[50].innerText);
-            }
-            // 🟢 นำโค้ดที่คืนค่าข้อความกล่องโหมดออกแล้ว
+            parseAndTriggerBoost(targetValue);
         }, 4000);
     }
 
-    function parseAndTriggerBoost(resultText) {
-        const cleaned = resultText.replace('[', '').replace(']', '').trim();
-        currentDisplayedValue = cleaned;
+    function parseAndTriggerBoost(targetValue) {
+        currentDisplayedValue = targetValue;
         
         if (isMaster) {
-            timerRef.update({ lastRandomValue: cleaned });
+            timerRef.update({ lastRandomValue: targetValue });
         }
         
-        const parts = cleaned.split(/\s+/);
+        const parts = targetValue.split(/\s+/);
         const sign = parts[0];
         const val = parseInt(parts[1]);
         const unit = parts[2];
@@ -326,24 +319,31 @@
     window.addEventListener('keydown', (e) => {
         if (isSpinning) return;
 
-        let modeName = "";
         let pool = null;
-        let poolType = "";
 
-        if (e.altKey && e.key === '1') { modeName = 'วินาที'; pool = secondsPool; poolType = 'seconds'; }
-        if (e.altKey && e.key === '2') { modeName = 'นาทีใหญ่'; pool = minutesLargePool; poolType = 'minutesLarge'; }
-        if (e.altKey && e.key === '3') { modeName = '10 Pok'; pool = minutesSmallPool; poolType = 'minutesSmall'; }
+        if (e.altKey && e.key === '1') { pool = secondsPool; }
+        if (e.altKey && e.key === '2') { pool = minutesLargePool; }
+        if (e.altKey && e.key === '3') { pool = minutesSmallPool; }
 
         if (pool) {
             isMaster = true; 
             const chosenValue = pool[Math.floor(Math.random() * pool.length)];
-            const spinId = "spin_" + Date.now();
+            
+            // 🟢 สร้างอาเรย์ข้อมูลรูเล็ตต์ 60 ช่องจากฝั่งคอนโทรลส่งไปพร้อมกันเลย
+            let fullList = [];
+            for(let i=0; i<60; i++){
+                if(i === 50) {
+                    fullList.push(chosenValue);
+                } else {
+                    fullList.push(pool[Math.floor(Math.random() * pool.length)]);
+                }
+            }
 
+            const spinId = "spin_" + Date.now();
             timerRef.update({
                 spinEvent: {
-                    modeName: modeName,
                     chosenValue: chosenValue,
-                    poolType: poolType,
+                    fullList: fullList,
                     id: spinId
                 }
             });
@@ -486,12 +486,8 @@
 
         if (data.spinEvent && data.spinEvent.id !== lastSpinId) {
             lastSpinId = data.spinEvent.id;
-            
-            let targetPool = secondsPool;
-            if (data.spinEvent.poolType === 'minutesLarge') targetPool = minutesLargePool;
-            if (data.spinEvent.poolType === 'minutesSmall') targetPool = minutesSmallPool;
-
-            startSpin(data.spinEvent.modeName, targetPool, data.spinEvent.chosenValue);
+            // 🟢 ดึงโครงสร้างข้อมูลก้อนเดียวกันที่ส่งมาจาก Master ไปหมุนพร้อมกัน
+            startSpin(data.spinEvent.fullList, data.spinEvent.chosenValue);
         }
 
         if (data.lastRandomValue && !isSpinning) {
