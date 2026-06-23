@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Roulette - Solid Version</title>
+    <title>Countdown Timer with Roulette - Clean Version</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
         body {
@@ -29,12 +29,6 @@
             transition: opacity 0.5s ease-in-out, transform 0.3s ease-out; opacity: 1;
         }
 
-        .mode-indicator {
-            font-size: 22px; margin-top: 15px; margin-bottom: 0px; font-weight: bold; 
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 1px;
-        }
-        .mode-indicator span { color: #ffaa00; text-shadow: 0 0 10px #ffaa00; }
-
         .roulette-container {
             position: relative; width: 576px; padding: 5px 0;
             margin-top: 18px;    
@@ -55,7 +49,7 @@
         }
         .window::before { left: 0; background: linear-gradient(to right, #050505, transparent); }
         .window::after { right: 0; background: linear-gradient(to left, #050505, transparent); }
-        
+         
         .track { display: flex; transition: transform 4s cubic-bezier(0.05, 0.9, 0.1, 1); transform: translateX(0); }
         .item {
             min-width: 160px; height: 76px; margin: 0 12px; background: #1c1c1c; 
@@ -115,6 +109,8 @@
         </div>
     </div>
 
+    <!-- 🟢 ลบกล่องดิฟโหมดดแสดงผลออกแล้ว -->
+
     <div class="roulette-container">
         <div class="pointer">▼</div>
         <div class="window" id="windowDiv">
@@ -171,7 +167,7 @@
     const catLayer = document.getElementById('catLayer');
     const track = document.getElementById('track');
     const windowDiv = document.getElementById('windowDiv');
-    const modeIndicator = document.getElementById('modeIndicator');
+    // 🟢 ลบการผูกตัวแปร modeIndicator ออกแล้วเพื่อไม่ให้เกิด Error
     window.interval = null;
     
     let isMaster = false; 
@@ -275,7 +271,7 @@
     function startSpin(modeName, targetPool, targetValue) {
         if (isSpinning) return;
         isSpinning = true;
-        if (modeIndicator) modeIndicator.innerHTML = `กำลังสุ่มโหมด: <span>${modeName}</span>`;
+        // 🟢 นำโค้ดที่อัปเดตข้อความกล่องโหมดออกแล้ว
         
         track.innerHTML = '';
         for (let i = 0; i < 60; i++) {
@@ -303,7 +299,7 @@
             if (track.children[50]) {
                 parseAndTriggerBoost(track.children[50].innerText);
             }
-            if (modeIndicator) modeIndicator.innerHTML = 'วงล้อพร้อมสุ่ม: <span>รอสัญญาณปุ่ม G1 - G3</span>';
+            // 🟢 นำโค้ดที่คืนค่าข้อความกล่องโหมดออกแล้ว
         }, 4000);
     }
 
@@ -311,7 +307,6 @@
         const cleaned = resultText.replace('[', '').replace(']', '').trim();
         currentDisplayedValue = cleaned;
         
-        // 🟢 เมื่อวงล้อหยุดหมุน ให้เครื่องที่กดสั่ง (isMaster) บันทึกค่าผลลัพธ์ลง Firebase เท่านั้น
         if (isMaster) {
             timerRef.update({ lastRandomValue: cleaned });
         }
@@ -323,13 +318,11 @@
         let totalSeconds = (unit === 'M' ? val * 60 : val);
         if (sign === '-') totalSeconds = -totalSeconds;
         
-        // 🟢 รันแอนิเมชันปรับเวลาเฉพาะเครื่องที่กดสั่งตรงๆ (เพราะเครื่องอื่นจะโดนสั่งผ่าน Firebase boostEvent อยู่แล้ว)
         if (isMaster) {
             window.smartBoost(totalSeconds, 2000, 'effect-30');
         }
     }
 
-    /* 🟢 ปรับปรุง: ไม่ว่าเปิดจอไหนอยู่ ถ้ากดคีย์บอร์ด จะทำการล็อกผลลัพธ์แล้วโยนขึ้น Firebase ทันที */
     window.addEventListener('keydown', (e) => {
         if (isSpinning) return;
 
@@ -342,12 +335,10 @@
         if (e.altKey && e.key === '3') { modeName = '10 Pok'; pool = minutesSmallPool; poolType = 'minutesSmall'; }
 
         if (pool) {
-            isMaster = true; // ตั้งค่าตัวเราเองเป็นผู้สั่งการหลักรอบนี้
+            isMaster = true; 
             const chosenValue = pool[Math.floor(Math.random() * pool.length)];
             const spinId = "spin_" + Date.now();
-            lastSpinId = spinId;
 
-            // ส่งข้อมูลสุ่มขึ้น Firebase เพื่อให้ทุกจอเริ่มหมุนพร้อมกัน
             timerRef.update({
                 spinEvent: {
                     modeName: modeName,
@@ -433,7 +424,7 @@
             activeBoosts = 0;
             timerElement.classList.remove('boost-up', 'boost-down');
             catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-            isMaster = false; // ปลดล็อก Master เมื่ออนิเมชันจบลง
+            isMaster = false; 
         }
     }
 
@@ -493,7 +484,6 @@
         const data = snapshot.val();
         if (!data) return; 
 
-        // 🟢 ดักฟัง Event การหมุนวงล้อ: ทุกๆ จอ (รวมถึงจอหลักและจออื่น) จะมาวิ่งเริ่มหมุนไปพร้อมกันตรงนี้
         if (data.spinEvent && data.spinEvent.id !== lastSpinId) {
             lastSpinId = data.spinEvent.id;
             
@@ -517,7 +507,6 @@
             } else {
                 lastEventId = data.boostEvent.id;
                 if (data.boostEvent.totalSeconds !== 0) {
-                    // 🟢 ถ้าเราไม่ใช่คนกดสั่งปุ่มเพิ่มเวลาตรงๆ (สตรีมอยู่) ให้รันแอนิเมชันเวลาตามค่า Firebase
                     if (!isMaster) {
                         window.runBoostAnimation(
                             data.boostEvent.totalSeconds, 
