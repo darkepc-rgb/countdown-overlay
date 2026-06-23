@@ -180,7 +180,7 @@
     
     window.interval = null;
     window.boostTask = null; 
-    window.lastTick = Date.now(); // เพิ่มตัวแปรเก็บเวลาล่าสุด เพื่อแก้ปัญหาแท็บหลับ
+    window.lastTick = Date.now();
 
     let isMaster = false; 
     let activeBoosts = 0;
@@ -353,6 +353,12 @@
         });
     }
 
+    window.addEventListener('keydown', (e) => {
+        if (e.altKey && e.key === '1') triggerSpin('วินาที', 'seconds');
+        if (e.altKey && e.key === '2') triggerSpin('นาทีใหญ่', 'minutesLarge');
+        if (e.altKey && e.key === '3') triggerSpin('10 Pok', 'minutesSmall');
+    });
+
     function parseAndTriggerBoost(resultText) {
         const cleaned = resultText.replace('[', '').replace(']', '').trim();
         currentDisplayedValue = cleaned;
@@ -369,12 +375,6 @@
         window.smartBoost(totalSeconds, 2000, 'effect-30');
     }
 
-    window.addEventListener('keydown', (e) => {
-        if (e.altKey && e.key === '1') triggerSpin('วินาที', 'seconds');
-        if (e.altKey && e.key === '2') triggerSpin('นาทีใหญ่', 'minutesLarge');
-        if (e.altKey && e.key === '3') triggerSpin('10 Pok', 'minutesSmall');
-    });
-
     const isMasterControl = new URLSearchParams(window.location.search).get('master') === '1' || window.location.protocol === 'file:';
 
     if (isMasterControl) {
@@ -385,52 +385,57 @@
                 console.log('%c[TikFinity] เชื่อมต่อสำเร็จแล้ว! ระบบพร้อมสุ่มอัตโนมัติเบื้องหลัง', 'color: #2ecc71; font-weight: bold;');
             };
 
-            ws.onmessage = (event) => {
-                try {
-                    const payload = JSON.parse(event.data);
-                    if (isSpinning) return;
+                    // เพิ่มตัวแปรนี้ไว้เหนือ ws.onmessage เพื่อตั้งเป้าหมายแรกที่ 1000 ไลก์
+            window.nextLikeTarget = 1000;
 
-                    // == โค้ดปรับปรุงใหม่ ตามเงื่อนไข G2 (นาทีใหญ่) ==
-                    const eventType = payload.event || payload.type; // รองรับทั้ง payload.event หรือ payload.type
+ws.onmessage = (event) => {
+    try {
+        const payload = JSON.parse(event.data);
+        if (isSpinning) return;
 
-                    // 1. ผู้ติดตามใหม่ -> G2 นาทีใหญ่
-                    if (eventType === 'follow') {
-                        console.log('[TikFinity] ผู้ติดตามใหม่! สุ่มนาทีใหญ่ (G2)');
-                        triggerSpin('นาทีใหญ่', 'minutesLarge');
-                    } 
-                    // 2. เคาะใจ (เซ็ตให้ส่ง event ออกมาตอนครบ 1000) -> G2 นาทีใหญ่
-                    else if (eventType === 'like') {
-                        console.log('[TikFinity] เคาะใจครบเป้า! สุ่มนาทีใหญ่ (G2)');
-                        triggerSpin('นาทีใหญ่', 'minutesLarge');
-                    }
-                    // 3. ของขวัญ
-                    else if (eventType === 'gift') {
-                        const giftData = payload.data || {};
-                        const coinCount = giftData.coins || giftData.diamonds || 1; 
-                        const giftName = giftData.gift_name || '';
+        const eventType = payload.event || payload.type; 
 
-                        console.log(`[TikFinity] ของขวัญ: ${giftName} | ราคา: ${coinCount} เหรียญ`);
+        // 1. ผู้ติดตามใหม่ -> G2 นาทีใหญ่
+        if (eventType === 'follow') {
+            console.log('[TikFinity] ผู้ติดตามใหม่! สุ่มนาทีใหญ่ (G2)');
+            triggerSpin('นาทีใหญ่', 'minutesLarge');
+        } 
+        // 2. เคาะใจ (เช็คยอดรวม)
+        else if (eventType === 'like') {
+            const likeData = payload.data || {};
+            const totalLikes = likeData.total_likes || likeData.totalLikeCount || 0;
 
-                        // ดักจับชื่อ "ใจส้ม" (เปลี่ยนคำค้นหาตามที่ขึ้นในระบบจริงๆ ได้เลย)
-                        if (giftName.includes('ใจส้ม') || giftName.includes('Orange') || giftName === 'Heart') {
-                            triggerSpin('นาทีใหญ่', 'minutesLarge'); // G2 นาทีใหญ่
-                        }
-                        // เงื่อนไขสุ่มเรทเหรียญปกติ
-                        else if (coinCount === 1) { 
-                            triggerSpin('วินาที', 'seconds');
-                        } 
-                        else if (coinCount === 5) {
-                            triggerSpin('นาทีใหญ่', 'minutesLarge');
-                        }
-                        else if (coinCount === 10) {
-                            triggerSpin('10 Pok', 'minutesSmall');
-                        }
-                    }
+            if (totalLikes >= window.nextLikeTarget) {
+                console.log(`[TikFinity] เคาะใจครบ ${window.nextLikeTarget} แล้ว! สุ่มนาทีใหญ่ (G2)`);
+                triggerSpin('นาทีใหญ่', 'minutesLarge');
+                window.nextLikeTarget += 1000; 
+            }
+        }
+        // 3. ของขวัญ
+        else if (eventType === 'gift') {
+            const giftData = payload.data || {};
+            const giftName = (giftData.gift_name || '').toLowerCase(); // ทำให้เป็นตัวพิมพ์เล็กเพื่อเช็คได้ง่ายขึ้น
+            const coinCount = giftData.coins || giftData.diamonds || 1; 
 
-                } catch (err) {
-                    console.error('[TikFinity Parse Error]', err);
-                }
-            };
+            console.log(`[TikFinity] ของขวัญ: ${giftName} | ราคา: ${coinCount} เหรียญ`);
+
+            // ดักจับชื่อ "Heart Me" หรือ "ใจส้ม" (รวมถึงชื่อภาษาอังกฤษหรือไทยที่อาจเป็นไปได้)
+            if (giftName.includes('heart me') || giftName.includes('ใจส้ม') || giftName.includes('orange')) {
+                console.log('[TikFinity] เจอของขวัญ Heart Me! สุ่มนาทีใหญ่ (G2)');
+                triggerSpin('นาทีใหญ่', 'minutesLarge'); 
+            }
+            // เงื่อนไขเหรียญปกติ
+            else if (coinCount >= 10) { 
+                triggerSpin('นาทีใหญ่', 'minutesLarge');
+            } 
+            else if (coinCount >= 5) {
+                triggerSpin('วินาที', 'seconds');
+            }
+        }
+    } catch (err) {
+        console.error('[TikFinity Parse Error]', err);
+    }
+};
 
             ws.onclose = () => {
                 console.log('%c[TikFinity] หลุดการเชื่อมต่อ พยายามต่อใหม่ในอีก 5 วินาที...', 'color: #e74c3c;');
@@ -509,7 +514,6 @@
             lastIntegerChange = currentIntegerChange;
 
             window.countdownTime = Math.max(0, window.countdownTime + diff);
-            // อัปเดต lastTick ด้วย เพื่อไม่ให้เวลา Timestamp เพี้ยนตอนเพิ่มลดเวลา
             window.lastTick += diff * 1000; 
             updateTimerDisplay();
 
@@ -534,7 +538,7 @@
             setTimeout(() => {
                 if (activeBoosts === 0 && !isSpinning && window.latestFirebaseData && window.latestFirebaseData.remainingTime !== undefined) {
                     window.countdownTime = window.latestFirebaseData.remainingTime;
-                    window.lastTick = Date.now(); // รีเซ็ตตัวเทียบเวลาใหม่ให้ตรงกัน
+                    window.lastTick = Date.now(); 
                     updateTimerDisplay();
                 }
             }, 1500); 
@@ -552,19 +556,16 @@
         });
     }
 
-    // == โค้ดที่แก้เรื่องเวลาเพี้ยนจาก Tab Sleep (นับถอยหลังจาก Timestamp แทน) ==
     function countdown() {
         if (window.countdownTime > 0) {
             const now = Date.now();
-            const delta = now - window.lastTick; // หาความต่างเวลาจริงๆ ที่ผ่านไปเป็นมิลลิวินาที
+            const delta = now - window.lastTick; 
 
-            // ถ้าเวลาผ่านไป 1 วินาทีขึ้นไป (รวมถึงกรณีแท็บหลับไป 5 วินาที delta ก็จะเป็น ~5000)
             if (delta >= 1000) {
                 const secondsPassed = Math.floor(delta / 1000);
                 window.countdownTime -= secondsPassed;
                 if (window.countdownTime < 0) window.countdownTime = 0;
                 
-                // เก็บเศษเสี้ยวเวลาที่เหลือทดไปรอบต่อไป
                 window.lastTick = now - (delta % 1000); 
                 updateTimerDisplay();
             }
@@ -575,9 +576,8 @@
 
     window.startTimer = function(isLocal = true) {
         if (window.interval) clearInterval(window.interval); 
-        window.lastTick = Date.now(); // เริ่มจับจุดอ้างอิงเวลาใหม่
+        window.lastTick = Date.now(); 
         
-        // เซ็ตให้มันเช็คถี่ขึ้นเล็กน้อย (200ms) เพื่อตอบสนองไวขึ้น แต่จะลดเวลาจริงๆ เฉพาะตอนครบ 1 วินาที
         window.interval = setInterval(countdown, 200); 
         
         document.getElementById('startBtn').classList.add('active');
@@ -606,7 +606,7 @@
         catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
         
         window.countdownTime = 3 * 60 * 60;
-        window.lastTick = Date.now(); // รีเซ็ตจุดอ้างอิง
+        window.lastTick = Date.now(); 
         lastEventId = "RESET_" + Date.now();
         updateTimerDisplay();
          
@@ -621,12 +621,12 @@
     timerRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return; 
-        window.latestFirebaseData = data; // เก็บอ้างอิงไว้ใช้ตอนปรับเวลาหลังบูส
+        window.latestFirebaseData = data; 
 
         if (data.isRunning) {
             if (!window.interval) {
-                window.lastTick = Date.now(); // จัดแจงจับจุดอ้างอิงใหม่เวลาสั่งเริ่มจากที่อื่น
-                window.interval = setInterval(countdown, 200);
+                window.lastTick = Date.now(); 
+                window.interval = setInterval(countdown, 1000);
             }
         } else {
             if (window.interval) {
@@ -641,7 +641,7 @@
             if (!isMasterControl) { 
                 if (drift > 2) { 
                     window.countdownTime = data.remainingTime;
-                    window.lastTick = Date.now(); // Sync แกนเวลาใหม่ให้เครื่องลูก
+                    window.lastTick = Date.now(); 
                     updateTimerDisplay();
                 }
             }
