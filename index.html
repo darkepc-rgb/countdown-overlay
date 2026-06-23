@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Auto Roulette (Balanced Spacing)</title>
+    <title>Countdown Timer with Auto Roulette (Stable Engine)</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
         body {
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
             min-height: 100vh; background-color: transparent; color: white;
-            font-family: 'Itim', cursive; text-align: center; margin: 0; padding-top: 60px;
+            font-family: 'Itim', cursive; text-align: center; margin: 0; padding-top: 40px;
         }
 
         .timer-stack-wrapper {
             position: relative; display: flex; align-items: center; justify-content: center;
             width: 576px; height: 324px; 
-            margin-bottom: 40px;
         }
 
         #timer {
@@ -33,10 +32,11 @@
             transition: opacity 0.5s ease-in-out, transform 0.3s ease-out; opacity: 1;
         }
 
+        /* --- Roulette Styles --- */
         .mode-indicator {
             font-size: 22px; 
-            margin-top: 20px;
-            margin-bottom: 12px;
+            margin-top: 15px;
+            margin-bottom: 10px;
             font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
             letter-spacing: 1px;
         }
@@ -46,7 +46,7 @@
         .roulette-container {
             position: relative; width: 576px; 
             padding: 12px 0;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             display: flex; justify-content: center;
         }
 
@@ -80,10 +80,25 @@
         .item.plus { color: #39ff14; text-shadow: 0 0 5px #39ff14; }
         .item.minus { color: #ff3333; text-shadow: 0 0 5px #ff3333; }
 
-        @keyframes pulse-soft { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.02); filter: brightness(1.1); } 100% { transform: scale(1); filter: brightness(1); } }
-        @keyframes pulse-medium { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.05); filter: brightness(1.2); } 100% { transform: scale(1); filter: brightness(1); } }
-        @keyframes pulse-strong { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.08); filter: brightness(1.3); } 100% { transform: scale(1); filter: brightness(1); } }
-         
+        .instructions { font-size: 15px; color: #ccc; margin-top: 5px; margin-bottom: 15px; line-height: 1.5; text-shadow: 0 1px 3px #000; }
+        .key-badge { background: #222; color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; }
+
+        /* --- Animations --- */
+        @keyframes pulse-soft {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.02); filter: brightness(1.1); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        @keyframes pulse-medium {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.05); filter: brightness(1.2); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        @keyframes pulse-strong {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.08); filter: brightness(1.3); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
         .effect-5-10 { animation: pulse-soft 0.8s infinite ease-in-out; }
         .effect-30 { animation: pulse-medium 0.5s infinite ease-in-out; }
         .effect-60 { animation: pulse-strong 0.4s infinite ease-in-out; }
@@ -92,21 +107,17 @@
         .boost-up { color: #2ecc71 !important; }
         .boost-down { color: #ff4757 !important; }
 
-        .instructions { font-size: 15px; color: #ccc; margin-top: 10px; margin-bottom: 20px; line-height: 1.5; text-shadow: 0 1px 3px #000; }
-        .key-badge { background: #222; color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; }
-
-        .buttons { margin-top: 12px; z-index: 10; position: relative; }
+        .buttons { margin-top: 10px; z-index: 10; position: relative; }
         .buttons button {
-            margin: 4px; padding: 10px 16px; font-size: 0.95rem; font-weight: bold;
+            margin: 5px; padding: 10px 18px; font-size: 1rem; font-weight: bold;
             cursor: pointer; border: 2px solid #333; background: #ffffff;
             color: #000; border-radius: 8px; font-family: 'Itim', cursive;
-            box-shadow: 0 3px 0 #999, 0 4px 8px rgba(0,0,0,0.3); transition: all 0.1s ease;
+            box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3); transition: all 0.1s ease;
         }
-
-        .buttons button:active { transform: translateY(2px); box-shadow: 0 1px 0 #777; }
-        #startBtn.active { background: #27ae60; color: white; border-color: #1e8449; box-shadow: 0 3px 0 #1e8449; }
-        #stopBtn.active { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: 0 3px 0 #c0392b; }
-        #resetBtn { background: #f39c12; color: white; border-color: #d35400; box-shadow: 0 3px 0 #d35400; }
+        .buttons button:active { transform: translateY(3px); box-shadow: 0 1px 0 #777; }
+        #startBtn.active { background: #27ae60; color: white; border-color: #1e8449; box-shadow: 0 4px 0 #1e8449; }
+        #stopBtn.active { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: 0 4px 0 #c0392b; }
+        #resetBtn { background: #f39c12; color: white; border-color: #d35400; box-shadow: 0 4px 0 #d35400; }
     </style>
 </head>
 <body>
@@ -117,9 +128,9 @@
             <img src="cat3-3.png" id="catImage">
         </div>
     </div>
-
+    
     <div class="mode-indicator" id="modeIndicator">วงล้อพร้อมสุ่ม: <span>รอสัญญาณปุ่ม G1 - G3</span></div>
-     
+    
     <div class="roulette-container">
         <div class="pointer">▼</div>
         <div class="window" id="windowDiv">
@@ -132,393 +143,355 @@
         <span class="key-badge">G2 (Alt+2)</span> สุ่มนาทีใหญ่ | 
         <span class="key-badge">G3 (Alt+3)</span> สุ่มโหมด 10 Pok (เรท 55/45)
     </div>
-
+    
     <div class="buttons">
         <button onclick="smartBoost(5 * 60, 1000, 'effect-5-10')">+5 นาที</button>
         <button onclick="smartBoost(10 * 60, 1000, 'effect-5-10')">+10 นาที</button>
         <button onclick="smartBoost(30 * 60, 2000, 'effect-30')">+30 นาที</button>
         <button onclick="smartBoost(60 * 60, 4000, 'effect-60')">+1 ชม.</button>
     </div>
-
     <div class="buttons">
         <button onclick="smartBoost(-5 * 60, 1000, 'effect-5-10')">-5 นาที</button>
         <button onclick="smartBoost(-10 * 60, 1000, 'effect-5-10')">-10 นาที</button>
         <button onclick="smartBoost(-30 * 60, 2000, 'effect-30')">-30 นาที</button>
         <button onclick="smartBoost(-60 * 60, 4000, 'effect-60')">-1 ชม.</button>
     </div>
-
     <div class="buttons">
         <button id="stopBtn" onclick="stopTimer()">หยุด</button>
         <button id="resetBtn" onclick="resetTimer()">รีเซต</button>
         <button id="startBtn" onclick="startTimer()">เริ่ม</button>
     </div>
+    
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCTqaj2D4b5p_loXgh7jjIW9D5zfi_2dUk",
+        authDomain: "countdown-timer-8dd4c.firebaseapp.com",
+        databaseURL: "https://countdown-timer-8dd4c-default-rtdb.asia-southeast1.firebasedatabase.app/",
+        projectId: "countdown-timer-8dd4c",
+        storageBucket: "countdown-timer-8dd4c.firebasestorage.app",
+        messagingSenderId: "1086221236719",
+        appId: "1:1086221236719:web:5e3148af69cb7303c1de1a",
+        measurementId: "G-P2TLY8RGZV"
+    };
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCTqaj2D4b5p_loXgh7jjIW9D5zfi_2dUk",
-            authDomain: "countdown-timer-8dd4c.firebaseapp.com",
-            databaseURL: "https://countdown-timer-8dd4c-default-rtdb.asia-southeast1.firebasedatabase.app/",
-            projectId: "countdown-timer-8dd4c",
-            storageBucket: "countdown-timer-8dd4c.firebasestorage.app",
-            messagingSenderId: "1086221236719",
-            appId: "1:1086221236719:web:5e3148af69cb7303c1de1a",
-            measurementId: "G-P2TLY8RGZV"
-        };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const timerRef = db.ref('timer_data');
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const timerRef = db.ref('timer_data');
+    window.countdownTime = 3 * 60 * 60;
+    const timerElement = document.getElementById('timer');
+    const catImage = document.getElementById('catImage');
+    const catLayer = document.getElementById('catLayer');
+    const track = document.getElementById('track');
+    const windowDiv = document.getElementById('windowDiv');
+    const modeIndicator = document.getElementById('modeIndicator');
+    window.interval = null;
+    
+    let isMaster = false; 
+    let activeBoosts = 0;
+    let lastEventId = "INIT"; 
+    let isChangingImage = false;
+    let isSpinning = false;
 
-        window.countdownTime = 3 * 60 * 60;
-        const timerElement = document.getElementById('timer');
-        const catImage = document.getElementById('catImage');
-        const catLayer = document.getElementById('catLayer');
-        const track = document.getElementById('track');
-        const windowDiv = document.getElementById('windowDiv');
-        const modeIndicator = document.getElementById('modeIndicator');
-        window.interval = null;
-        const params = new URLSearchParams(window.location.search);
-        const IS_DISPLAY_ONLY = params.get("display") === "1";
+    // --- ข้อมูลและ Pool สำหรับระบบวงล้อสุ่ม ---
+    const secondsOptions = [
+        { value: '+ 10 S', weight: 12 }, { value: '- 10 S', weight: 12 }, 
+        { value: '+ 20 S', weight: 10 }, { value: '- 20 S', weight: 10 }, 
+        { value: '+ 30 S', weight: 7 },  { value: '- 30 S', weight: 7 }, 
+        { value: '+ 40 S', weight: 4 },  { value: '- 40 S', weight: 4 }, 
+        { value: '+ 50 S', weight: 2 },  { value: '- 50 S', weight: 2 }, 
+        { value: '+ 60 S', weight: 1 },  { value: '- 60 S', weight: 1 }
+    ];
 
-        let isMaster = false; 
-        let activeBoosts = 0;
-        let lastEventId = "INIT"; 
-        let isSpinning = false;
+    const minutesLargeOptions = [
+        { value: '+ 5 M', weight: 35 }, 
+        { value: '- 5 M', weight: 28 }, 
+        { value: '+ 10 M', weight: 23 }, 
+        { value: '- 10 M', weight: 19 }, 
+        { value: '+ 15 M', weight: 12 }, 
+        { value: '- 15 M', weight: 10 }
+    ];
+
+    const minutesSmallOptions = [
+        { value: '+ 5 M', weight: 44 },  { value: '- 5 M', weight: 36 }, 
+        { value: '+ 10 M', weight: 22 }, { value: '- 10 M', weight: 18 }, 
+        { value: '+ 15 M', weight: 3 },  { value: '- 15 M', weight: 2 }
+    ];
+
+    function createPool(options) { 
+        let pool = []; 
+        options.forEach(opt => { for (let i = 0; i < opt.weight; i++) { pool.push(opt.value); } }); 
+        return pool; 
+    }
+
+    const secondsPool = createPool(secondsOptions);
+    const minutesLargePool = createPool(minutesLargeOptions);
+    const minutesSmallPool = createPool(minutesSmallOptions);
+
+    // --- ระบบเสียงแบบ Web Audio API ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playTick() {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.value = 850; osc.type = 'sine';
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.04);
+    }
+
+    function playTickSequence(duration = 4000) {
+        const startTime = Date.now();
+        function tickLoop() {
+            playTick();
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            if (progress < 1) {
+                const nextDelay = 30 + Math.pow(progress, 4) * 700;
+                setTimeout(tickLoop, nextDelay);
+            }
+        }
+        tickLoop();
+    }
+
+    function playWin() {
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.value = 1174.66; osc.type = 'triangle';
+        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.0);
+        osc.start(); osc.stop(audioCtx.currentTime + 1.0);
+    }
+
+    // --- ฟังก์ชันการทำงานของวงล้อสุ่ม ---
+    function generateTrackItems(totalItems, pool) {
+        track.innerHTML = '';
+        for (let i = 0; i < totalItems; i++) {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'item';
+            const randomVal = pool[Math.floor(Math.random() * pool.length)];
+            itemDiv.innerText = `[ ${randomVal} ]`;
+            itemDiv.classList.add(randomVal.includes('+') ? 'plus' : 'minus');
+            track.appendChild(itemDiv);
+        }
+    }
+
+    function startSpin(modeName, targetPool) {
+        if (isSpinning) return;
+        isSpinning = true;
+        modeIndicator.innerHTML = `กำลังสุ่มโหมด: <span>${modeName}</span>`;
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(0)';
+        track.offsetHeight; // Force reflow
+        generateTrackItems(60, targetPool);
         
-        // ตัวแปรควบคุมการเปลี่ยนรูปภาพ (เพิ่มเข้ามาเพื่อความเสถียร)
-        let isChangingImage = false;
-        let currentCatImage = "cat3-3.png";
+        const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * 140) + 70); 
+        track.style.transition = 'transform 4s cubic-bezier(0.05, 0.9, 0.1, 1)';
+        track.style.transform = `translateX(${finalTranslateX}px)`;
 
-        const secondsOptions = [
-            { value: '+ 10 S', weight: 12 }, { value: '- 10 S', weight: 12 }, 
-            { value: '+ 20 S', weight: 10 }, { value: '- 20 S', weight: 10 }, 
-            { value: '+ 30 S', weight: 7 },  { value: '- 30 S', weight: 7 }, 
-            { value: '+ 40 S', weight: 4 },  { value: '- 40 S', weight: 4 }, 
-            { value: '+ 50 S', weight: 2 },  { value: '- 50 S', weight: 2 }, 
-            { value: '+ 60 S', weight: 1 },  { value: '- 60 S', weight: 1 }
-        ];
+        playTickSequence(4000);
 
-        const minutesLargeOptions = [
-            { value: '+ 5 M', weight: 35 }, 
-            { value: '- 5 M', weight: 28 }, 
-            { value: '+ 10 M', weight: 23 }, 
-            { value: '- 10 M', weight: 19 }, 
-            { value: '+ 15 M', weight: 12 }, 
-            { value: '- 15 M', weight: 10 }
-        ];
-
-        const minutesSmallOptions = [
-            { value: '+ 5 M', weight: 44 },  { value: '- 5 M', weight: 36 }, 
-            { value: '+ 10 M', weight: 22 }, { value: '- 10 M', weight: 18 }, 
-            { value: '+ 15 M', weight: 3 },  { value: '- 15 M', weight: 2 }
-        ];
-
-        function createPool(options) { 
-            let pool = []; 
-            options.forEach(opt => { for (let i = 0; i < opt.weight; i++) { pool.push(opt.value); } }); 
-            return pool; 
-        }
-
-        const secondsPool = createPool(secondsOptions);
-        const minutesLargePool = createPool(minutesLargeOptions);
-        const minutesSmallPool = createPool(minutesSmallOptions);
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-        function playTick() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.frequency.value = 850; osc.type = 'sine';
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.04);
-        }
-
-        function playTickSequence(duration = 4000) {
-            const startTime = Date.now();
-            function tickLoop() {
-                playTick();
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                if (progress < 1) {
-                    const nextDelay = 30 + Math.pow(progress, 4) * 700;
-                    setTimeout(tickLoop, nextDelay);
-                }
+        setTimeout(() => { 
+            playWin();
+            isSpinning = false; 
+            if (track.children[50]) {
+                parseAndTriggerBoost(track.children[50].innerText);
             }
-            tickLoop();
-        }
+            modeIndicator.innerHTML = 'วงล้อพร้อมสุ่ม: <span>รอสัญญาณปุ่ม G1 - G3</span>';
+        }, 4000);
+    }
 
-        function playWin() {
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.frequency.value = 1174.66; osc.type = 'triangle';
-            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.0);
-            osc.start(); osc.stop(audioCtx.currentTime + 1.0);
-        }
+    function parseAndTriggerBoost(resultText) {
+        const cleaned = resultText.replace('[', '').replace(']', '').trim();
+        const parts = cleaned.split(/\s+/);
+        const sign = parts[0];
+        const val = parseInt(parts[1]);
+        const unit = parts[2];
+        let totalSeconds = (unit === 'M' ? val * 60 : val);
+        if (sign === '-') totalSeconds = -totalSeconds;
+        
+        // เรียกใช้ฟังก์ชันดั้งเดิม เพื่อให้แอนิเมชันเวลาวิ่งสมดุล
+        window.smartBoost(totalSeconds, 2000, 'effect-30');
+    }
 
-        function generateTrackItems(totalItems, pool) {
-            track.innerHTML = '';
-            for (let i = 0; i < totalItems; i++) {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'item';
-                const randomVal = pool[Math.floor(Math.random() * pool.length)];
-                itemDiv.innerText = `[ ${randomVal} ]`;
-                itemDiv.classList.add(randomVal.includes('+') ? 'plus' : 'minus');
-                track.appendChild(itemDiv);
-            }
-        }
+    // ฟังคีย์บอร์ดลัด Alt+1, Alt+2, Alt+3
+    window.addEventListener('keydown', (e) => {
+        if (e.altKey && e.key === '1') startSpin('วินาที', secondsPool);
+        if (e.altKey && e.key === '2') startSpin('นาทีใหญ่', minutesLargePool);
+        if (e.altKey && e.key === '3') startSpin('10 Pok', minutesSmallPool);
+    });
 
-        function startSpin(modeName, targetPool) {
-            if (isSpinning) return;
-            isSpinning = true;
-            modeIndicator.innerHTML = `กำลังสุ่มโหมด: <span>${modeName}</span>`;
-            track.style.transition = 'none';
-            track.style.transform = 'translateX(0)';
-            track.offsetHeight;
-            generateTrackItems(60, targetPool);
-            const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * 140) + 70);
-            track.style.transition = 'transform 4s cubic-bezier(0.05, 0.9, 0.1, 1)';
-            track.style.transform = `translateX(${finalTranslateX}px)`;
-
-            playTickSequence(4000);
-
-            setTimeout(() => { 
-                playWin();
-                isSpinning = false; 
-                if (track.children[50]) {
-                    parseAndTriggerBoost(track.children[50].innerText);
-                }
-                modeIndicator.innerHTML = 'วงล้อพร้อมสุ่ม: <span>รอสัญญาณปุ่ม G1 - G3</span>';
-            }, 4000);
-        }
-
-        function parseAndTriggerBoost(resultText) {
-            const cleaned = resultText.replace('[', '').replace(']', '').trim();
-            const parts = cleaned.split(/\s+/);
-            const sign = parts[0];
-            const val = parseInt(parts[1]);
-            const unit = parts[2];
-            let totalSeconds = (unit === 'M' ? val * 60 : val);
-            if (sign === '-') totalSeconds = -totalSeconds;
-            window.smartBoost(totalSeconds, 2000, 'effect-30');
-        }
-
-        window.addEventListener('keydown', (e) => {
-            if (e.altKey && e.key === '1') startSpin('วินาที', secondsPool);
-            if (e.altKey && e.key === '2') startSpin('นาทีใหญ่', minutesLargePool);
-            if (e.altKey && e.key === '3') startSpin('10 Pok', minutesSmallPool);
+    // --- โครงสร้างฟังก์ชันเวลาจากเวอร์ชันสเตเบิล (ไม่มีการแก้ลอจิกภายใน) ---
+    function syncToFirebase() {
+        timerRef.update({
+            remainingTime: window.countdownTime,
+            isRunning: window.interval !== null,
+            lastActionTime: firebase.database.ServerValue.TIMESTAMP
         });
+    }
 
-        // ฟังก์ชันเฟดเปลี่ยนรูปภาพอย่างนุ่มนวล
-        function fadeChangeImage(newSrc) {
-            if (currentCatImage === newSrc || isChangingImage) return;
-            isChangingImage = true;
-            currentCatImage = newSrc;
-            
-            catImage.style.opacity = 0;
-            setTimeout(() => {
-                catImage.src = newSrc;
-                catImage.style.opacity = 1;
-                isChangingImage = false;
-            }, 500);
+    function fadeChangeImage(newSrc) {
+        if (catImage.src.includes(newSrc) || isChangingImage) return;
+        isChangingImage = true;
+        catImage.style.opacity = 0;
+        setTimeout(() => {
+            catImage.src = newSrc;
+            catImage.style.opacity = 1;
+            isChangingImage = false;
+        }, 500);
+    }
+
+    function updateTimerDisplay() {
+        let hours = Math.floor(window.countdownTime / 3600);
+        let minutes = Math.floor((window.countdownTime % 3600) / 60);
+        let seconds = Math.floor(window.countdownTime % 60);
+        if (seconds < 0) seconds = 0;
+
+        timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
+        
+        if (window.countdownTime <= 1800) { 
+            timerElement.classList.add('red'); fadeChangeImage("cat3-1.png");
+        } else if (window.countdownTime <= 7200) {
+            timerElement.classList.remove('red'); fadeChangeImage("cat3-2.png");
+        } else {
+            timerElement.classList.remove('red'); fadeChangeImage("cat3-3.png");
         }
+    }
 
-        // อัปเดตการแสดงผลเวลาพร้อมเช็คเงื่อนไขรูปภาพและสี
-        function updateTimerDisplay() {
-            let h = Math.floor(window.countdownTime/3600);
-            let m = Math.floor((window.countdownTime%3600)/60);
-            let s = Math.floor(window.countdownTime%60);
-            if (s < 0) s = 0;
-            
-            timerElement.innerHTML = `${String(h).padStart(2,'0')} : ${String(m).padStart(2,'0')} : ${String(s).padStart(2,'0')}`;
+    window.runBoostAnimation = function(totalSeconds, durationMs, effectClass, isThisMachineMaster) {
+        activeBoosts++;
+        timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
+        catLayer.classList.add(effectClass);
 
-            // เงื่อนไขการเปลี่ยนสีและเปลี่ยนรูปน้องแมวตามเวลาที่เหลือ
-            if (window.countdownTime <= 1800) { 
-                // ต่ำกว่าหรือเท่ากับ 30 นาที (30 * 60 = 1800 วินาที)
-                timerElement.classList.add('red'); 
-                fadeChangeImage("cat3-1.png"); 
-            } else if (window.countdownTime <= 7200) {
-                // ต่ำกว่าหรือเท่ากับ 2 ชั่วโมง (2 * 3600 = 7200 วินาที)
-                timerElement.classList.remove('red'); 
-                fadeChangeImage("cat3-2.png"); 
-            } else {
-                // มากกว่า 2 ชั่วโมงขึ้นไป
-                timerElement.classList.remove('red'); 
-                fadeChangeImage("cat3-3.png"); 
-            }
-        }
+        if (isThisMachineMaster) {
+            const fps = 30; 
+            const totalSteps = (durationMs / 1000) * fps;
+            const incrementPerStep = totalSeconds / totalSteps;
+            let stepsTaken = 0;
+            let accumulatedChange = 0;
+            let lastIntegerChange = 0;
 
-        window.runBoostAnimation = function(totalSeconds, durationMs, effectClass, isThisMachineMaster) {
-            activeBoosts++;
-            timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
-            catLayer.classList.add(effectClass);
-            const fps = 30;
-            const steps = (durationMs / 1000) * fps;
-            const inc = totalSeconds / steps;
-            let count = 0;
-            let timer = setInterval(() => {
-                window.countdownTime += inc;
-                if (window.countdownTime < 0) window.countdownTime = 0;
+            let boostTask = setInterval(() => {
+                stepsTaken++;
+                accumulatedChange += incrementPerStep;
+                let currentIntegerChange = Math.round(accumulatedChange);
+                let diff = currentIntegerChange - lastIntegerChange;
+                lastIntegerChange = currentIntegerChange;
+
+                window.countdownTime = Math.max(0, window.countdownTime + diff);
                 updateTimerDisplay();
 
-                if (++count >= steps) {
-                    clearInterval(timer);
-                    window.countdownTime = Math.round(window.countdownTime);
-                    if (window.countdownTime < 0) window.countdownTime = 0;
-                    updateTimerDisplay();
-
-                    if (isThisMachineMaster) {
-                        syncToFirebase();
-                        timerRef.child('boostEvent').remove();
-                    }
-
+                if (stepsTaken >= totalSteps) {
+                    clearInterval(boostTask);
+                    syncToFirebase(); 
                     finishBoost(effectClass);
                 }
             }, 1000 / fps);
+        } else {
+            setTimeout(() => {
+                finishBoost(effectClass);
+            }, durationMs);
         }
+    }
 
-        function finishBoost(e) {
-            activeBoosts = Math.max(0, activeBoosts - 1);
-            if (activeBoosts === 0) {
-                timerElement.classList.remove('boost-up', 'boost-down');
-                catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-            }
-        }
-
-        window.smartBoost = function(s, d, e) {
-            if (activeBoosts > 0) return;
-            isMaster = true;
-            try {
-                window.runBoostAnimation(s, d, e, true);
-                timerRef.update({
-                    boostEvent: {
-                        totalSeconds: s,
-                        durationMs: d,
-                        effectClass: e,
-                        id: "ev_" + Date.now()
-                    }
-                });
-            } finally {
-                setTimeout(() => { isMaster = false; }, d + 1000);
-            }
-        }
-
-        function syncToFirebase() {
-            timerRef.update({
-                remainingTime: Math.max(0, Math.round(window.countdownTime)),
-                isRunning: window.interval !== null
-            });
-        }
-
-        window.startTimer = function(local = true) {
-            if (IS_DISPLAY_ONLY) return;
-            if (window.interval) return;
-
-            window.interval = setInterval(() => {
-                if (window.countdownTime > 0) {
-                    window.countdownTime--;
-                    updateTimerDisplay();
-                    if (local) syncToFirebase();
-                } else {
-                    stopTimer(local);
-                }
-            }, 1000);
-
-            if (local) syncToFirebase();
-        }
-
-        window.stopTimer = function(local = true) {
-            if (window.interval !== null) {
-                clearInterval(window.interval);
-                window.interval = null;
-            }
-
-            if (local) {
-                timerRef.update({
-                    remainingTime: Math.max(0, Math.round(window.countdownTime)),
-                    isRunning: false
-                });
-            }
-        }
-
-        window.resetTimer = function() {
-            window.stopTimer();
-            window.countdownTime = 3 * 60 * 60;
-            updateTimerDisplay();
-            lastEventId = "INIT";
+    function finishBoost(effectClass) {
+        activeBoosts--;
+        if (activeBoosts <= 0) {
             activeBoosts = 0;
+            timerElement.classList.remove('boost-up', 'boost-down');
+            catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
+            isMaster = false;
+        }
+    }
 
-            timerRef.set({
-                remainingTime: window.countdownTime,
-                isRunning: false,
-                boostEvent: null
-            });
+    window.smartBoost = function(totalSeconds, durationMs, effectClass) {
+        const eventId = "ev_" + Date.now();
+        lastEventId = eventId;
+        isMaster = true; 
+        window.runBoostAnimation(totalSeconds, durationMs, effectClass, true);
+
+        timerRef.update({
+            boostEvent: { totalSeconds, durationMs, effectClass, id: eventId }
+        });
+    }
+
+    function countdown() {
+        if (window.countdownTime > 0) {
+            window.countdownTime--;
+            updateTimerDisplay();
+        } else {
+            window.stopTimer();
+        }
+    }
+
+    window.startTimer = function(isLocal = true) {
+        if (window.interval) clearInterval(window.interval); 
+        window.interval = setInterval(countdown, 1000);
+        document.getElementById('startBtn').classList.add('active');
+        document.getElementById('stopBtn').classList.remove('active');
+        if (isLocal) syncToFirebase();
+    }
+
+    window.stopTimer = function(isLocal = true) {
+        if (window.interval) {
+            clearInterval(window.interval);
+            window.interval = null;
+        }
+        document.getElementById('startBtn').classList.remove('active');
+        document.getElementById('stopBtn').classList.add('active');
+        if (isLocal) syncToFirebase();
+    }
+
+    window.resetTimer = function() {
+        window.stopTimer();
+        window.countdownTime = 3 * 60 * 60;
+        lastEventId = "RESET_" + Date.now();
+        updateTimerDisplay();
+        timerRef.set({ 
+            remainingTime: window.countdownTime,
+            isRunning: false,
+            boostEvent: null,
+            lastActionTime: firebase.database.ServerValue.TIMESTAMP
+        });
+    };
+
+    // --- Firebase Sync Engine จากโค้ดสเตเบิล ---
+    timerRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data || isMaster) return; 
+
+        if (data.isRunning && !window.interval) {
+            window.countdownTime = data.remainingTime;
+            window.startTimer(false);
+        } else if (!data.isRunning && window.interval) {
+            window.stopTimer(false);
+            window.countdownTime = data.remainingTime;
+            updateTimerDisplay();
+        } else if (!window.interval) {
+            window.countdownTime = data.remainingTime;
+            updateTimerDisplay();
         }
 
-        // --- Initial Load Sync ---
-        timerRef.once('value', (snap) => {
-            const data = snap.val();
-            if (data && data.remainingTime != null) {
-                window.countdownTime = Math.round(data.remainingTime);
-                if (window.countdownTime < 0) window.countdownTime = 0;
-                updateTimerDisplay();
-                
-                if (data.isRunning && !IS_DISPLAY_ONLY && !window.interval) {
-                    startTimer(false);
-                }
-            }
-        });
-
-        timerRef.child('remainingTime').on('value', (snap) => {
-            if (isMaster || activeBoosts > 0) return;
-
-            const value = snap.val();
-            if (value != null) {
-                if (Math.abs(window.countdownTime - Math.round(value)) > 3) {
-                    window.countdownTime = Math.round(value);
-                    if (window.countdownTime < 0) window.countdownTime = 0;
-                    updateTimerDisplay();
-                }
-            }
-        });
-
-        timerRef.child('isRunning').on('value', (snap) => {
-            if (isMaster) return;
-
-            const running = snap.val();
-            if (!IS_DISPLAY_ONLY) {
-                if (running && !window.interval) {
-                    startTimer(false);
-                }
-                if (!running && window.interval) {
-                    stopTimer(false);
-                }
-            }
-        });
-
-        timerRef.child('boostEvent').on('value', (snap) => {
-            if (isMaster) return;
-
-            const event = snap.val();
-            if (!event) return;
-
-            if (event.id && event.id !== lastEventId) {
-                lastEventId = event.id;
+        if (data.boostEvent && data.boostEvent.id !== lastEventId) {
+            if (lastEventId === "INIT") {
+                lastEventId = data.boostEvent.id;
+            } else {
+                lastEventId = data.boostEvent.id;
                 window.runBoostAnimation(
-                    event.totalSeconds,
-                    event.durationMs,
-                    event.effectClass,
+                    data.boostEvent.totalSeconds, 
+                    data.boostEvent.durationMs, 
+                    data.boostEvent.effectClass,
                     false
                 );
             }
-        });
+        }
+    });
 
-        updateTimerDisplay();
-    </script>
+    updateTimerDisplay();
+</script>
 </body>
 </html>
