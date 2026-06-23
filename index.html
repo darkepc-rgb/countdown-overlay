@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Auto Roulette (Full Screen Center)</title>
+    <title>Countdown Timer with Auto Roulette</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
-        /* 🔴 แก้ไขตรงนี้: ดึงความสามารถล็อกเต็มจอและจัดกึ่งกลางสไตล์โค้ดเก่ากลับมา */
         body {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 100vh; background-color: transparent; color: white;
@@ -37,7 +36,7 @@
         .mode-indicator {
             font-size: 22px; 
             margin-top: 10px;
-            margin-bottom: 20px; 
+            margin-bottom: 15px; 
             font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
             letter-spacing: 1px;
         }
@@ -46,40 +45,53 @@
 
         .roulette-container {
             position: relative; width: 576px; 
-            padding: 12px 0;
-            margin-bottom: 20px; 
+            padding: 5px 0;
+            margin-bottom: 15px; 
             display: flex; justify-content: center;
         }
 
         .pointer {
-            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-            color: #ff2222; font-size: 42px; z-index: 10; text-shadow: 0 2px 8px rgba(255, 0, 0, 0.6);
+            position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+            color: #ff2222; font-size: 42px; z-index: 10; text-shadow: 0 2px 8px rgba(255, 0, 0, 0.8);
         }
 
         .window {
-            width: 100%; overflow: hidden; background: #0f0f0f; border: 3px solid #333;
-            border-radius: 12px; padding: 20px 0; position: relative;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 5px 15px rgba(0,0,0,0.5);
+            width: 100%; overflow: hidden; background: #050505; border: 3px solid #333;
+            border-radius: 12px; padding: 10px 0; position: relative;
+            box-shadow: inset 0 0 25px rgba(0,0,0,1), 0 5px 15px rgba(0,0,0,0.5);
         }
 
         .window::before, .window::after {
             content: ''; position: absolute; top: 0; bottom: 0; width: 20%; z-index: 5; pointer-events: none;
         }
 
-        .window::before { left: 0; background: linear-gradient(to right, #0f0f0f, transparent); }
-        .window::after { right: 0; background: linear-gradient(to left, #0f0f0f, transparent); }
+        .window::before { left: 0; background: linear-gradient(to right, #050505, transparent); }
+        .window::after { right: 0; background: linear-gradient(to left, #050505, transparent); }
 
         .track { display: flex; transition: transform 4s cubic-bezier(0.05, 0.9, 0.1, 1); transform: translateX(0); }
 
+        /* 🟢 ปรับตัวอักษรให้หนาและใหญ่เต็มตาขึ้น เอาแสงขาวที่รกออก เหลือแค่แสงตามสีบางๆ */
         .item {
-            min-width: 120px; height: 50px; margin: 0 10px; background: #000;
-            border: 2px solid #222; border-radius: 8px; display: flex; justify-content: center;
-            align-items: center; font-size: 22px; font-weight: bold; box-sizing: border-box;
+            min-width: 160px; height: 76px; margin: 0 5px; background: #1c1c1c; 
+            border: 2px solid #3b3b3b; border-radius: 8px; display: flex; justify-content: center;
+            align-items: center; 
+            font-size: 2.35rem; /* เพิ่มขนาดตัวอักษรให้ใหญ่ขึ้น */
+            font-weight: 900;  /* ปรับให้หนาขึ้นที่สุด */
+            box-sizing: border-box;
             transition: transform 0.3s, box-shadow 0.3s, color 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+            -webkit-text-stroke: 0.5px rgba(0,0,0,0.5); /* เพิ่มเส้นขอบมิติบางๆ ให้ตัวหนังสือดูคมหนาขึ้น */
         }
 
-        .item.plus { color: #39ff14; text-shadow: 0 0 5px #39ff14; }
-        .item.minus { color: #ff3333; text-shadow: 0 0 5px #ff3333; }
+        /* เหลือแค่สีและแสงเรืองสีนั้นๆ แบบพอดี ไม่ฟุ้งจนกลืนกัน */
+        .item.plus { 
+            color: #39ff14; 
+            text-shadow: 0 0 5px rgba(57, 255, 20, 0.6); 
+        }
+        .item.minus { 
+            color: #ff3333; 
+            text-shadow: 0 0 5px rgba(255, 51, 51, 0.6); 
+        }
 
         .instructions { font-size: 15px; color: #ccc; margin-top: 5px; margin-bottom: 15px; line-height: 1.5; text-shadow: 0 1px 3px #000; }
         .key-badge { background: #222; color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; }
@@ -108,9 +120,10 @@
         .boost-up { color: #2ecc71 !important; }
         .boost-down { color: #ff4757 !important; }
 
-        .buttons { margin-top: 5px; z-index: 10; position: relative; }
+        /* ปุ่มกดขนาดมาตรฐานเดิม */
+        .buttons { margin-top: 20px; z-index: 10; position: relative; }
         .buttons button {
-            margin: 4px; padding: 10px 18px; font-size: 1rem; font-weight: bold;
+            margin: 5px; padding: 10px 18px; font-size: 1rem; font-weight: bold;
             cursor: pointer; border: 2px solid #333; background: #ffffff;
             color: #000; border-radius: 8px; font-family: 'Itim', cursive;
             box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3); transition: all 0.1s ease;
@@ -200,6 +213,9 @@
     let isSpinning = false;
     let currentDisplayedValue = ""; 
 
+    const ITEM_TOTAL_WIDTH = 170; 
+    const ITEM_HALF_WIDTH = 85;
+
     const secondsOptions = [
         { value: '+ 10 S', weight: 12 }, { value: '- 10 S', weight: 12 }, 
         { value: '+ 20 S', weight: 10 }, { value: '- 20 S', weight: 10 }, 
@@ -260,7 +276,6 @@
         tickLoop();
     }
 
-    // --- ส่วนการทำงานระบบเสียงสุ่มชนะ ---
     function playWin() {
         const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
@@ -299,7 +314,7 @@
             track.appendChild(itemDiv);
         }
         track.style.transition = 'none';
-        const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * 140) + 70);
+        const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH);
         track.style.transform = `translateX(${finalTranslateX}px)`;
     }
 
@@ -312,7 +327,7 @@
         track.offsetHeight; 
         generateTrackItems(60, targetPool);
         
-        const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * 140) + 70); 
+        const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH); 
         track.style.transition = 'transform 4s cubic-bezier(0.05, 0.9, 0.1, 1)';
         track.style.transform = `translateX(${finalTranslateX}px)`;
 
