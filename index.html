@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Roulette - Clean Version</title>
+    <title>Countdown Timer with Roulette - Sync Version</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
         body {
@@ -224,7 +224,7 @@
     function playTickSequence(duration = 4000) {
         const startTime = Date.now();
         function tickLoop() {
-            if (!isSpinning) return; // ป้องกันเสียงดังค้างถ้าจบสปินก่อน
+            if (!isSpinning) return;
             playTick();
             const elapsed = Date.now() - startTime;
             const progress = Math.min(elapsed / duration, 1);
@@ -245,6 +245,19 @@
         osc.start(); osc.stop(audioCtx.currentTime + 1.0);
     }
 
+    // ฟังก์ชันสร้างรายการแบบสุ่ม 60 ช่องล่วงหน้าจากฝั่ง Master เพื่อแชร์ให้ทุกจอ
+    function generateFullTrackLayout(targetPool, targetValue) {
+        let itemsArray = [];
+        for (let i = 0; i < 60; i++) {
+            if (i === 50) {
+                itemsArray.push(targetValue);
+            } else {
+                itemsArray.push(targetPool[Math.floor(Math.random() * targetPool.length)]);
+            }
+        }
+        return itemsArray;
+    }
+
     function setRouletteToValue(value) {
         if (!value || value === "-") {
             track.innerHTML = '';
@@ -262,21 +275,21 @@
             track.appendChild(itemDiv);
         }
         track.style.transition = 'none';
-        // ป้องกันบั๊กขยับตำแหน่งตอนกว้างเป็น 0
         const windowWidth = windowDiv.offsetWidth || 576;
         const finalTranslateX = (windowWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH);
         track.style.transform = `translateX(${finalTranslateX}px)`;
     }
 
-    function startSpin(modeName, targetPool, targetValue) {
-        if (isSpinning) return;
+    // ปรับฟังก์ชัน startSpin ให้รับอาร์เรย์ trackLayout ที่ระบุตัวเลขทุกช่องมาจาก Firebase
+    function startSpin(modeName, trackLayout) {
+        if (isSpinning || !trackLayout || trackLayout.length === 0) return;
         isSpinning = true;
         
         track.innerHTML = '';
-        for (let i = 0; i < 60; i++) {
+        for (let i = 0; i < trackLayout.length; i++) {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item';
-            let currentVal = (i === 50) ? targetValue : targetPool[Math.floor(Math.random() * targetPool.length)];
+            let currentVal = trackLayout[i];
             itemDiv.innerText = `[ ${currentVal} ]`;
             itemDiv.classList.add(currentVal.includes('+') ? 'plus' : 'minus');
             track.appendChild(itemDiv);
@@ -318,7 +331,6 @@
         if (sign === '-') totalSeconds = -totalSeconds;
         
         if (isMaster) {
-            // ไม่ปรับเป็น false ทันที ให้ smartBoost คุมต่อ
             window.smartBoost(totalSeconds, 2000, 'effect-30', true); 
         }
     }
@@ -335,15 +347,17 @@
         if (e.altKey && e.key === '3') { modeName = '10 Pok'; pool = minutesSmallPool; poolType = 'minutesSmall'; }
 
         if (pool) {
-            isMaster = true; // ล็อกความเป็น Master ก่อนส่งค่าขึ้น Firebase เสมอ
+            isMaster = true; 
             const chosenValue = pool[Math.floor(Math.random() * pool.length)];
+            
+            // สร้างโครงสร้างลำดับตัวเลข 60 ช่องจากฝั่งคุมเครื่องนี้เลย
+            const trackLayout = generateFullTrackLayout(pool, chosenValue);
             const spinId = "spin_" + Date.now();
 
             timerRef.update({
                 spinEvent: {
                     modeName: modeName,
-                    chosenValue: chosenValue,
-                    poolType: poolType,
+                    trackLayout: trackLayout, // ส่งรายชื่อตัวเลขทั้ง 60 ช่องขึ้นคลาวด์ไปซิงค์กับจออื่น
                     id: spinId
                 }
             });
@@ -424,7 +438,7 @@
             activeBoosts = 0;
             timerElement.classList.remove('boost-up', 'boost-down');
             catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-            isMaster = false; // เคลียร์ Master เมื่อสิ้นสุดแอนิเมชันทั้งหมดจริง ๆ
+            isMaster = false; 
         }
     }
 
@@ -473,7 +487,6 @@
         currentDisplayedValue = "-";
         updateTimerDisplay();
         
-        // เคลียร์ค่าทั้งหมดใน Firebase เพื่อให้จอบน OBS หรือจออื่น ๆ เคลียร์ตามด้วย
         timerRef.update({ 
             remainingTime: window.countdownTime,
             isRunning: false,
@@ -488,14 +501,10 @@
         const data = snapshot.val();
         if (!data) return; 
 
+        // ดึงโครงสร้างชุดข้อมูลสุ่มแบบแชร์ร่วมกันมาใช้งานรันแอนิเมชัน
         if (data.spinEvent && data.spinEvent.id !== lastSpinId) {
             lastSpinId = data.spinEvent.id;
-            
-            let targetPool = secondsPool;
-            if (data.spinEvent.poolType === 'minutesLarge') targetPool = minutesLargePool;
-            if (data.spinEvent.poolType === 'minutesSmall') targetPool = minutesSmallPool;
-
-            startSpin(data.spinEvent.modeName, targetPool, data.spinEvent.chosenValue);
+            startSpin(data.spinEvent.modeName, data.spinEvent.trackLayout);
         }
 
         if (data.lastRandomValue && !isSpinning) {
@@ -538,7 +547,6 @@
         }
     });
 
-    // ดีเลย์เล็กน้อยตอนเริ่มต้น เพื่อให้แน่ใจว่าได้ความกว้าง windowDiv ที่ถูกต้อง
     setTimeout(updateTimerDisplay, 100);
 </script>
 </body>
