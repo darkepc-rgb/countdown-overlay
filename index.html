@@ -177,9 +177,11 @@
     const catLayer = document.getElementById('catLayer');
     const track = document.getElementById('track');
     const windowDiv = document.getElementById('windowDiv');
+    
     window.interval = null;
     window.boostTask = null; 
-     
+    window.lastTick = Date.now(); // เพิ่มตัวแปรเก็บเวลาล่าสุด เพื่อแก้ปัญหาแท็บหลับ
+
     let isMaster = false; 
     let activeBoosts = 0;
     let lastEventId = "INIT"; 
@@ -386,16 +388,35 @@
             ws.onmessage = (event) => {
                 try {
                     const payload = JSON.parse(event.data);
-                     
-                    if (payload.event === 'gift') {
-                        const giftData = payload.data;
+                    if (isSpinning) return;
+
+                    // == โค้ดปรับปรุงใหม่ ตามเงื่อนไข G2 (นาทีใหญ่) ==
+                    const eventType = payload.event || payload.type; // รองรับทั้ง payload.event หรือ payload.type
+
+                    // 1. ผู้ติดตามใหม่ -> G2 นาทีใหญ่
+                    if (eventType === 'follow') {
+                        console.log('[TikFinity] ผู้ติดตามใหม่! สุ่มนาทีใหญ่ (G2)');
+                        triggerSpin('นาทีใหญ่', 'minutesLarge');
+                    } 
+                    // 2. เคาะใจ (เซ็ตให้ส่ง event ออกมาตอนครบ 1000) -> G2 นาทีใหญ่
+                    else if (eventType === 'like') {
+                        console.log('[TikFinity] เคาะใจครบเป้า! สุ่มนาทีใหญ่ (G2)');
+                        triggerSpin('นาทีใหญ่', 'minutesLarge');
+                    }
+                    // 3. ของขวัญ
+                    else if (eventType === 'gift') {
+                        const giftData = payload.data || {};
                         const coinCount = giftData.coins || giftData.diamonds || 1; 
-                         
-                        console.log(`[TikFinity] ของขวัญ: ${giftData.gift_name} | ราคา: ${coinCount} เหรียญ`);
+                        const giftName = giftData.gift_name || '';
 
-                        if (isSpinning) return;
+                        console.log(`[TikFinity] ของขวัญ: ${giftName} | ราคา: ${coinCount} เหรียญ`);
 
-                        if (coinCount === 1) { 
+                        // ดักจับชื่อ "ใจส้ม" (เปลี่ยนคำค้นหาตามที่ขึ้นในระบบจริงๆ ได้เลย)
+                        if (giftName.includes('ใจส้ม') || giftName.includes('Orange') || giftName === 'Heart') {
+                            triggerSpin('นาทีใหญ่', 'minutesLarge'); // G2 นาทีใหญ่
+                        }
+                        // เงื่อนไขสุ่มเรทเหรียญปกติ
+                        else if (coinCount === 1) { 
                             triggerSpin('วินาที', 'seconds');
                         } 
                         else if (coinCount === 5) {
@@ -405,6 +426,7 @@
                             triggerSpin('10 Pok', 'minutesSmall');
                         }
                     }
+
                 } catch (err) {
                     console.error('[TikFinity Parse Error]', err);
                 }
@@ -487,6 +509,8 @@
             lastIntegerChange = currentIntegerChange;
 
             window.countdownTime = Math.max(0, window.countdownTime + diff);
+            // อัปเดต lastTick ด้วย เพื่อไม่ให้เวลา Timestamp เพี้ยนตอนเพิ่มลดเวลา
+            window.lastTick += diff * 1000; 
             updateTimerDisplay();
 
             if (stepsTaken >= totalSteps) {
@@ -506,12 +530,11 @@
         catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
         isMaster = false;
 
-        // 🌟 [แก้ไขใหม่] รอ 1.5 วินาทีให้มาสเตอร์ส่งข้อมูลขึ้น Firebase ให้เสร็จ 
-        // แล้วบังคับให้หน้าจอ OBS ดึง "เวลาสุทธิที่แท้จริง" มาแทนที่ตัวเลขที่วิ่งเพี้ยนไป
         if (!isMasterControl) {
             setTimeout(() => {
                 if (activeBoosts === 0 && !isSpinning && window.latestFirebaseData && window.latestFirebaseData.remainingTime !== undefined) {
                     window.countdownTime = window.latestFirebaseData.remainingTime;
+                    window.lastTick = Date.now(); // รีเซ็ตตัวเทียบเวลาใหม่ให้ตรงกัน
                     updateTimerDisplay();
                 }
             }, 1500); 
@@ -529,10 +552,22 @@
         });
     }
 
+    // == โค้ดที่แก้เรื่องเวลาเพี้ยนจาก Tab Sleep (นับถอยหลังจาก Timestamp แทน) ==
     function countdown() {
         if (window.countdownTime > 0) {
-            window.countdownTime--;
-            updateTimerDisplay();
+            const now = Date.now();
+            const delta = now - window.lastTick; // หาความต่างเวลาจริงๆ ที่ผ่านไปเป็นมิลลิวินาที
+
+            // ถ้าเวลาผ่านไป 1 วินาทีขึ้นไป (รวมถึงกรณีแท็บหลับไป 5 วินาที delta ก็จะเป็น ~5000)
+            if (delta >= 1000) {
+                const secondsPassed = Math.floor(delta / 1000);
+                window.countdownTime -= secondsPassed;
+                if (window.countdownTime < 0) window.countdownTime = 0;
+                
+                // เก็บเศษเสี้ยวเวลาที่เหลือทดไปรอบต่อไป
+                window.lastTick = now - (delta % 1000); 
+                updateTimerDisplay();
+            }
         } else {
             window.stopTimer();
         }
@@ -540,7 +575,11 @@
 
     window.startTimer = function(isLocal = true) {
         if (window.interval) clearInterval(window.interval); 
-        window.interval = setInterval(countdown, 1000);
+        window.lastTick = Date.now(); // เริ่มจับจุดอ้างอิงเวลาใหม่
+        
+        // เซ็ตให้มันเช็คถี่ขึ้นเล็กน้อย (200ms) เพื่อตอบสนองไวขึ้น แต่จะลดเวลาจริงๆ เฉพาะตอนครบ 1 วินาที
+        window.interval = setInterval(countdown, 200); 
+        
         document.getElementById('startBtn').classList.add('active');
         document.getElementById('stopBtn').classList.remove('active');
         if (isLocal) syncToFirebase();
@@ -567,6 +606,7 @@
         catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
         
         window.countdownTime = 3 * 60 * 60;
+        window.lastTick = Date.now(); // รีเซ็ตจุดอ้างอิง
         lastEventId = "RESET_" + Date.now();
         updateTimerDisplay();
          
@@ -578,16 +618,15 @@
         });
     };
 
-// ปรับปรุงฟังก์ชันการรับข้อมูลจาก Firebase ใหม่ให้แม่นยำ
     timerRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return; 
+        window.latestFirebaseData = data; // เก็บอ้างอิงไว้ใช้ตอนปรับเวลาหลังบูส
 
-        // 1. ซิงค์สถานะการวิ่ง (วิ่งหรือหยุด)
         if (data.isRunning) {
             if (!window.interval) {
-                // ถ้ามาสเตอร์บอกให้วิ่ง แต่เรายังไม่วิ่ง ให้เริ่มนับ
-                window.interval = setInterval(countdown, 1000);
+                window.lastTick = Date.now(); // จัดแจงจับจุดอ้างอิงใหม่เวลาสั่งเริ่มจากที่อื่น
+                window.interval = setInterval(countdown, 200);
             }
         } else {
             if (window.interval) {
@@ -596,22 +635,18 @@
             }
         }
 
-        // 2. ซิงค์เวลา (หัวใจสำคัญ: ถ้ารู้สึกว่าเวลาห่างเกิน 2 วินาที ให้ตบให้ตรงทันที)
         if (data.remainingTime !== undefined) {
             let drift = Math.abs(window.countdownTime - data.remainingTime);
             
-            // ถ้าเป็นเครื่องโชว์ และเวลาห่างเกิน 2 วินาที หรือเครื่องมาสเตอร์เพิ่งอัปเดตค่ามา
-            // ให้ยึดเวลาจาก Firebase เป็นหลัก (ป้องกันเวลาเดินไม่เท่ากัน)
             if (!isMasterControl) { 
                 if (drift > 2) { 
                     window.countdownTime = data.remainingTime;
+                    window.lastTick = Date.now(); // Sync แกนเวลาใหม่ให้เครื่องลูก
                     updateTimerDisplay();
                 }
             }
         }
 
-        // 3. จัดการเรื่องแอนิเมชันและเหตุการณ์ต่างๆ
-        // (ส่วนของ spinEvent และ boostEvent ของเดิมใช้ได้ปกติครับ)
         if (data.spinEvent && data.spinEvent.id !== lastSpinId) {
             lastSpinId = data.spinEvent.id;
             startSpin(data.spinEvent.modeName, data.spinEvent.poolType, data.spinEvent.winnerValue);
