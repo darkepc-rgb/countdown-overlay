@@ -29,12 +29,6 @@
             transition: opacity 0.5s ease-in-out, transform 0.3s ease-out; opacity: 1;
         }
 
-        .mode-indicator {
-            font-size: 22px; margin-top: 15px; margin-bottom: 0px; font-weight: bold; 
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 1px;
-        }
-        .mode-indicator span { color: #ffaa00; text-shadow: 0 0 10px #ffaa00; }
-
         .roulette-container {
             position: relative; width: 576px; padding: 5px 0;
             margin-top: 18px;    
@@ -183,7 +177,6 @@
     const catLayer = document.getElementById('catLayer');
     const track = document.getElementById('track');
     const windowDiv = document.getElementById('windowDiv');
-    const modeIndicator = document.getElementById('modeIndicator');
     window.interval = null;
     
     let isMaster = false; 
@@ -265,7 +258,6 @@
         osc.start(); osc.stop(audioCtx.currentTime + 1.0);
     }
 
-    // 🟢 ฟังก์ชันใหม่: สร้างแทร็กโดยล็อคค่า Winner ไว้ตำแหน่งที่ 50 ให้ตรงกันทุกจอ
     function generateTrackItemsWithWinner(totalItems, pool, winnerValue) {
         track.innerHTML = '';
         for (let i = 0; i < totalItems; i++) {
@@ -311,11 +303,9 @@
         setRouletteToValue("-");
     }
 
-    // 🟢 ฟังก์ชันหลักในการสั่งเริ่มหมุนแบบพร้อมกัน (ทั้ง Master และ Client เรียกผ่าน Firebase Listener)
     function startSpin(modeName, poolType, winnerValue) {
         if (isSpinning) return;
         isSpinning = true;
-        if (modeIndicator) modeIndicator.innerHTML = `กำลังสุ่มโหมด: <span>${modeName}</span>`;
         track.style.transition = 'none';
         track.style.transform = 'translateX(0)';
         track.offsetHeight; 
@@ -337,16 +327,13 @@
             isSpinning = false; 
             if (track.children[50]) {
                 track.children[50].classList.add('winner'); 
-                // 🟢 เฉพาะเครื่อง Master เท่านั้นที่จะส่งคำสั่งนำผลลัพธ์ไปคำนวณบวก/ลดเวลาต่อ
                 if (isMaster) {
                     parseAndTriggerBoost(track.children[50].innerText);
                 }
             }
-            if (modeIndicator) modeIndicator.innerHTML = 'วงล้อพร้อมสุ่ม: <span>รอสัญญาณปุ่ม G1 - G3</span>';
         }, 4000);
     }
 
-    // 🟢 ฟังก์ชันใหม่: ส่งสัญญาณการกดคีย์บอร์ดขึ้น Firebase ก่อนเพื่อให้เครื่องตัวโชว์หมุนไปพร้อมกัน
     function triggerSpin(modeName, poolType) {
         if (isSpinning) return;
         isMaster = true; 
@@ -421,7 +408,6 @@
         }
     }
 
-    // 🟢 ปรับปรุงฟังก์ชันแอนิเมชันให้ฝั่ง Client รันเลขวิ่งสมูทแบบ 30 FPS ไปพร้อม ๆ กันด้วย
     window.runBoostAnimation = function(totalSeconds, durationMs, effectClass, isThisMachineMaster) {
         activeBoosts++;
         timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
@@ -439,6 +425,8 @@
             accumulatedChange += incrementPerStep;
             let currentIntegerChange = Math.round(accumulatedChange);
             let diff = currentIntegerChange - lastIntegerChange;
+            
+            // 🟢 ลบคำว่า 'let' ออกเพื่อไม่ให้ตัวแปรประกาศซ้ำซ้อนจนระบบแอนิเมชันรันเลขล่ม คราวนี้เลขจะวิ่งได้สมูทเรียบเนียน
             lastIntegerChange = currentIntegerChange;
 
             window.countdownTime = Math.max(0, window.countdownTime + diff);
@@ -446,7 +434,6 @@
 
             if (stepsTaken >= totalSteps) {
                 clearInterval(boostTask);
-                // 🟢 เฉพาะ Master เท่านั้นที่จะส่งค่าสรุปเวลาสุดท้ายขึ้น Firebase เพื่อป้องกันคำสั่งทับซ้อน
                 if (isThisMachineMaster) {
                     syncToFirebase(); 
                 }
@@ -549,7 +536,6 @@
             return; 
         }
 
-        // 🟢 เช็ค Event การสุ่มวงล้อจาก Firebase (ให้แสดงแอนิเมชันตอนหมุนพร้อมกัน)
         if (data.spinEvent && data.spinEvent.id !== lastSpinId) {
             lastSpinId = data.spinEvent.id;
             startSpin(data.spinEvent.modeName, data.spinEvent.poolType, data.spinEvent.winnerValue);
