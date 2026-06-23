@@ -496,19 +496,18 @@
         if (isLocal) syncToFirebase();
     }
 
-window.resetTimer = function() {
+    window.resetTimer = function() {
         window.stopTimer();
         window.countdownTime = 3 * 60 * 60;
         lastEventId = "RESET_" + Date.now();
         updateTimerDisplay();
         
-        // 🟢 แก้ไขตรงนี้: ใช้ update แทน set เพื่อเก็บค่า lastRandomValue เอาไว้
+        // 🟢 แก้ไขตรงนี้: ไม่ล้างค่า boostEvent เป็น null ทั้งหมด แต่ส่ง Object เคลียร์ และจงใจไม่ยุ่งกับ lastRandomValue ค่าเดิมจึงไม่หายไปไหน
         timerRef.update({ 
             remainingTime: window.countdownTime,
             isRunning: false,
-            boostEvent: null, // รีเซตแค่ค่า boost
+            boostEvent: { totalSeconds: 0, durationMs: 0, effectClass: '', id: lastEventId }, 
             lastActionTime: firebase.database.ServerValue.TIMESTAMP
-            // ไม่ต้องใส่ lastRandomValue ตรงนี้ ค่าเดิมจะยังคงค้างอยู่ที่ฐานข้อมูลครับ
         });
     };
 
@@ -528,6 +527,7 @@ window.resetTimer = function() {
             }
         }
 
+        // 🟢 ตรวจสอบและวาดตำแหน่งวงล้อจากค่าล่าสุดที่มีอยู่ใน Firebase เสมอ (แก้ไขปัญหาตอนเปิดปิดหน้าเว็บใหม่)
         if (data.lastRandomValue && !isSpinning) {
             if (currentDisplayedValue !== data.lastRandomValue) {
                 currentDisplayedValue = data.lastRandomValue;
@@ -541,12 +541,15 @@ window.resetTimer = function() {
                 lastEventId = data.boostEvent.id;
             } else {
                 lastEventId = data.boostEvent.id;
-                window.runBoostAnimation(
-                    data.boostEvent.totalSeconds, 
-                    data.boostEvent.durationMs, 
-                    data.boostEvent.effectClass,
-                    false // เครื่อง Client อื่นๆ ไม่ต้อง Sync ซ้ำ
-                );
+                // ป้องกันกรณีส่งค่ารีเซ็ต (0) เข้ามาชนอนิเมชัน
+                if (data.boostEvent.totalSeconds !== 0) {
+                    window.runBoostAnimation(
+                        data.boostEvent.totalSeconds, 
+                        data.boostEvent.durationMs, 
+                        data.boostEvent.effectClass,
+                        false // เครื่อง Client อื่นๆ ไม่ต้อง Sync ซ้ำ
+                    );
+                }
             }
         }
 
