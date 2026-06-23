@@ -39,7 +39,8 @@
 
         .roulette-container {
             position: relative; width: 576px; padding: 5px 0;
-            margin-top: 35px;    /* เว้นช่องไฟด้านบนกันชนข้อความ "รอสัญญาณ" */
+            /* 🟢 ปรับตรงนี้: ลดช่องไฟด้านบนลงเหลือครึ่งนึง (จาก 35px เป็น 18px) เพื่อให้กรอบสุ่มขยับขึ้นไปชิดกับชุดบนมากขึ้น */
+            margin-top: 18px;    
             margin-bottom: 35px; /* เว้นช่องไฟด้านล่างกันชนปุ่ม G1 G2 */
             display: flex; justify-content: center;
         }
@@ -289,7 +290,7 @@
     function startSpin(modeName, targetPool) {
         if (isSpinning) return;
         isSpinning = true;
-        modeIndicator.innerHTML = `กำลังสุ่มโหมด: <span>${modeName}</span>`;
+        if (modeIndicator) modeIndicator.innerHTML = `กำลังสุ่มโหมด: <span>${modeName}</span>`;
         track.style.transition = 'none';
         track.style.transform = 'translateX(0)';
         track.offsetHeight; 
@@ -307,7 +308,7 @@
             if (track.children[50]) {
                 parseAndTriggerBoost(track.children[50].innerText);
             }
-            modeIndicator.innerHTML = 'วงล้อพร้อมสุ่ม: <span>รอสัญญาณปุ่ม G1 - G3</span>';
+            if (modeIndicator) modeIndicator.innerHTML = 'วงล้อพร้อมสุ่ม: <span>รอสัญญาณปุ่ม G1 - G3</span>';
         }, 4000);
     }
 
