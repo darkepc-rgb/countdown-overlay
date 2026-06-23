@@ -19,7 +19,7 @@
         #timer {
             position: relative; z-index: 1; font-size: 3.5rem; font-weight: bold;
             transition: color 0.3s ease; margin-top: 22px; margin-left: 125px; 
-            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, -2px 2px 0 #000, 0px 4px 12px rgba(0,0,0,0.9);
+            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0px 4px 12px rgba(0,0,0,0.9);
         }
         .cat-overlay-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; 
@@ -171,6 +171,7 @@
     const catLayer = document.getElementById('catLayer');
     const track = document.getElementById('track');
     const windowDiv = document.getElementById('windowDiv');
+    const modeIndicator = document.getElementById('modeIndicator');
     window.interval = null;
     
     let isMaster = false; 
@@ -274,6 +275,7 @@
     function startSpin(modeName, targetPool, targetValue) {
         if (isSpinning) return;
         isSpinning = true;
+        if (modeIndicator) modeIndicator.innerHTML = `กำลังสุ่มโหมด: <span>${modeName}</span>`;
         
         track.innerHTML = '';
         for (let i = 0; i < 60; i++) {
@@ -287,7 +289,7 @@
 
         track.style.transition = 'none';
         track.style.transform = 'translateX(0)';
-        track.offsetHeight; // force reflow
+        track.offsetHeight; 
         
         const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH); 
         track.style.transition = 'transform 4s cubic-bezier(0.05, 0.9, 0.1, 1)';
@@ -301,6 +303,7 @@
             if (track.children[50]) {
                 parseAndTriggerBoost(track.children[50].innerText);
             }
+            if (modeIndicator) modeIndicator.innerHTML = 'วงล้อพร้อมสุ่ม: <span>รอสัญญาณปุ่ม G1 - G3</span>';
         }, 4000);
     }
 
@@ -308,6 +311,7 @@
         const cleaned = resultText.replace('[', '').replace(']', '').trim();
         currentDisplayedValue = cleaned;
         
+        // 🟢 เมื่อวงล้อหยุดหมุน ให้เครื่องที่กดสั่ง (isMaster) บันทึกค่าผลลัพธ์ลง Firebase เท่านั้น
         if (isMaster) {
             timerRef.update({ lastRandomValue: cleaned });
         }
@@ -319,12 +323,13 @@
         let totalSeconds = (unit === 'M' ? val * 60 : val);
         if (sign === '-') totalSeconds = -totalSeconds;
         
+        // 🟢 รันแอนิเมชันปรับเวลาเฉพาะเครื่องที่กดสั่งตรงๆ (เพราะเครื่องอื่นจะโดนสั่งผ่าน Firebase boostEvent อยู่แล้ว)
         if (isMaster) {
             window.smartBoost(totalSeconds, 2000, 'effect-30');
         }
     }
 
-    /* 🟢 ปรับปรุง: แยกบล็อกคำสั่งสุ่ม ไม่ให้ Firebase ดึงลูปทำงานซ้ำซ้อนตอนกำลังหมุน */
+    /* 🟢 ปรับปรุง: ไม่ว่าเปิดจอไหนอยู่ ถ้ากดคีย์บอร์ด จะทำการล็อกผลลัพธ์แล้วโยนขึ้น Firebase ทันที */
     window.addEventListener('keydown', (e) => {
         if (isSpinning) return;
 
@@ -337,13 +342,12 @@
         if (e.altKey && e.key === '3') { modeName = '10 Pok'; pool = minutesSmallPool; poolType = 'minutesSmall'; }
 
         if (pool) {
-            e.preventDefault(); // บล็อกไม่ให้เบราว์เซอร์ไปเปิดคีย์ลัดอื่นตีกัน
-            isMaster = true; 
+            isMaster = true; // ตั้งค่าตัวเราเองเป็นผู้สั่งการหลักรอบนี้
             const chosenValue = pool[Math.floor(Math.random() * pool.length)];
             const spinId = "spin_" + Date.now();
-            lastSpinId = spinId; 
+            lastSpinId = spinId;
 
-            // อัปเดตข้อมูลขึ้นเฉพาะ spinEvent ตัวเดียวเพื่อสั่งรันอนิเมชันพร้อมกัน
+            // ส่งข้อมูลสุ่มขึ้น Firebase เพื่อให้ทุกจอเริ่มหมุนพร้อมกัน
             timerRef.update({
                 spinEvent: {
                     modeName: modeName,
@@ -429,7 +433,7 @@
             activeBoosts = 0;
             timerElement.classList.remove('boost-up', 'boost-down');
             catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-            isMaster = false; 
+            isMaster = false; // ปลดล็อก Master เมื่ออนิเมชันจบลง
         }
     }
 
@@ -485,11 +489,11 @@
         });
     };
 
-    // 🟢 ตัวดักฟังข้อมูลหลัก: เช็คสิทธิ์และกรองไอดีซ้ำ เพื่อป้องกันการแสดงผลสะดุด กระตุก
     timerRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return; 
 
+        // 🟢 ดักฟัง Event การหมุนวงล้อ: ทุกๆ จอ (รวมถึงจอหลักและจออื่น) จะมาวิ่งเริ่มหมุนไปพร้อมกันตรงนี้
         if (data.spinEvent && data.spinEvent.id !== lastSpinId) {
             lastSpinId = data.spinEvent.id;
             
@@ -513,6 +517,7 @@
             } else {
                 lastEventId = data.boostEvent.id;
                 if (data.boostEvent.totalSeconds !== 0) {
+                    // 🟢 ถ้าเราไม่ใช่คนกดสั่งปุ่มเพิ่มเวลาตรงๆ (สตรีมอยู่) ให้รันแอนิเมชันเวลาตามค่า Firebase
                     if (!isMaster) {
                         window.runBoostAnimation(
                             data.boostEvent.totalSeconds, 
