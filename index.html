@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Auto Roulette (Fixed Sync)</title>
+    <title>Countdown Timer with Auto Roulette (Full Screen Center)</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
+        /* 🔴 แก้ไขตรงนี้: ดึงความสามารถล็อกเต็มจอและจัดกึ่งกลางสไตล์โค้ดเก่ากลับมา */
         body {
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-            min-height: 100vh; background-color: transparent; color: white;
-            font-family: 'Itim', cursive; text-align: center; margin: 0; padding-top: 40px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; background-color: transparent; color: white;
+            font-family: 'Itim', cursive; text-align: center; margin: 0; overflow: hidden;
         }
 
         .timer-stack-wrapper {
@@ -35,8 +36,8 @@
         /* --- Roulette Styles --- */
         .mode-indicator {
             font-size: 22px; 
-            margin-top: 15px;
-            margin-bottom: 30px; /* 👈 เพิ่มระยะห่างด้านล่างอักษร (ก่อนถึงหน้าจอสุ่ม) */
+            margin-top: 10px;
+            margin-bottom: 20px; 
             font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
             letter-spacing: 1px;
         }
@@ -46,7 +47,7 @@
         .roulette-container {
             position: relative; width: 576px; 
             padding: 12px 0;
-            margin-bottom: 35px; /* 👈 เพิ่มระยะห่างด้านล่างหน้าจอสุ่ม (ก่อนถึงคำอธิบายปุ่ม) */
+            margin-bottom: 20px; 
             display: flex; justify-content: center;
         }
 
@@ -107,9 +108,9 @@
         .boost-up { color: #2ecc71 !important; }
         .boost-down { color: #ff4757 !important; }
 
-        .buttons { margin-top: 10px; z-index: 10; position: relative; }
+        .buttons { margin-top: 5px; z-index: 10; position: relative; }
         .buttons button {
-            margin: 5px; padding: 10px 18px; font-size: 1rem; font-weight: bold;
+            margin: 4px; padding: 10px 18px; font-size: 1rem; font-weight: bold;
             cursor: pointer; border: 2px solid #333; background: #ffffff;
             color: #000; border-radius: 8px; font-family: 'Itim', cursive;
             box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3); transition: all 0.1s ease;
@@ -199,7 +200,6 @@
     let isSpinning = false;
     let currentDisplayedValue = ""; 
 
-    // --- ข้อมูลและ Pool สำหรับระบบวงล้อสุ่ม ---
     const secondsOptions = [
         { value: '+ 10 S', weight: 12 }, { value: '- 10 S', weight: 12 }, 
         { value: '+ 20 S', weight: 10 }, { value: '- 20 S', weight: 10 }, 
@@ -234,7 +234,6 @@
     const minutesLargePool = createPool(minutesLargeOptions);
     const minutesSmallPool = createPool(minutesSmallOptions);
 
-    // --- ระบบเสียงแบบ Web Audio API ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function playTick() {
@@ -261,6 +260,7 @@
         tickLoop();
     }
 
+    // --- ส่วนการทำงานระบบเสียงสุ่มชนะ ---
     function playWin() {
         const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
@@ -270,7 +270,6 @@
         osc.start(); osc.stop(audioCtx.currentTime + 1.0);
     }
 
-    // --- ฟังก์ชันการทำงานของวงล้อสุ่ม ---
     function generateTrackItems(totalItems, pool) {
         track.innerHTML = '';
         for (let i = 0; i < totalItems; i++) {
@@ -350,7 +349,6 @@
         if (e.altKey && e.key === '3') startSpin('10 Pok', minutesSmallPool);
     });
 
-    // --- ระบบควบคุมเวลาและสลับรูปดั้งเดิม ---
     function syncToFirebase() {
         timerRef.update({
             remainingTime: window.countdownTime,
@@ -497,7 +495,6 @@
         });
     };
 
-    // --- ระบบ Firebase Sync Engine ---
     timerRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return; 
