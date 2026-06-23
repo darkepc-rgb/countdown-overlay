@@ -3,99 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Auto Roulette</title>
+    <title>Countdown Timer with Roulette - Solid Version</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
         body {
-            display: flex; flex-direction: column; align-items: center;
-            /* 🟢 แก้ไข: เอา height: 100vh และ justify-content ออก เพื่อไม่ให้ตำแหน่งยืดหดตามขนาดความสูงของจอ */
-            background-color: transparent; color: white;
-            font-family: 'Itim', cursive; text-align: center; margin: 0; 
-            padding: 30px 0; /* เว้นพื้นที่ขอบบน-ล่างของหน้าเว็บให้คงที่ */
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            /* 🟢 แก้ไขตรงนี้: ใช้ min-height แทน height เพื่อรองรับความสูงของวงล้อสุ่ม ไม่ให้บีบกันจนเพี้ยนในจอเล็ก */
+            min-height: 100vh; background-color: transparent; color: white;
+            font-family: 'Itim', cursive; text-align: center; margin: 0;
+            padding: 20px 0; box-sizing: border-box;
         }
-
         .timer-stack-wrapper {
             position: relative; display: flex; align-items: center; justify-content: center;
             width: 576px; height: 324px; 
         }
-
         #timer {
             position: relative; z-index: 1; font-size: 3.5rem; font-weight: bold;
             transition: color 0.3s ease; margin-top: 22px; margin-left: 125px; 
             text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0px 4px 12px rgba(0,0,0,0.9);
         }
-
         .cat-overlay-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; 
         }
-
         .cat-overlay-layer img {
             width: 100%; height: 100%; object-fit: contain;
             transition: opacity 0.5s ease-in-out, transform 0.3s ease-out; opacity: 1;
         }
 
-        /* --- Roulette Styles --- */
+        /* --- 🟢 ส่วนของวงล้อสุ่ม (Roulette Styles) แบบล็อกระยะตายตัว --- */
         .mode-indicator {
-            font-size: 22px; 
-            margin-top: 15px;
-            margin-bottom: 0px; 
-            font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-            letter-spacing: 1px;
+            font-size: 22px; margin-top: 15px; margin-bottom: 0px; font-weight: bold; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 1px;
         }
-
         .mode-indicator span { color: #ffaa00; text-shadow: 0 0 10px #ffaa00; }
 
-        /* ช่องไฟรอบนอกกล่องสุ่มแบบล็อกพิกเซลตายตัว เพื่อความแม่นยำในการ Crop บน OBS */
         .roulette-container {
-            position: relative; width: 576px; 
-            padding: 5px 0;
-            margin-top: 35px;    /* ระยะห่างจากข้อความด้านบนคงที่ 35px */
-            margin-bottom: 35px; /* ระยะห่างจากปุ่มคีย์ลัดด้านล่างคงที่ 35px */
+            position: relative; width: 576px; padding: 5px 0;
+            margin-top: 35px;    /* เว้นช่องไฟด้านบนกันชนข้อความ "รอสัญญาณ" */
+            margin-bottom: 35px; /* เว้นช่องไฟด้านล่างกันชนปุ่ม G1 G2 */
             display: flex; justify-content: center;
         }
-
         .pointer {
             position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
             color: #ff2222; font-size: 42px; z-index: 10; text-shadow: 0 2px 8px rgba(255, 0, 0, 0.8);
         }
-
         .window {
             width: 100%; overflow: hidden; background: #050505; border: 3px solid #333;
             border-radius: 12px; padding: 15px 0; position: relative;
             box-shadow: inset 0 0 25px rgba(0,0,0,1), 0 5px 15px rgba(0,0,0,0.5);
         }
-
         .window::before, .window::after {
             content: ''; position: absolute; top: 0; bottom: 0; width: 20%; z-index: 5; pointer-events: none;
         }
-
         .window::before { left: 0; background: linear-gradient(to right, #050505, transparent); }
         .window::after { right: 0; background: linear-gradient(to left, #050505, transparent); }
-
+        
         .track { display: flex; transition: transform 4s cubic-bezier(0.05, 0.9, 0.1, 1); transform: translateX(0); }
-
         .item {
             min-width: 160px; height: 76px; margin: 0 12px; background: #1c1c1c; 
             border: 2px solid #3b3b3b; border-radius: 8px; display: flex; justify-content: center;
-            align-items: center; 
-            font-size: 2.35rem; 
-            font-weight: 900;  
-            box-sizing: border-box;
+            align-items: center; font-size: 2.35rem; font-weight: 900; box-sizing: border-box;
             transition: transform 0.3s, box-shadow 0.3s, color 0.3s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.8);
-            -webkit-text-stroke: 0.5px rgba(0,0,0,0.5); 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.8); -webkit-text-stroke: 0.5px rgba(0,0,0,0.5); 
         }
+        .item.plus { color: #39ff14; text-shadow: 0 0 5px rgba(57, 255, 20, 0.6); }
+        .item.minus { color: #ff3333; text-shadow: 0 0 5px rgba(255, 51, 51, 0.6); }
 
-        .item.plus { 
-            color: #39ff14; 
-            text-shadow: 0 0 5px rgba(57, 255, 20, 0.6); 
-        }
-        .item.minus { 
-            color: #ff3333; 
-            text-shadow: 0 0 5px rgba(255, 51, 51, 0.6); 
-        }
-
-        .instructions { font-size: 15px; color: #ccc; margin-top: 0px; margin-bottom: 20px; line-height: 1.5; text-shadow: 0 1px 3px #000; }
+        .instructions { font-size: 15px; color: #ccc; margin-top: 0px; margin-bottom: 15px; line-height: 1.5; text-shadow: 0 1px 3px #000; }
         .key-badge { background: #222; color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; }
 
         /* --- Animations --- */
@@ -122,8 +96,7 @@
         .boost-up { color: #2ecc71 !important; }
         .boost-down { color: #ff4757 !important; }
 
-        /* ปุ่มกดขนาดมาตรฐานเดิม */
-        .buttons { margin-top: 15px; z-index: 10; position: relative; }
+        .buttons { margin-top: 20px; z-index: 10; position: relative; }
         .buttons button {
             margin: 5px; padding: 10px 18px; font-size: 1rem; font-weight: bold;
             cursor: pointer; border: 2px solid #333; background: #ffffff;
@@ -141,7 +114,7 @@
     <div class="timer-stack-wrapper">
         <div id="timer">03 : 00 : 00</div>
         <div class="cat-overlay-layer" id="catLayer">
-            <img id="catImage" style="opacity: 0;">
+            <img src="cat3-3.png" id="catImage">
         </div>
     </div>
     
@@ -209,9 +182,7 @@
     let isMaster = false; 
     let activeBoosts = 0;
     let lastEventId = "INIT"; 
-    
-    let isChangingImage = false; 
-    let currentCatSrc = ""; 
+    let isChangingImage = false;
     let isSpinning = false;
     let currentDisplayedValue = ""; 
 
@@ -228,12 +199,9 @@
     ];
 
     const minutesLargeOptions = [
-        { value: '+ 5 M', weight: 35 }, 
-        { value: '- 5 M', weight: 28 }, 
-        { value: '+ 10 M', weight: 23 }, 
-        { value: '- 10 M', weight: 19 }, 
-        { value: '+ 15 M', weight: 12 }, 
-        { value: '- 15 M', weight: 10 }
+        { value: '+ 5 M', weight: 35 }, { value: '- 5 M', weight: 28 }, 
+        { value: '+ 10 M', weight: 23 }, { value: '- 10 M', weight: 19 }, 
+        { value: '+ 15 M', weight: 12 }, { value: '- 15 M', weight: 10 }
     ];
 
     const minutesSmallOptions = [
@@ -375,17 +343,8 @@
     }
 
     function fadeChangeImage(newSrc) {
-        if (currentCatSrc === newSrc || isChangingImage) return;
-        
-        if (currentCatSrc === "") {
-            currentCatSrc = newSrc;
-            catImage.src = newSrc;
-            catImage.style.opacity = 1;
-            return;
-        }
-
+        if (catImage.src.includes(newSrc) || isChangingImage) return;
         isChangingImage = true;
-        currentCatSrc = newSrc; 
         catImage.style.opacity = 0;
         setTimeout(() => {
             catImage.src = newSrc;
@@ -403,14 +362,11 @@
         timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
         
         if (window.countdownTime <= 1800) { 
-            timerElement.classList.add('red'); 
-            fadeChangeImage("cat3-1.png");
+            timerElement.classList.add('red'); fadeChangeImage("cat3-1.png");
         } else if (window.countdownTime <= 7200) {
-            timerElement.classList.remove('red'); 
-            fadeChangeImage("cat3-2.png");
+            timerElement.classList.remove('red'); fadeChangeImage("cat3-2.png");
         } else {
-            timerElement.classList.remove('red'); 
-            fadeChangeImage("cat3-3.png");
+            timerElement.classList.remove('red'); fadeChangeImage("cat3-3.png");
         }
     }
 
@@ -503,8 +459,7 @@
         window.countdownTime = 3 * 60 * 60;
         lastEventId = "RESET_" + Date.now();
         updateTimerDisplay();
-
-        timerRef.update({ 
+        timerRef.set({ 
             remainingTime: window.countdownTime,
             isRunning: false,
             boostEvent: null,
@@ -525,15 +480,17 @@
 
         if (isMaster) return; 
 
-        window.countdownTime = data.remainingTime;
-
         if (data.isRunning && !window.interval) {
+            window.countdownTime = data.remainingTime;
             window.startTimer(false);
         } else if (!data.isRunning && window.interval) {
             window.stopTimer(false);
+            window.countdownTime = data.remainingTime;
+            updateTimerDisplay();
+        } else if (!window.interval) {
+            window.countdownTime = data.remainingTime;
+            updateTimerDisplay();
         }
-        
-        updateTimerDisplay();
 
         if (data.boostEvent && data.boostEvent.id !== lastEventId) {
             if (lastEventId === "INIT") {
