@@ -172,6 +172,7 @@
         const db = firebase.database();
         const timerRef = db.ref('timer_data');
 
+
         window.countdownTime = 3 * 60 * 60;
         const timerElement = document.getElementById('timer');
         const catImage = document.getElementById('catImage');
@@ -180,6 +181,8 @@
         const windowDiv = document.getElementById('windowDiv');
         const modeIndicator = document.getElementById('modeIndicator');
         window.interval = null;
+        const params = new URLSearchParams(window.location.search);
+        const IS_DISPLAY_ONLY = params.get("display") === "1";
 
         let isMaster = false; 
         let activeBoosts = 0;
@@ -326,14 +329,25 @@
                 if (window.countdownTime < 0) window.countdownTime = 0;
                 updateTimerDisplay();
 
-                if (++count >= steps) {
-                    clearInterval(timer);
-                    window.countdownTime = Math.round(window.countdownTime);
-                    if (window.countdownTime < 0) window.countdownTime = 0;
-                    updateTimerDisplay();
-                    if (isThisMachineMaster) syncToFirebase();
-                    finishBoost(effectClass);
-                }
+if (++count >= steps) {
+
+    clearInterval(timer);
+
+    window.countdownTime = Math.round(window.countdownTime);
+
+    if (window.countdownTime < 0)
+        window.countdownTime = 0;
+
+    updateTimerDisplay();
+
+    if (isThisMachineMaster) {
+        syncToFirebase();
+        timerRef.child('boostEvent').remove();
+    }
+
+    finishBoost(effectClass);
+}
+
             }, 1000 / fps);
         }
 
@@ -370,69 +384,116 @@
             });
         }
 
-        window.startTimer = function(local = true) {
-            if (!window.interval) {
-                window.interval = setInterval(() => {
-                    if (window.countdownTime > 0) {
-                        window.countdownTime = Math.round(window.countdownTime) - 1;
-                        if (window.countdownTime < 0) window.countdownTime = 0;
-                        updateTimerDisplay();
-                        if (local) syncToFirebase();
-                    } else {
-                        window.countdownTime = 0;
-                        updateTimerDisplay();
-                        stopTimer(local);
-                    }
-                }, 1000);
-            }
-            if (local) syncToFirebase();
-        }
+window.startTimer = function(local = true) {
 
-        window.stopTimer = function(local = true) {
-            clearInterval(window.interval);
-            window.interval = null;
-            if (local) {
-                timerRef.update({
-                    remainingTime: Math.max(0, Math.round(window.countdownTime)),
-                    isRunning: false
-                });
-            }
-        }
+    if (IS_DISPLAY_ONLY) return;
 
-        window.resetTimer = function() {
-            window.stopTimer(false);
-            window.countdownTime = 3 * 60 * 60;
+    if (window.interval) return;
+
+    window.interval = setInterval(() => {
+        if (window.countdownTime > 0) {
+            window.countdownTime--;
             updateTimerDisplay();
-            lastEventId = "";
-            timerRef.update({
-                remainingTime: window.countdownTime,
-                isRunning: false,
-                boostEvent: null
-            });
+
+            if (local) syncToFirebase();
+        } else {
+            stopTimer(local);
+        }
+    }, 1000);
+
+    if (local) syncToFirebase();
+}
+
+window.stopTimer = function(local = true) {
+    if (window.interval !== null) {
+        clearInterval(window.interval);
+        window.interval = null;
+    }
+
+    if (local) {
+        timerRef.update({
+            remainingTime: Math.max(0, Math.round(window.countdownTime)),
+            isRunning: false
+        });
+    }
+}
+
+window.resetTimer = function() {
+    window.stopTimer();
+
+    window.countdownTime = 3 * 60 * 60;
+    updateTimerDisplay();
+
+    lastEventId = "INIT";
+    activeBoosts = 0;
+
+timerRef.set({
+    remainingTime: window.countdownTime,
+    isRunning: false,
+    boostEvent: null
+});
+
+}
+
+timerRef.child('remainingTime').on('value', (snap) => {
+
+    if (isMaster || activeBoosts > 0) return;
+
+    const value = snap.val();
+
+    if (value != null) {
+        window.countdownTime = Math.round(value);
+
+        if (window.countdownTime < 0)
+            window.countdownTime = 0;
+
+        updateTimerDisplay();
+    }
+
+});
+
+timerRef.child('isRunning').on('value', (snap) => {
+
+    if (isMaster) return;
+
+    const running = snap.val();
+
+    if (!IS_DISPLAY_ONLY) {
+
+        if (running && !window.interval) {
+            startTimer(false);
         }
 
-        timerRef.on('value', (snap) => {
-            const data = snap.val();
-            if (!data || isMaster) return;
+        if (!running && window.interval) {
+            stopTimer(false);
+        }
 
-            if (data.boostEvent && data.boostEvent.id && data.boostEvent.id !== lastEventId) {
-                lastEventId = data.boostEvent.id;
-                window.runBoostAnimation(
-                    data.boostEvent.totalSeconds,
-                    data.boostEvent.durationMs,
-                    data.boostEvent.effectClass,
-                    false
-                );
-            }
+    }
 
-            if (!activeBoosts) {
-                window.countdownTime = Math.round(data.remainingTime ?? 0);
-                if (window.countdownTime < 0) window.countdownTime = 0;
-                updateTimerDisplay();
-                if (data.isRunning && !window.interval) startTimer(false);
-                if (!data.isRunning && window.interval) stopTimer(false);
-            }
-        });
+});
+
+timerRef.child('boostEvent').on('value', (snap) => {
+
+    if (isMaster) return;
+
+    const event = snap.val();
+
+    if (!event) return;
+
+    if (event.id && event.id !== lastEventId) {
+
+        lastEventId = event.id;
+
+        window.runBoostAnimation(
+            event.totalSeconds,
+            event.durationMs,
+            event.effectClass,
+            false
+        );
+
+    }
+
+});
 
         updateTimerDisplay();
     </script>
