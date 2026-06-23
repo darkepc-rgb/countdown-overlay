@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Roulette - Solid Version</title>
+    <title>Countdown Timer - Super Real-time Version</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
         body {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; background-color: transparent; color: white;
-            font-family: 'Itim', cursive; text-align: center; margin: 0;
-            padding: 20px 0; box-sizing: border-box;
+            height: 100vh; background-color: transparent; color: white;
+            font-family: 'Itim', cursive; text-align: center; margin: 0; overflow: hidden;
         }
         .timer-stack-wrapper {
             position: relative; display: flex; align-items: center; justify-content: center;
@@ -28,47 +27,6 @@
             width: 100%; height: 100%; object-fit: contain;
             transition: opacity 0.5s ease-in-out, transform 0.3s ease-out; opacity: 1;
         }
-
-        .mode-indicator {
-            font-size: 22px; margin-top: 15px; margin-bottom: 0px; font-weight: bold; 
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 1px;
-        }
-        .mode-indicator span { color: #ffaa00; text-shadow: 0 0 10px #ffaa00; }
-
-        .roulette-container {
-            position: relative; width: 576px; padding: 5px 0;
-            margin-top: 18px;    
-            margin-bottom: 35px; 
-            display: flex; justify-content: center;
-        }
-        .pointer {
-            position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
-            color: #ff2222; font-size: 42px; z-index: 10; text-shadow: 0 2px 8px rgba(255, 0, 0, 0.8);
-        }
-        .window {
-            width: 100%; overflow: hidden; background: #050505; border: 3px solid #333;
-            border-radius: 12px; padding: 15px 0; position: relative;
-            box-shadow: inset 0 0 25px rgba(0,0,0,1), 0 5px 15px rgba(0,0,0,0.5);
-        }
-        .window::before, .window::after {
-            content: ''; position: absolute; top: 0; bottom: 0; width: 20%; z-index: 5; pointer-events: none;
-        }
-        .window::before { left: 0; background: linear-gradient(to right, #050505, transparent); }
-        .window::after { right: 0; background: linear-gradient(to left, #050505, transparent); }
-        
-        .track { display: flex; transition: transform 4s cubic-bezier(0.05, 0.9, 0.1, 1); transform: translateX(0); }
-        .item {
-            min-width: 160px; height: 76px; margin: 0 12px; background: #1c1c1c; 
-            border: 2px solid #3b3b3b; border-radius: 8px; display: flex; justify-content: center;
-            align-items: center; font-size: 2.35rem; font-weight: 900; box-sizing: border-box;
-            transition: transform 0.3s, box-shadow 0.3s, color 0.3s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.8); -webkit-text-stroke: 0.5px rgba(0,0,0,0.5); 
-        }
-        .item.plus { color: #39ff14; text-shadow: 0 0 5px rgba(57, 255, 20, 0.6); }
-        .item.minus { color: #ff3333; text-shadow: 0 0 5px rgba(255, 51, 51, 0.6); }
-
-        .instructions { font-size: 15px; color: #ccc; margin-top: 0px; margin-bottom: 15px; line-height: 1.5; text-shadow: 0 1px 3px #000; }
-        .key-badge { background: #222; color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; }
 
         /* --- Animations --- */
         @keyframes pulse-soft {
@@ -115,19 +73,6 @@
             <img src="cat3-3.png" id="catImage">
         </div>
     </div>
-
-    <div class="roulette-container">
-        <div class="pointer">▼</div>
-        <div class="window" id="windowDiv">
-            <div class="track" id="track"></div>
-        </div>
-    </div>
-
-    <div class="instructions">
-        <span class="key-badge">G1 (Alt+1)</span> สุ่มวินาที | 
-        <span class="key-badge">G2 (Alt+2)</span> สุ่มนาทีใหญ่ | 
-        <span class="key-badge">G3 (Alt+3)</span> สุ่มโหมด 10 Pok (เรท 55/45)
-    </div>
     
     <div class="buttons">
         <button onclick="smartBoost(5 * 60, 1000, 'effect-5-10')">+5 นาที</button>
@@ -167,201 +112,24 @@
     const timerRef = db.ref('timer_data');
 
     window.countdownTime = 3 * 60 * 60;
+    window.localTargetTimestamp = null; // เวลาปลายทางสากล (มิลลิวินาที)
+    
     const timerElement = document.getElementById('timer');
     const catImage = document.getElementById('catImage');
     const catLayer = document.getElementById('catLayer');
-    const track = document.getElementById('track');
-    const windowDiv = document.getElementById('windowDiv');
-    const modeIndicator = document.getElementById('modeIndicator');
     window.interval = null;
     
     let isMaster = false; 
     let activeBoosts = 0;
     let lastEventId = "INIT"; 
-    let lastSpinEventId = "INIT";
     let isChangingImage = false;
-    let isSpinning = false;
-    let currentDisplayedValue = ""; 
 
-    const ITEM_TOTAL_WIDTH = 184; 
-    const ITEM_HALF_WIDTH = 92;
-
-    const secondsOptions = [
-        { value: '+ 10 S', weight: 12 }, { value: '- 10 S', weight: 12 }, 
-        { value: '+ 20 S', weight: 10 }, { value: '- 20 S', weight: 10 }, 
-        { value: '+ 30 S', weight: 7 },  { value: '- 30 S', weight: 7 }, 
-        { value: '+ 40 S', weight: 4 },  { value: '- 40 S', weight: 4 }, 
-        { value: '+ 50 S', weight: 2 },  { value: '- 50 S', weight: 2 }, 
-        { value: '+ 60 S', weight: 1 },  { value: '- 60 S', weight: 1 }
-    ];
-
-    const minutesLargeOptions = [
-        { value: '+ 5 M', weight: 35 }, { value: '- 5 M', weight: 28 }, 
-        { value: '+ 10 M', weight: 23 }, { value: '- 10 M', weight: 19 }, 
-        { value: '+ 15 M', weight: 12 }, { value: '- 15 M', weight: 10 }
-    ];
-
-    const minutesSmallOptions = [
-        { value: '+ 5 M', weight: 44 },  { value: '- 5 M', weight: 36 }, 
-        { value: '+ 10 M', weight: 22 }, { value: '- 10 M', weight: 18 }, 
-        { value: '+ 15 M', weight: 3 },  { value: '- 15 M', weight: 2 }
-    ];
-
-    function createPool(options) { 
-        let pool = []; 
-        options.forEach(opt => { for (let i = 0; i < opt.weight; i++) { pool.push(opt.value); } }); 
-        return pool; 
-    }
-
-    const secondsPool = createPool(secondsOptions);
-    const minutesLargePool = createPool(minutesLargeOptions);
-    const minutesSmallPool = createPool(minutesSmallOptions);
-
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-    function playTick() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.frequency.value = 850; osc.type = 'sine';
-        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.04);
-    }
-
-    function playTickSequence(duration = 4000) {
-        const startTime = Date.now();
-        function tickLoop() {
-            playTick();
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            if (progress < 1) {
-                const nextDelay = 30 + Math.pow(progress, 4) * 700;
-                setTimeout(tickLoop, nextDelay);
-            }
-        }
-        tickLoop();
-    }
-
-    function playWin() {
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.frequency.value = 1174.66; osc.type = 'triangle';
-        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.0);
-        osc.start(); osc.stop(audioCtx.currentTime + 1.0);
-    }
-
-    function generateTrackItems(totalItems, pool) {
-        track.innerHTML = '';
-        for (let i = 0; i < totalItems; i++) {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'item';
-            const randomVal = pool[Math.floor(Math.random() * pool.length)];
-            itemDiv.innerText = `[ ${randomVal} ]`;
-            itemDiv.classList.add(randomVal.includes('+') ? 'plus' : 'minus');
-            track.appendChild(itemDiv);
-        }
-    }
-
-    function setRouletteToValue(value) {
-        if (!value || value === "-") {
-            track.innerHTML = '';
-            track.style.transition = 'none';
-            track.style.transform = 'translateX(0)';
-            return;
-        }
-        track.innerHTML = '';
-        for (let i = 0; i < 60; i++) {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'item';
-            let currentVal = (i === 50) ? value : secondsPool[Math.floor(Math.random() * secondsPool.length)];
-            itemDiv.innerText = `[ ${currentVal} ]`;
-            itemDiv.classList.add(currentVal.includes('+') ? 'plus' : 'minus');
-            track.appendChild(itemDiv);
-        }
-        track.style.transition = 'none';
-        const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH);
-        track.style.transform = `translateX(${finalTranslateX}px)`;
-    }
-
-    // 🟢 แก้ไข: ฟังก์ชั่นสุ่มวงล้อที่ทำงานพร้อมกันทุกหน้าจอรับค่าเป้าหมายล่วงหน้ามาจาก Firebase
-    function startSpin(modeName, poolType, targetValue) {
-        if (isSpinning) return;
-        isSpinning = true;
-        if (modeIndicator) modeIndicator.innerHTML = `กำลังสุ่มโหมด: <span>${modeName}</span>`;
-        track.style.transition = 'none';
-        track.style.transform = 'translateX(0)';
-        track.offsetHeight; 
-        
-        let targetPool = secondsPool;
-        if (poolType === 'large') targetPool = minutesLargePool;
-        if (poolType === 'small') targetPool = minutesSmallPool;
-
-        // บังคับให้ไอเท็มที่สุ่มได้จริง (ดัชนีที่ 50) ตรงกับ targetValue ที่กำหนดมาจากระบบคลาวด์
-        track.innerHTML = '';
-        for (let i = 0; i < 60; i++) {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'item';
-            let currentVal = (i === 50) ? targetValue : targetPool[Math.floor(Math.random() * targetPool.length)];
-            itemDiv.innerText = `[ ${currentVal} ]`;
-            itemDiv.classList.add(currentVal.includes('+') ? 'plus' : 'minus');
-            track.appendChild(itemDiv);
-        }
-        
-        const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH); 
-        track.style.transition = 'transform 4s cubic-bezier(0.05, 0.9, 0.1, 1)';
-        track.style.transform = `translateX(${finalTranslateX}px)`;
-
-        playTickSequence(4000);
-
-        setTimeout(() => { 
-            playWin();
-            isSpinning = false; 
-            
-            // 🟢 เฉพาะเครื่องที่เป็นคนกดสุ่ม (Master) เท่านั้นที่เป็นคนส่งคำสั่งเวลาคำนวณและกระจายเหตุการณ์บินตัวเลข
-            if (isMaster) {
-                currentDisplayedValue = targetValue;
-                timerRef.update({ lastRandomValue: targetValue });
-                
-                const parts = targetValue.split(/\s+/);
-                const sign = parts[0];
-                const val = parseInt(parts[1]);
-                const unit = parts[2];
-                let totalSeconds = (unit === 'M' ? val * 60 : val);
-                if (sign === '-') totalSeconds = -totalSeconds;
-                
-                window.smartBoost(totalSeconds, 2000, 'effect-30');
-            }
-            if (modeIndicator) modeIndicator.innerHTML = 'วงล้อพร้อมสุ่ม: <span>รอสัญญาณปุ่ม G1 - G3</span>';
-        }, 4000);
-    }
-
-    // 🟢 แก้ไข: เมื่อกดคีย์บอร์ด จะทำการคำนวณผลลัพธ์ล่วงหน้าและยิงเหตุการณ์สุ่มขึ้นคลาวด์เพื่อให้ทุกหน้าจอขยับพร้อมกัน
-    window.addEventListener('keydown', (e) => {
-        let modeName = "";
-        let poolType = "";
-        let selectedPool = null;
-
-        if (e.altKey && e.key === '1') { modeName = 'วินาที'; poolType = 'seconds'; selectedPool = secondsPool; }
-        if (e.altKey && e.key === '2') { modeName = 'นาทีใหญ่'; poolType = 'large'; selectedPool = minutesLargePool; }
-        if (e.altKey && e.key === '3') { modeName = '10 Pok'; poolType = 'small'; selectedPool = minutesSmallPool; }
-
-        if (modeName) {
-            isMaster = true; // ล็อกสิทธิ์ของเครื่องควบคุมนี้ไว้
-            const targetValue = selectedPool[Math.floor(Math.random() * selectedPool.length)];
-            const eventId = "spin_" + Date.now();
-            
-            timerRef.update({
-                spinEvent: { modeName, poolType, targetValue, id: eventId }
-            });
-        }
-    });
-
+    // ซิงค์ข้อมูลไป Firebase โดยแนบระบบล็อคเวลาปลายทาง (targetTimestamp)
     function syncToFirebase() {
         timerRef.update({
             remainingTime: window.countdownTime,
             isRunning: window.interval !== null,
+            targetTimestamp: window.localTargetTimestamp || 0,
             lastActionTime: firebase.database.ServerValue.TIMESTAMP
         });
     }
@@ -394,7 +162,7 @@
         }
     }
 
-    // 🟢 แก้ไข: สั่งให้ลูปค่อยๆ วิ่งบวก/ลบตัวเลขทำงานทั้งฝั่ง Master และฝั่ง Client เพื่อให้ตัวเลขไหลเรียลไทม์พร้อมกัน
+    // ปรับระบบแอนิเมชันให้เครื่อง Slave สามารถคำนวณตัวเลขวิ่งตามอย่างนุ่มนวลไปพร้อมๆ กันได้
     window.runBoostAnimation = function(totalSeconds, durationMs, effectClass, isThisMachineMaster) {
         activeBoosts++;
         timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
@@ -420,7 +188,7 @@
             if (stepsTaken >= totalSteps) {
                 clearInterval(boostTask);
                 if (isThisMachineMaster) {
-                    syncToFirebase(); 
+                    syncToFirebase(); // เฉพาะเครื่องกดยิงข้อมูลสรุปยอดท้ายสุด
                 }
                 finishBoost(effectClass);
             }
@@ -441,6 +209,12 @@
         const eventId = "ev_" + Date.now();
         lastEventId = eventId;
         isMaster = true; 
+        
+        // ขยับค่าเวลาปลายทางของเครื่องตัวเองทันทีแบบ Real-time
+        if (window.localTargetTimestamp) {
+            window.localTargetTimestamp += totalSeconds * 1000;
+        }
+
         window.runBoostAnimation(totalSeconds, durationMs, effectClass, true);
 
         timerRef.update({
@@ -449,20 +223,35 @@
     }
 
     function countdown() {
-        if (window.countdownTime > 0) {
-            window.countdownTime--;
-            updateTimerDisplay();
+        // ถ้าอยู่ในช่วงแอนิเมชันปรับเวลา ให้ข้ามสเต็ปนี้ชั่วคราวเพื่อป้องกันการแย่งสิทธิ์แก้ไขตัวเลข
+        if (activeBoosts > 0) return;
+
+        if (window.localTargetTimestamp) {
+            // คำนวณเวลาที่เหลือจริงจาก Timestamp ปลายทาง หักลบเวลาปัจจุบัน (แก้ปัญหาเวลาเดินไม่ตรงกันและเบราว์เซอร์หน่วงตัว)
+            window.countdownTime = Math.max(0, Math.ceil((window.localTargetTimestamp - Date.now()) / 1000));
         } else {
-            window.stopTimer();
+            if (window.countdownTime > 0) window.countdownTime--;
+        }
+
+        updateTimerDisplay();
+
+        if (window.countdownTime <= 0) {
+            window.stopTimer(isMaster);
         }
     }
 
     window.startTimer = function(isLocal = true) {
         if (window.interval) clearInterval(window.interval); 
+        
+        if (isLocal) {
+            // สร้างเวลาปลายทางจากปัจจุบัน + เวลาที่เหลือก่อนเริ่มรันซ้ำ
+            window.localTargetTimestamp = Date.now() + (window.countdownTime * 1000);
+            syncToFirebase();
+        }
+        
         window.interval = setInterval(countdown, 1000);
         document.getElementById('startBtn').classList.add('active');
         document.getElementById('stopBtn').classList.remove('active');
-        if (isLocal) syncToFirebase();
     }
 
     window.stopTimer = function(isLocal = true) {
@@ -470,6 +259,7 @@
             clearInterval(window.interval);
             window.interval = null;
         }
+        window.localTargetTimestamp = null; // เคลียร์ Timestamp เมื่อหยุดเวลา
         document.getElementById('startBtn').classList.remove('active');
         document.getElementById('stopBtn').classList.add('active');
         if (isLocal) syncToFirebase();
@@ -479,61 +269,33 @@
         window.stopTimer();
         window.countdownTime = 3 * 60 * 60;
         lastEventId = "RESET_" + Date.now();
-        lastSpinEventId = "RESET_" + Date.now();
         updateTimerDisplay();
         timerRef.set({ 
             remainingTime: window.countdownTime,
             isRunning: false,
+            targetTimestamp: 0,
             boostEvent: null,
-            spinEvent: null,
-            lastRandomValue: "-",
             lastActionTime: firebase.database.ServerValue.TIMESTAMP
         });
     };
 
+    // --- Firebase Real-time Sync Engine ---
     timerRef.on('value', (snapshot) => {
         const data = snapshot.val();
-        if (!data) return; 
+        if (!data || isMaster) return; 
 
-        // 1. ซิงค์ค่าหน้ากระดานสุ่มวงล้อล่าสุด (สำหรับคนที่เปิดเบราว์เซอร์มาทีหลัง)
-        if (data.lastRandomValue && !isSpinning) {
-            if (currentDisplayedValue !== data.lastRandomValue) {
-                currentDisplayedValue = data.lastRandomValue;
-                setRouletteToValue(data.lastRandomValue);
-            }
-        }
-
-        // 2. 🟢 ซิงค์อนิเมชั่นวงล้อสุ่มให้หมุนเรียลไทม์พร้อมกันทุกหน้าจอ
-        if (data.spinEvent && data.spinEvent.id !== lastSpinEventId) {
-            if (lastSpinEventId === "INIT") {
-                lastSpinEventId = data.spinEvent.id;
-            } else {
-                lastSpinEventId = data.spinEvent.id;
-                startSpin(data.spinEvent.modeName, data.spinEvent.poolType, data.spinEvent.targetValue);
-            }
-        }
-
-        if (isMaster) return; 
-
-        // 3. ซิงค์สถานะการกดเริ่ม/หยุดเวลาปกติ
-        if (data.isRunning && !window.interval) {
-            window.countdownTime = data.remainingTime;
-            window.startTimer(false);
-        } else if (!data.isRunning && window.interval) {
-            window.stopTimer(false);
-            window.countdownTime = data.remainingTime;
-            updateTimerDisplay();
-        } else if (!window.interval) {
-            window.countdownTime = data.remainingTime;
-            updateTimerDisplay();
-        }
-
-        // 4. 🟢 ซิงค์เอฟเฟกต์และตัวเลขวิ่งเวลาบินให้นุ่มนวลพร้อมกับเครื่อง Master
+        // 1. ตรวจสอบการเพิ่ม/ลดเวลา (Boost Event) และให้ทุกเครื่องหมุนเอฟเฟกต์/ตัวเลขพร้อมกัน
         if (data.boostEvent && data.boostEvent.id !== lastEventId) {
             if (lastEventId === "INIT") {
                 lastEventId = data.boostEvent.id;
             } else {
                 lastEventId = data.boostEvent.id;
+                
+                // เครื่อง Slave ขยับเวลาเป้าหมายภายในตาม Master ทันที
+                if (window.localTargetTimestamp) {
+                    window.localTargetTimestamp += data.boostEvent.totalSeconds * 1000;
+                }
+                
                 window.runBoostAnimation(
                     data.boostEvent.totalSeconds, 
                     data.boostEvent.durationMs, 
@@ -541,6 +303,27 @@
                     false
                 );
             }
+        }
+
+        // หากตัวเลขกำลังวิ่งจากผลของ Boost อยู่ ให้ข้ามการเขียนทับด้วยระบบเวลาปกติ เพื่อไม่ให้ตัวเลขตีกัน
+        if (activeBoosts > 0) return;
+
+        // 2. จัดการการทำงาน (Start / Stop) และเวลาตาม Timestamp โลก
+        if (data.isRunning) {
+            window.localTargetTimestamp = data.targetTimestamp;
+            window.countdownTime = Math.max(0, Math.ceil((data.targetTimestamp - Date.now()) / 1000));
+            
+            if (!window.interval) {
+                window.startTimer(false);
+            } else {
+                updateTimerDisplay();
+            }
+        } else {
+            if (window.interval) {
+                window.stopTimer(false);
+            }
+            window.countdownTime = data.remainingTime;
+            updateTimerDisplay();
         }
     });
 
