@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Auto Roulette (Balanced Spacing)</title>
+    <title>Countdown Timer with Auto Roulette (Full Synced)</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
         body {
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
             min-height: 100vh; background-color: transparent; color: white;
-            font-family: 'Itim', cursive; text-align: center; margin: 0; padding-top: 20px; /* ลดลงจาก 40px */
+            font-family: 'Itim', cursive; text-align: center; margin: 0; 
+            padding-top: 60px; /* ขยายระยะขอบบนลงมาให้กด Crop บน OBS ได้ง่ายขึ้น */
         }
         
         /* =================================================== */
-        /* [1] ส่วนของ TIMER STACK (ปรับระยะกระชับขึ้น) */
+        /* [1] ส่วนของ TIMER STACK */
         /* =================================================== */
         .timer-stack-wrapper {
             position: relative; display: flex; align-items: center; justify-content: center;
             width: 576px; height: 324px; 
-            margin-bottom: 40px; /* ลดลงจาก 80px */
+            margin-bottom: 40px; 
         }
         #timer {
             position: relative; z-index: 1; font-size: 3.5rem; font-weight: bold;
@@ -34,12 +35,12 @@
         }
 
         /* =================================================== */
-        /* [2] ส่วนของ วงล้อสุ่ม ROULETTE UI (ลดระยะห่างให้พอดีสายตา) */
+        /* [2] ส่วนของ วงล้อสุ่ม ROULETTE UI */
         /* =================================================== */
         .mode-indicator {
             font-size: 22px; 
-            margin-top: 20px;    /* ลดลงจาก 40px */
-            margin-bottom: 12px; /* ลดลงจาก 25px */
+            margin-top: 20px;    
+            margin-bottom: 12px; 
             font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
             letter-spacing: 1px;
         }
@@ -47,8 +48,8 @@
 
         .roulette-container {
             position: relative; width: 576px; 
-            padding: 12px 0; /* ลดลงจาก 25px */
-            margin-bottom: 25px; /* ลดลงจาก 50px */
+            padding: 12px 0; 
+            margin-bottom: 25px; 
             display: flex; justify-content: center;
         }
         .pointer {
@@ -105,15 +106,15 @@
         /* =================================================== */
         .instructions { 
             font-size: 15px; color: #ccc; 
-            margin-top: 10px;    /* ลดลงจาก 20px */
-            margin-bottom: 20px; /* ลดลงจาก 40px */
-            line-height: 1.5;    /* ลดลงจาก 2 เพื่อให้กระชับขึ้น */
+            margin-top: 10px;    
+            margin-bottom: 20px; 
+            line-height: 1.5;    
             text-shadow: 0 1px 3px #000; 
         }
         .key-badge { background: #222; color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; }
 
         .buttons { 
-            margin-top: 12px; /* ลดลงจาก 25px */
+            margin-top: 12px; 
             z-index: 10; position: relative; 
         }
         .buttons button {
@@ -172,7 +173,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
-    // --- ตั้งค่า Firebase ดั้งเดิมของพี่ ---
+    // --- ตั้งค่า Firebase ดั้งเดิม ---
     const firebaseConfig = {
         apiKey: "AIzaSyCTqaj2D4b5p_loXgh7jjIW9D5zfi_2dUk",
         authDomain: "countdown-timer-8dd4c.firebaseapp.com",
@@ -200,6 +201,8 @@
     let isMaster = false; 
     let activeBoosts = 0;
     let lastEventId = "INIT"; 
+    let lastSpinId = "INIT"; // ระบบใหม่: ล็อกไอดีคีย์วงล้อป้องกันการสุ่มเบิ้ล
+    let amISpinInitiator = false; // ระบบใหม่: เช็กว่าเครื่องนี้เป็นต้นทางคนกดปุ่มหรือไม่
     let isChangingImage = false;
     let isSpinning = false;
 
@@ -254,20 +257,30 @@
         osc.start(); osc.stop(audioCtx.currentTime + 1.0);
     }
 
-    // --- ระบบทำงานวงล้อสุ่ม ---
-    function generateTrackItems(totalItems, pool) {
-        track.innerHTML = '';
-        for (let i = 0; i < totalItems; i++) {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'item';
-            const randomVal = pool[Math.floor(Math.random() * pool.length)];
-            itemDiv.innerText = `[ ${randomVal} ]`;
-            itemDiv.classList.add(randomVal.includes('+') ? 'plus' : 'minus');
-            track.appendChild(itemDiv);
-        }
+    // --- ระบบวงล้อกระจายสัญญาณ (Realtime Sync) ---
+    function triggerSpin(mode) {
+        if (isSpinning) return;
+        amISpinInitiator = true; // บันทึกว่าคอมเครื่องนี้เป็นคนสั่งเริ่มระบบ
+
+        let pool, modeName;
+        if (mode === 'G1') { pool = secondsPool; modeName = 'หลักวินาที (G1)'; }
+        else if (mode === 'G2') { pool = minutesLargePool; modeName = 'หลักนาทีใหญ่ (G2)'; }
+        else if (mode === 'G3') { pool = minutesSmallPool; modeName = 'โหมด 10 Pok (G3)'; }
+
+        // สุ่มดวงล่วงหน้าจากฝั่งผู้ส่งทันที เพื่อบังคับให้ผลลัพธ์ทุกหน้าจอตรงกันเป๊ะ 100%
+        const chosenValue = pool[Math.floor(Math.random() * pool.length)];
+
+        timerRef.update({
+            spinEvent: {
+                mode: mode,
+                modeName: modeName,
+                winningValue: chosenValue,
+                id: "spin_" + Date.now()
+            }
+        });
     }
 
-    function startSpin(modeName, targetPool) {
+    function startSpin(modeName, winningValue, targetPool) {
         if (isSpinning) return;
         isSpinning = true;
 
@@ -277,7 +290,16 @@
         track.offsetHeight;
 
         const totalItems = 60;
-        generateTrackItems(totalItems, targetPool);
+        track.innerHTML = '';
+        for (let i = 0; i < totalItems; i++) {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'item';
+            // บังคับให้ช่องกล่องที่ 50 (จุดชนะ) แสดงผลลัพธ์ดวงตรงกันกับที่ดึงมาจาก Firebase
+            let val = (i === 50) ? winningValue : targetPool[Math.floor(Math.random() * targetPool.length)];
+            itemDiv.innerText = `[ ${val} ]`;
+            itemDiv.classList.add(val.includes('+') ? 'plus' : 'minus');
+            track.appendChild(itemDiv);
+        }
 
         const winningIndex = 50; 
         const itemWidth = 140; 
@@ -302,10 +324,13 @@
             winningItem.style.transform = "scale(1.12)";
             winningItem.style.backgroundColor = "#222";
             
-            const rawText = winningItem.innerText.replace('[', '').replace(']', '').trim();
-            modeIndicator.innerHTML = `สุ่มเสร็จสิ้น! ผลลัพธ์: <span>${rawText}</span>`;
+            modeIndicator.innerHTML = `สุ่มเสร็จสิ้น! ผลลัพธ์: <span>${winningValue}</span>`;
             
-            parseAndTriggerBoost(rawText);
+            // เฉพาะเครื่องที่เป็นคนกดคำสั่งเริ่มสุ่มตัวจริง ถึงจะทำการคำนวณบวก/ลดเวลาเพื่อไม่ให้ซ้ำซ้อน
+            if (amISpinInitiator) {
+                parseAndTriggerBoost(winningValue);
+                amISpinInitiator = false;
+            }
         }, 4000);
     }
 
@@ -334,11 +359,11 @@
     // --- ระบบดักจับปุ่ม Macro Key ---
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.key === '1') {
-            e.preventDefault(); startSpin('หลักวินาที (G1)', secondsPool);
+            e.preventDefault(); triggerSpin('G1');
         } else if (e.altKey && e.key === '2') {
-            e.preventDefault(); startSpin('หลักนาทีใหญ่ (G2)', minutesLargePool);
+            e.preventDefault(); triggerSpin('G2');
         } else if (e.altKey && e.key === '3') {
-            e.preventDefault(); startSpin('โหมด 10 Pok (G3)', minutesSmallPool);
+            e.preventDefault(); triggerSpin('G3');
         }
     });
 
@@ -474,9 +499,36 @@
         });
     };
 
+    // --- ระบบคอยฟังคำสั่งจาก Firebase ---
     timerRef.on('value', (snapshot) => {
         const data = snapshot.val();
-        if (!data || isMaster) return;
+        if (!data) return;
+
+        // [1] ดักจับระบบโดเนทอัตโนมัติ (Transaction ล็อกระบบป้องกันสุ่มเบิ้ลกรณีเปิดหน้าจอซ้อนกัน)
+        if (data.triggerG3 === true) {
+            db.ref('timer_data/triggerG3').transaction((currentValue) => {
+                if (currentValue === true) return false;
+                return;
+            }, (error, committed) => {
+                if (committed) {
+                    triggerSpin('G3');
+                }
+            });
+        }
+
+        // [2] คำสั่งสั่งสุ่มวงล้อแบบเรียลไทม์ (ทำงานร่วมกันทุกหน้าจอสตรีมรวมถึง OBS)
+        if (data.spinEvent && data.spinEvent.id !== lastSpinId) {
+            lastSpinId = data.spinEvent.id;
+            
+            let targetPool;
+            if (data.spinEvent.mode === 'G1') targetPool = secondsPool;
+            else if (data.spinEvent.mode === 'G2') targetPool = minutesLargePool;
+            else if (data.spinEvent.mode === 'G3') targetPool = minutesSmallPool;
+
+            startSpin(data.spinEvent.modeName, data.spinEvent.winningValue, targetPool);
+        }
+
+        if (isMaster) return;
 
         if (data.isRunning && !window.interval) {
             window.countdownTime = data.remainingTime;
