@@ -178,7 +178,7 @@
     const track = document.getElementById('track');
     const windowDiv = document.getElementById('windowDiv');
     window.interval = null;
-    window.boostTask = null; // [แก้ไขจุดที่ 1] สร้างตัวแปรส่วนกลางสำหรับคุมลูปแอนิเมชันปรับเวลา
+    window.boostTask = null; 
      
     let isMaster = false; 
     let activeBoosts = 0;
@@ -460,7 +460,6 @@
     }
 
     window.runBoostAnimation = function(totalSeconds, durationMs, effectClass, isThisMachineMaster) {
-        // [แก้ไขจุดที่ 1] ป้องกันลูปแอนิเมชันรันซ้อนกัน: ถ้าอันเก่ายังไม่จบ ให้ตัดจบเคลียร์ทิ้งทันทีก่อนเริ่มอันใหม่
         if (window.boostTask) {
             clearInterval(window.boostTask);
             window.boostTask = null;
@@ -468,7 +467,7 @@
             catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
         }
 
-        activeBoosts = 1; // ล็อกสถานะไว้ว่ากำลังเล่นเอฟเฟกต์ (ไม่ใช้การบวกทับสะสม)
+        activeBoosts = 1; 
         timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
         catLayer.classList.add(effectClass);
 
@@ -502,14 +501,21 @@
     }
 
     function finishBoost(effectClass) {
-        activeBoosts = 0; // [แก้ไขจุดที่ 2] เคลียร์ให้เป็น 0 ทันทีเมื่อเล่นแอนิเมชันจบตัวล่าสุด
+        activeBoosts = 0; 
         timerElement.classList.remove('boost-up', 'boost-down');
         catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
         isMaster = false;
 
-        // ❌ เอาโค้ดบังคับดึงข้อมูลสแนปชอตย้อนหลังตรงนี้ออกไปเลยครับ 
-        // เพราะมันจะแย่งจังหวะดึงค่าเดิมก่อนหักลบเวลามาใส่ทับ ทำให้ฝั่ง OBS โดนกระชากตัวเลขกลับไปเป็น 01:59:30
-        // ปล่อยให้ฟังก์ชันอัปเดตหลักของ Firebase ด้านล่างซิงค์ล็อกค่าตอนฝั่งคอนโทรลส่งมาสำเร็จจะแม่นยำที่สุดครับ
+        // 🌟 [แก้ไขใหม่] รอ 1.5 วินาทีให้มาสเตอร์ส่งข้อมูลขึ้น Firebase ให้เสร็จ 
+        // แล้วบังคับให้หน้าจอ OBS ดึง "เวลาสุทธิที่แท้จริง" มาแทนที่ตัวเลขที่วิ่งเพี้ยนไป
+        if (!isMasterControl) {
+            setTimeout(() => {
+                if (activeBoosts === 0 && !isSpinning && window.latestFirebaseData && window.latestFirebaseData.remainingTime !== undefined) {
+                    window.countdownTime = window.latestFirebaseData.remainingTime;
+                    updateTimerDisplay();
+                }
+            }, 1500); 
+        }
     }
 
     window.smartBoost = function(totalSeconds, durationMs, effectClass) {
@@ -552,7 +558,7 @@
 
     window.resetTimer = function() {
         window.stopTimer();
-        if (window.boostTask) { // เคลียร์แอนิเมชันตอนกดรีเซตด้วย
+        if (window.boostTask) { 
             clearInterval(window.boostTask);
             window.boostTask = null;
         }
@@ -572,40 +578,40 @@
         });
     };
 
+// ปรับปรุงฟังก์ชันการรับข้อมูลจาก Firebase ใหม่ให้แม่นยำ
     timerRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return; 
 
-        window.latestFirebaseData = data;
-
-        if (isFirstLoad) {
-            isFirstLoad = false;
-            if (data.boostEvent) lastEventId = data.boostEvent.id;
-            if (data.spinEvent) lastSpinId = data.spinEvent.id;
-             
-            if (data.lastRandomValue && data.lastRandomValue !== "-") {
-                if (currentDisplayedValue !== data.lastRandomValue) {
-                    currentDisplayedValue = data.lastRandomValue;
-                    localStorage.setItem('lastSpunValue', data.lastRandomValue);
-                    setRouletteToValue(data.lastRandomValue);
-                }
+        // 1. ซิงค์สถานะการวิ่ง (วิ่งหรือหยุด)
+        if (data.isRunning) {
+            if (!window.interval) {
+                // ถ้ามาสเตอร์บอกให้วิ่ง แต่เรายังไม่วิ่ง ให้เริ่มนับ
+                window.interval = setInterval(countdown, 1000);
             }
-
-            window.countdownTime = data.remainingTime !== undefined ? data.remainingTime : (3 * 60 * 60);
-             
-            if (data.isRunning) {
-                if (!window.interval) window.interval = setInterval(countdown, 1000);
-                document.getElementById('startBtn').classList.add('active');
-                document.getElementById('stopBtn').classList.remove('active');
-            } else {
-                if (window.interval) { clearInterval(window.interval); window.interval = null; }
-                document.getElementById('startBtn').classList.remove('active');
-                document.getElementById('stopBtn').classList.add('active');
+        } else {
+            if (window.interval) {
+                clearInterval(window.interval);
+                window.interval = null;
             }
-            updateTimerDisplay();
-            return; 
         }
 
+        // 2. ซิงค์เวลา (หัวใจสำคัญ: ถ้ารู้สึกว่าเวลาห่างเกิน 2 วินาที ให้ตบให้ตรงทันที)
+        if (data.remainingTime !== undefined) {
+            let drift = Math.abs(window.countdownTime - data.remainingTime);
+            
+            // ถ้าเป็นเครื่องโชว์ และเวลาห่างเกิน 2 วินาที หรือเครื่องมาสเตอร์เพิ่งอัปเดตค่ามา
+            // ให้ยึดเวลาจาก Firebase เป็นหลัก (ป้องกันเวลาเดินไม่เท่ากัน)
+            if (!isMasterControl) { 
+                if (drift > 2) { 
+                    window.countdownTime = data.remainingTime;
+                    updateTimerDisplay();
+                }
+            }
+        }
+
+        // 3. จัดการเรื่องแอนิเมชันและเหตุการณ์ต่างๆ
+        // (ส่วนของ spinEvent และ boostEvent ของเดิมใช้ได้ปกติครับ)
         if (data.spinEvent && data.spinEvent.id !== lastSpinId) {
             lastSpinId = data.spinEvent.id;
             startSpin(data.spinEvent.modeName, data.spinEvent.poolType, data.spinEvent.winnerValue);
@@ -627,7 +633,6 @@
             window.stopTimer(false);
         }
 
-        // [ระบบซิงค์หลัก] เมื่อฝั่ง OBS แอนิเมชันจบลง (activeBoosts === 0) จะดึงเวลาสุทธิจาก Firebase มาอัปเดตให้ตรงกันเป๊ะทันทีแบบเรียลไทม์
         if (!isMasterControl && !isSpinning && activeBoosts === 0) {
             window.countdownTime = data.remainingTime !== undefined ? data.remainingTime : window.countdownTime;
             updateTimerDisplay();
