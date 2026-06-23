@@ -172,7 +172,6 @@
         const db = firebase.database();
         const timerRef = db.ref('timer_data');
 
-
         window.countdownTime = 3 * 60 * 60;
         const timerElement = document.getElementById('timer');
         const catImage = document.getElementById('catImage');
@@ -329,25 +328,19 @@
                 if (window.countdownTime < 0) window.countdownTime = 0;
                 updateTimerDisplay();
 
-if (++count >= steps) {
+                if (++count >= steps) {
+                    clearInterval(timer);
+                    window.countdownTime = Math.round(window.countdownTime);
+                    if (window.countdownTime < 0) window.countdownTime = 0;
+                    updateTimerDisplay();
 
-    clearInterval(timer);
+                    if (isThisMachineMaster) {
+                        syncToFirebase();
+                        timerRef.child('boostEvent').remove();
+                    }
 
-    window.countdownTime = Math.round(window.countdownTime);
-
-    if (window.countdownTime < 0)
-        window.countdownTime = 0;
-
-    updateTimerDisplay();
-
-    if (isThisMachineMaster) {
-        syncToFirebase();
-        timerRef.child('boostEvent').remove();
-    }
-
-    finishBoost(effectClass);
-}
-
+                    finishBoost(effectClass);
+                }
             }, 1000 / fps);
         }
 
@@ -373,7 +366,8 @@ if (++count >= steps) {
                     }
                 });
             } finally {
-                setTimeout(() => { isMaster = false; }, d + 100);
+                // ยืดเวลาปลดล็อกเพื่อกันการดึงค่าเก่าจาก Firebase กลับมา
+                setTimeout(() => { isMaster = false; }, d + 1000);
             }
         }
 
@@ -384,116 +378,109 @@ if (++count >= steps) {
             });
         }
 
-window.startTimer = function(local = true) {
+        window.startTimer = function(local = true) {
+            if (IS_DISPLAY_ONLY) return;
+            if (window.interval) return;
 
-    if (IS_DISPLAY_ONLY) return;
-
-    if (window.interval) return;
-
-    window.interval = setInterval(() => {
-        if (window.countdownTime > 0) {
-            window.countdownTime--;
-            updateTimerDisplay();
+            window.interval = setInterval(() => {
+                if (window.countdownTime > 0) {
+                    window.countdownTime--;
+                    updateTimerDisplay();
+                    if (local) syncToFirebase();
+                } else {
+                    stopTimer(local);
+                }
+            }, 1000);
 
             if (local) syncToFirebase();
-        } else {
-            stopTimer(local);
         }
-    }, 1000);
 
-    if (local) syncToFirebase();
-}
+        window.stopTimer = function(local = true) {
+            if (window.interval !== null) {
+                clearInterval(window.interval);
+                window.interval = null;
+            }
 
-window.stopTimer = function(local = true) {
-    if (window.interval !== null) {
-        clearInterval(window.interval);
-        window.interval = null;
-    }
+            if (local) {
+                timerRef.update({
+                    remainingTime: Math.max(0, Math.round(window.countdownTime)),
+                    isRunning: false
+                });
+            }
+        }
 
-    if (local) {
-        timerRef.update({
-            remainingTime: Math.max(0, Math.round(window.countdownTime)),
-            isRunning: false
+        window.resetTimer = function() {
+            window.stopTimer();
+            window.countdownTime = 3 * 60 * 60;
+            updateTimerDisplay();
+            lastEventId = "INIT";
+            activeBoosts = 0;
+
+            timerRef.set({
+                remainingTime: window.countdownTime,
+                isRunning: false,
+                boostEvent: null
+            });
+        }
+
+        // --- เพิ่มการดึงค่าเริ่มต้นตอนเปิดเว็บ (Initial Load Sync) ---
+        timerRef.once('value', (snap) => {
+            const data = snap.val();
+            if (data && data.remainingTime != null) {
+                window.countdownTime = Math.round(data.remainingTime);
+                if (window.countdownTime < 0) window.countdownTime = 0;
+                updateTimerDisplay();
+                
+                if (data.isRunning && !IS_DISPLAY_ONLY && !window.interval) {
+                    startTimer(false);
+                }
+            }
         });
-    }
-}
 
-window.resetTimer = function() {
-    window.stopTimer();
+        timerRef.child('remainingTime').on('value', (snap) => {
+            if (isMaster || activeBoosts > 0) return;
 
-    window.countdownTime = 3 * 60 * 60;
-    updateTimerDisplay();
+            const value = snap.val();
+            if (value != null) {
+                // เพิ่ม Buffer เช็คความต่างเวลา เพื่อป้องกันเวลาเด้งกลับไปมาหลังจากการสุ่ม
+                if (Math.abs(window.countdownTime - Math.round(value)) > 3) {
+                    window.countdownTime = Math.round(value);
+                    if (window.countdownTime < 0) window.countdownTime = 0;
+                    updateTimerDisplay();
+                }
+            }
+        });
 
-    lastEventId = "INIT";
-    activeBoosts = 0;
+        timerRef.child('isRunning').on('value', (snap) => {
+            if (isMaster) return;
 
-timerRef.set({
-    remainingTime: window.countdownTime,
-    isRunning: false,
-    boostEvent: null
-});
+            const running = snap.val();
+            if (!IS_DISPLAY_ONLY) {
+                if (running && !window.interval) {
+                    startTimer(false);
+                }
+                if (!running && window.interval) {
+                    stopTimer(false);
+                }
+            }
+        });
 
-}
+        timerRef.child('boostEvent').on('value', (snap) => {
+            if (isMaster) return;
 
-timerRef.child('remainingTime').on('value', (snap) => {
+            const event = snap.val();
+            if (!event) return;
 
-    if (isMaster || activeBoosts > 0) return;
-
-    const value = snap.val();
-
-    if (value != null) {
-        window.countdownTime = Math.round(value);
-
-        if (window.countdownTime < 0)
-            window.countdownTime = 0;
-
-        updateTimerDisplay();
-    }
-
-});
-
-timerRef.child('isRunning').on('value', (snap) => {
-
-    if (isMaster) return;
-
-    const running = snap.val();
-
-    if (!IS_DISPLAY_ONLY) {
-
-        if (running && !window.interval) {
-            startTimer(false);
-        }
-
-        if (!running && window.interval) {
-            stopTimer(false);
-        }
-
-    }
-
-});
-
-timerRef.child('boostEvent').on('value', (snap) => {
-
-    if (isMaster) return;
-
-    const event = snap.val();
-
-    if (!event) return;
-
-    if (event.id && event.id !== lastEventId) {
-
-        lastEventId = event.id;
-
-        window.runBoostAnimation(
-            event.totalSeconds,
-            event.durationMs,
-            event.effectClass,
-            false
-        );
-
-    }
-
-});
+            if (event.id && event.id !== lastEventId) {
+                lastEventId = event.id;
+                window.runBoostAnimation(
+                    event.totalSeconds,
+                    event.durationMs,
+                    event.effectClass,
+                    false
+                );
+            }
+        });
 
         updateTimerDisplay();
     </script>
