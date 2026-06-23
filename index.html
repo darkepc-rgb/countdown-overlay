@@ -189,6 +189,7 @@
     let isMaster = false; 
     let activeBoosts = 0;
     let lastEventId = "INIT"; 
+    let lastSpinId = "INIT_SPIN";
     let isChangingImage = false;
     let isSpinning = false;
     let currentDisplayedValue = ""; 
@@ -264,12 +265,13 @@
         osc.start(); osc.stop(audioCtx.currentTime + 1.0);
     }
 
-    function generateTrackItems(totalItems, pool) {
+    // 🟢 ฟังก์ชันใหม่: สร้างแทร็กโดยล็อคค่า Winner ไว้ตำแหน่งที่ 50 ให้ตรงกันทุกจอ
+    function generateTrackItemsWithWinner(totalItems, pool, winnerValue) {
         track.innerHTML = '';
         for (let i = 0; i < totalItems; i++) {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item';
-            const randomVal = pool[Math.floor(Math.random() * pool.length)];
+            const randomVal = (i === 50) ? winnerValue : pool[Math.floor(Math.random() * pool.length)];
             itemDiv.innerText = `[ ${randomVal} ]`;
             itemDiv.classList.add(randomVal.includes('+') ? 'plus' : 'minus');
             track.appendChild(itemDiv);
@@ -301,7 +303,6 @@
         track.style.transform = `translateX(${finalTranslateX}px)`;
     }
 
-    // 🟢 ดึงค่าล่าสุดจากเครื่องมาโชว์ทันทีตอนเปิดเว็บ (ไม่ต้องรอโหลด)
     let localLastSpun = localStorage.getItem('lastSpunValue');
     if (localLastSpun) {
         currentDisplayedValue = localLastSpun;
@@ -310,14 +311,20 @@
         setRouletteToValue("-");
     }
 
-    function startSpin(modeName, targetPool) {
+    // 🟢 ฟังก์ชันหลักในการสั่งเริ่มหมุนแบบพร้อมกัน (ทั้ง Master และ Client เรียกผ่าน Firebase Listener)
+    function startSpin(modeName, poolType, winnerValue) {
         if (isSpinning) return;
         isSpinning = true;
         if (modeIndicator) modeIndicator.innerHTML = `กำลังสุ่มโหมด: <span>${modeName}</span>`;
         track.style.transition = 'none';
         track.style.transform = 'translateX(0)';
         track.offsetHeight; 
-        generateTrackItems(60, targetPool);
+        
+        let targetPool = secondsPool;
+        if (poolType === 'minutesLarge') targetPool = minutesLargePool;
+        if (poolType === 'minutesSmall') targetPool = minutesSmallPool;
+
+        generateTrackItemsWithWinner(60, targetPool, winnerValue);
         
         const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH); 
         track.style.transition = 'transform 4s cubic-bezier(0.05, 0.9, 0.1, 1)';
@@ -330,16 +337,36 @@
             isSpinning = false; 
             if (track.children[50]) {
                 track.children[50].classList.add('winner'); 
-                parseAndTriggerBoost(track.children[50].innerText);
+                // 🟢 เฉพาะเครื่อง Master เท่านั้นที่จะส่งคำสั่งนำผลลัพธ์ไปคำนวณบวก/ลดเวลาต่อ
+                if (isMaster) {
+                    parseAndTriggerBoost(track.children[50].innerText);
+                }
             }
             if (modeIndicator) modeIndicator.innerHTML = 'วงล้อพร้อมสุ่ม: <span>รอสัญญาณปุ่ม G1 - G3</span>';
         }, 4000);
     }
 
+    // 🟢 ฟังก์ชันใหม่: ส่งสัญญาณการกดคีย์บอร์ดขึ้น Firebase ก่อนเพื่อให้เครื่องตัวโชว์หมุนไปพร้อมกัน
+    function triggerSpin(modeName, poolType) {
+        if (isSpinning) return;
+        isMaster = true; 
+        
+        let targetPool = secondsPool;
+        if (poolType === 'minutesLarge') targetPool = minutesLargePool;
+        if (poolType === 'minutesSmall') targetPool = minutesSmallPool;
+
+        const randomWinner = targetPool[Math.floor(Math.random() * targetPool.length)];
+        const spinId = "spin_" + Date.now();
+
+        timerRef.update({
+            spinEvent: { modeName, poolType, winnerValue: randomWinner, id: spinId }
+        });
+    }
+
     function parseAndTriggerBoost(resultText) {
         const cleaned = resultText.replace('[', '').replace(']', '').trim();
         currentDisplayedValue = cleaned;
-        localStorage.setItem('lastSpunValue', cleaned); // 🟢 เซฟลงเครื่องด้วย
+        localStorage.setItem('lastSpunValue', cleaned); 
         timerRef.update({ lastRandomValue: cleaned });
         
         const parts = cleaned.split(/\s+/);
@@ -353,9 +380,9 @@
     }
 
     window.addEventListener('keydown', (e) => {
-        if (e.altKey && e.key === '1') startSpin('วินาที', secondsPool);
-        if (e.altKey && e.key === '2') startSpin('นาทีใหญ่', minutesLargePool);
-        if (e.altKey && e.key === '3') startSpin('10 Pok', minutesSmallPool);
+        if (e.altKey && e.key === '1') triggerSpin('วินาที', 'seconds');
+        if (e.altKey && e.key === '2') triggerSpin('นาทีใหญ่', 'minutesLarge');
+        if (e.altKey && e.key === '3') triggerSpin('10 Pok', 'minutesSmall');
     });
 
     function syncToFirebase() {
@@ -394,40 +421,38 @@
         }
     }
 
+    // 🟢 ปรับปรุงฟังก์ชันแอนิเมชันให้ฝั่ง Client รันเลขวิ่งสมูทแบบ 30 FPS ไปพร้อม ๆ กันด้วย
     window.runBoostAnimation = function(totalSeconds, durationMs, effectClass, isThisMachineMaster) {
         activeBoosts++;
         timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
         catLayer.classList.add(effectClass);
 
-        if (isThisMachineMaster) {
-            const fps = 30; 
-            const totalSteps = (durationMs / 1000) * fps;
-            const incrementPerStep = totalSeconds / totalSteps;
-            let stepsTaken = 0;
-            let accumulatedChange = 0;
-            let lastIntegerChange = 0;
+        const fps = 30; 
+        const totalSteps = (durationMs / 1000) * fps;
+        const incrementPerStep = totalSeconds / totalSteps;
+        let stepsTaken = 0;
+        let accumulatedChange = 0;
+        let lastIntegerChange = 0;
 
-            let boostTask = setInterval(() => {
-                stepsTaken++;
-                accumulatedChange += incrementPerStep;
-                let currentIntegerChange = Math.round(accumulatedChange);
-                let diff = currentIntegerChange - lastIntegerChange;
-                lastIntegerChange = currentIntegerChange;
+        let boostTask = setInterval(() => {
+            stepsTaken++;
+            accumulatedChange += incrementPerStep;
+            let currentIntegerChange = Math.round(accumulatedChange);
+            let diff = currentIntegerChange - lastIntegerChange;
+            lastIntegerChange = currentIntegerChange;
 
-                window.countdownTime = Math.max(0, window.countdownTime + diff);
-                updateTimerDisplay();
+            window.countdownTime = Math.max(0, window.countdownTime + diff);
+            updateTimerDisplay();
 
-                if (stepsTaken >= totalSteps) {
-                    clearInterval(boostTask);
+            if (stepsTaken >= totalSteps) {
+                clearInterval(boostTask);
+                // 🟢 เฉพาะ Master เท่านั้นที่จะส่งค่าสรุปเวลาสุดท้ายขึ้น Firebase เพื่อป้องกันคำสั่งทับซ้อน
+                if (isThisMachineMaster) {
                     syncToFirebase(); 
-                    finishBoost(effectClass);
                 }
-            }, 1000 / fps);
-        } else {
-            setTimeout(() => {
                 finishBoost(effectClass);
-            }, durationMs);
-        }
+            }
+        }, 1000 / fps);
     }
 
     function finishBoost(effectClass) {
@@ -478,7 +503,6 @@
         if (isLocal) syncToFirebase();
     }
 
-    // 🟢 แก้ไขปุ่มรีเซต ไม่ให้ไปล้างค่าวงล้อที่โชว์อยู่
     window.resetTimer = function() {
         window.stopTimer();
         window.countdownTime = 3 * 60 * 60;
@@ -500,8 +524,8 @@
         if (isFirstLoad) {
             isFirstLoad = false;
             if (data.boostEvent) lastEventId = data.boostEvent.id;
+            if (data.spinEvent) lastSpinId = data.spinEvent.id;
             
-            // 🟢 ตรวจสอบค่าจาก Firebase ถ้ามีก็อัปเดตลงเครื่องด้วย
             if (data.lastRandomValue && data.lastRandomValue !== "-") {
                 if (currentDisplayedValue !== data.lastRandomValue) {
                     currentDisplayedValue = data.lastRandomValue;
@@ -525,10 +549,16 @@
             return; 
         }
 
+        // 🟢 เช็ค Event การสุ่มวงล้อจาก Firebase (ให้แสดงแอนิเมชันตอนหมุนพร้อมกัน)
+        if (data.spinEvent && data.spinEvent.id !== lastSpinId) {
+            lastSpinId = data.spinEvent.id;
+            startSpin(data.spinEvent.modeName, data.spinEvent.poolType, data.spinEvent.winnerValue);
+        }
+
         if (data.lastRandomValue && !isSpinning) {
             if (currentDisplayedValue !== data.lastRandomValue && data.lastRandomValue !== "-") {
                 currentDisplayedValue = data.lastRandomValue;
-                localStorage.setItem('lastSpunValue', data.lastRandomValue); // 🟢 อัปเดตให้เครื่องลูกด้วย
+                localStorage.setItem('lastSpunValue', data.lastRandomValue); 
                 setRouletteToValue(data.lastRandomValue);
             }
         }
