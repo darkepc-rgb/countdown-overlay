@@ -8,7 +8,6 @@
     <style>
         body {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            /* 🟢 แก้ไขตรงนี้: ใช้ min-height แทน height เพื่อรองรับความสูงของวงล้อสุ่ม ไม่ให้บีบกันจนเพี้ยนในจอเล็ก */
             min-height: 100vh; background-color: transparent; color: white;
             font-family: 'Itim', cursive; text-align: center; margin: 0;
             padding: 20px 0; box-sizing: border-box;
@@ -30,7 +29,6 @@
             transition: opacity 0.5s ease-in-out, transform 0.3s ease-out; opacity: 1;
         }
 
-        /* --- 🟢 ส่วนของวงล้อสุ่ม (Roulette Styles) แบบล็อกระยะตายตัว --- */
         .mode-indicator {
             font-size: 22px; margin-top: 15px; margin-bottom: 0px; font-weight: bold; 
             text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 1px;
@@ -39,9 +37,8 @@
 
         .roulette-container {
             position: relative; width: 576px; padding: 5px 0;
-            /* 🟢 ปรับตรงนี้: ลดช่องไฟด้านบนลงเหลือครึ่งนึง (จาก 35px เป็น 18px) เพื่อให้กรอบสุ่มขยับขึ้นไปชิดกับชุดบนมากขึ้น */
             margin-top: 18px;    
-            margin-bottom: 35px; /* เว้นช่องไฟด้านล่างกันชนปุ่ม G1 G2 */
+            margin-bottom: 35px; 
             display: flex; justify-content: center;
         }
         .pointer {
@@ -73,7 +70,6 @@
         .instructions { font-size: 15px; color: #ccc; margin-top: 0px; margin-bottom: 15px; line-height: 1.5; text-shadow: 0 1px 3px #000; }
         .key-badge { background: #222; color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; }
 
-        /* --- Animations --- */
         @keyframes pulse-soft {
             0% { transform: scale(1); filter: brightness(1); }
             50% { transform: scale(1.02); filter: brightness(1.1); }
@@ -181,7 +177,7 @@
     let isMaster = false; 
     let activeBoosts = 0;
     let lastEventId = "INIT"; 
-    let lastSpinId = "INIT"; // 🟢 ตัวแปรสำหรับจับ Event ID ของวงล้อสุ่มเรียลไทม์
+    let lastSpinId = "INIT"; 
     let isChangingImage = false;
     let isSpinning = false;
     let currentDisplayedValue = ""; 
@@ -255,18 +251,6 @@
         osc.start(); osc.stop(audioCtx.currentTime + 1.0);
     }
 
-    function generateTrackItems(totalItems, pool) {
-        track.innerHTML = '';
-        for (let i = 0; i < totalItems; i++) {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'item';
-            const randomVal = pool[Math.floor(Math.random() * pool.length)];
-            itemDiv.innerText = `[ ${randomVal} ]`;
-            itemDiv.classList.add(randomVal.includes('+') ? 'plus' : 'minus');
-            track.appendChild(itemDiv);
-        }
-    }
-
     function setRouletteToValue(value) {
         if (!value || value === "-") {
             track.innerHTML = '';
@@ -288,13 +272,11 @@
         track.style.transform = `translateX(${finalTranslateX}px)`;
     }
 
-    /* 🟢 ปรับปรุงฟังก์ชันหมุน: ให้ล็อกเป้าผลลัพธ์ล่วงหน้าเพื่อให้เรียลไทม์ทำงานได้ตรงกันทุกจอ */
     function startSpin(modeName, targetPool, targetValue) {
         if (isSpinning) return;
         isSpinning = true;
         if (modeIndicator) modeIndicator.innerHTML = `กำลังสุ่มโหมด: <span>${modeName}</span>`;
         
-        // สร้าง Track items ล็อกเป้าที่ช่อง 50
         track.innerHTML = '';
         for (let i = 0; i < 60; i++) {
             const itemDiv = document.createElement('div');
@@ -329,7 +311,7 @@
         const cleaned = resultText.replace('[', '').replace(']', '').trim();
         currentDisplayedValue = cleaned;
         
-        // ส่งผลสรุปขึ้นเฉพาะตอนหมุนหยุดแล้ว
+        // 🟢 เมื่อวงล้อหยุดหมุน ให้เครื่องที่กดสั่ง (isMaster) บันทึกค่าผลลัพธ์ลง Firebase เท่านั้น
         if (isMaster) {
             timerRef.update({ lastRandomValue: cleaned });
         }
@@ -341,10 +323,13 @@
         let totalSeconds = (unit === 'M' ? val * 60 : val);
         if (sign === '-') totalSeconds = -totalSeconds;
         
-        window.smartBoost(totalSeconds, 2000, 'effect-30');
+        // 🟢 รันแอนิเมชันปรับเวลาเฉพาะเครื่องที่กดสั่งตรงๆ (เพราะเครื่องอื่นจะโดนสั่งผ่าน Firebase boostEvent อยู่แล้ว)
+        if (isMaster) {
+            window.smartBoost(totalSeconds, 2000, 'effect-30');
+        }
     }
 
-    /* 🟢 แก้ไขส่วนคีย์บอร์ด: สุ่มผลลัพธ์ทันทีแล้วโยน Event ไปหมุนพร้อมกันกับจอสตรีม */
+    /* 🟢 ปรับปรุง: ไม่ว่าเปิดจอไหนอยู่ ถ้ากดคีย์บอร์ด จะทำการล็อกผลลัพธ์แล้วโยนขึ้น Firebase ทันที */
     window.addEventListener('keydown', (e) => {
         if (isSpinning) return;
 
@@ -357,13 +342,12 @@
         if (e.altKey && e.key === '3') { modeName = '10 Pok'; pool = minutesSmallPool; poolType = 'minutesSmall'; }
 
         if (pool) {
-            isMaster = true;
-            // สุ่มล็อกผลลัพธ์ล่วงหน้าเพื่อส่งให้ Client ตัวอื่นสร้างตามทันที
+            isMaster = true; // ตั้งค่าตัวเราเองเป็นผู้สั่งการหลักรอบนี้
             const chosenValue = pool[Math.floor(Math.random() * pool.length)];
             const spinId = "spin_" + Date.now();
             lastSpinId = spinId;
 
-            // บันทึก Event สุ่มวงล้อขึ้น Firebase
+            // ส่งข้อมูลสุ่มขึ้น Firebase เพื่อให้ทุกจอเริ่มหมุนพร้อมกัน
             timerRef.update({
                 spinEvent: {
                     modeName: modeName,
@@ -372,9 +356,6 @@
                     id: spinId
                 }
             });
-
-            // หมุนบนเครื่องหลักเอง
-            startSpin(modeName, pool, chosenValue);
         }
     });
 
@@ -414,7 +395,6 @@
         }
     }
 
-    /* 🟢 แก้ไขฟังก์ชันนี้: ให้ทุกเครื่องรันอนิเมชันเพิ่ม/ลดเวลาเรียลไทม์พร้อมกัน */
     window.runBoostAnimation = function(totalSeconds, durationMs, effectClass, isThisMachineMaster) {
         activeBoosts++;
         timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
@@ -439,7 +419,6 @@
 
             if (stepsTaken >= totalSteps) {
                 clearInterval(boostTask);
-                // 🟢 เฉพาะเครื่องที่เป็นคนกดสั่ง (Master) เท่านั้นที่มีหน้าที่อัปเดตค่าสรุปสุดท้ายขึ้น Firebase 
                 if (isThisMachineMaster) {
                     syncToFirebase(); 
                 }
@@ -454,7 +433,7 @@
             activeBoosts = 0;
             timerElement.classList.remove('boost-up', 'boost-down');
             catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-            isMaster = false;
+            isMaster = false; // ปลดล็อก Master เมื่ออนิเมชันจบลง
         }
     }
 
@@ -502,7 +481,6 @@
         lastEventId = "RESET_" + Date.now();
         updateTimerDisplay();
         
-        // 🟢 แก้ไขตรงนี้: ไม่ล้างค่า boostEvent เป็น null ทั้งหมด แต่ส่ง Object เคลียร์ และจงใจไม่ยุ่งกับ lastRandomValue ค่าเดิมจึงไม่หายไปไหน
         timerRef.update({ 
             remainingTime: window.countdownTime,
             isRunning: false,
@@ -515,19 +493,17 @@
         const data = snapshot.val();
         if (!data) return; 
 
-        // 🟢 เพิ่มระบบดักฟัง Event การหมุนวงล้อ: ส่งไปให้เครื่อง Client (หน้าจอสตรีม) เริ่มสปินพร้อมกันอย่างเป็นระเบียบ
+        // 🟢 ดักฟัง Event การหมุนวงล้อ: ทุกๆ จอ (รวมถึงจอหลักและจออื่น) จะมาวิ่งเริ่มหมุนไปพร้อมกันตรงนี้
         if (data.spinEvent && data.spinEvent.id !== lastSpinId) {
             lastSpinId = data.spinEvent.id;
-            if (!isMaster) {
-                let targetPool = secondsPool;
-                if (data.spinEvent.poolType === 'minutesLarge') targetPool = minutesLargePool;
-                if (data.spinEvent.poolType === 'minutesSmall') targetPool = minutesSmallPool;
+            
+            let targetPool = secondsPool;
+            if (data.spinEvent.poolType === 'minutesLarge') targetPool = minutesLargePool;
+            if (data.spinEvent.poolType === 'minutesSmall') targetPool = minutesSmallPool;
 
-                startSpin(data.spinEvent.modeName, targetPool, data.spinEvent.chosenValue);
-            }
+            startSpin(data.spinEvent.modeName, targetPool, data.spinEvent.chosenValue);
         }
 
-        // 🟢 ตรวจสอบและวาดตำแหน่งวงล้อจากค่าล่าสุดที่มีอยู่ใน Firebase เสมอ (แก้ไขปัญหาตอนเปิดปิดหน้าเว็บใหม่)
         if (data.lastRandomValue && !isSpinning) {
             if (currentDisplayedValue !== data.lastRandomValue) {
                 currentDisplayedValue = data.lastRandomValue;
@@ -535,20 +511,21 @@
             }
         }
 
-        // 🟢 ดักฟัง event เพิ่มลดเวลาของตัวเองที่สั่งจาก Firebase เพื่อความเสถียร
         if (data.boostEvent && data.boostEvent.id !== lastEventId) {
             if (lastEventId === "INIT") {
                 lastEventId = data.boostEvent.id;
             } else {
                 lastEventId = data.boostEvent.id;
-                // ป้องกันกรณีส่งค่ารีเซ็ต (0) เข้ามาชนอนิเมชัน
                 if (data.boostEvent.totalSeconds !== 0) {
-                    window.runBoostAnimation(
-                        data.boostEvent.totalSeconds, 
-                        data.boostEvent.durationMs, 
-                        data.boostEvent.effectClass,
-                        false // เครื่อง Client อื่นๆ ไม่ต้อง Sync ซ้ำ
-                    );
+                    // 🟢 ถ้าเราไม่ใช่คนกดสั่งปุ่มเพิ่มเวลาตรงๆ (สตรีมอยู่) ให้รันแอนิเมชันเวลาตามค่า Firebase
+                    if (!isMaster) {
+                        window.runBoostAnimation(
+                            data.boostEvent.totalSeconds, 
+                            data.boostEvent.durationMs, 
+                            data.boostEvent.effectClass,
+                            false 
+                        );
+                    }
                 }
             }
         }
