@@ -372,6 +372,68 @@
         if (e.altKey && e.key === '3') triggerSpin('10 Pok', 'minutesSmall');
     });
 
+    // =========================================================================
+    // 🚀 [ใหม่] ระบบเชื่อมต่อตรง TikFinity Local WebSocket (ดักของขวัญเรียลไทม์)
+    // =========================================================================
+    const isMasterControl = new URLSearchParams(window.location.search).get('master') === '1' || window.location.protocol === 'file:';
+
+    if (isMasterControl) {
+        function connectTikFinity() {
+            const ws = new WebSocket('ws://localhost:21213/');
+
+            ws.onopen = () => {
+                console.log('%c[TikFinity] เชื่อมต่อสำเร็จแล้ว! ระบบพร้อมสุ่มอัตโนมัติเบื้องหลัง', 'color: #2ecc71; font-weight: bold;');
+            };
+
+ws.onmessage = (event) => {
+                try {
+                    const payload = JSON.parse(event.data);
+                    
+                    // ดักจับเมื่อมีคนส่งของขวัญเข้ามา
+                    if (payload.event === 'gift') {
+                        const giftData = payload.data;
+                        
+                        // ดึงจำนวนเหรียญ (รองรับทั้งระบบ coins และ diamonds ของ TikFinity)
+                        const coinCount = giftData.coins || giftData.diamonds || 1; 
+                        
+                        console.log(`[TikFinity] ของขวัญ: ${giftData.gift_name} | ราคา: ${coinCount} เหรียญ`);
+
+                        if (isSpinning) return; // ถ้าวงล้อกำลังหมุนอยู่ ให้ข้ามไปก่อน
+
+                        // 💰 เช็คเงื่อนไขตามจำนวนเหรียญ
+                        if (coinCount === 1) { 
+                            // ถ้าส่งของขวัญ 1 เหรียญ (เช่น โรส, ติ๊กต็อก, นิ้วโป้ง) -> สุ่มหลักวินาที
+                            triggerSpin('วินาที', 'seconds');
+                        } 
+                        else if (coinCount === 5) {
+                            // ถ้าส่งของขวัญ 5 เหรียญ (เช่น หัวใจนิ้ว, โดนัท) -> สุ่มหลักนาทีใหญ่
+                            triggerSpin('นาทีใหญ่', 'minutesLarge');
+                        }
+                        else if (coinCount === 10) {
+                            // แถมให้: ถ้าอยากได้โหมด 10 Pok เรท 55/45 สำหรับของขวัญ 10 เหรียญ
+                            triggerSpin('10 Pok', 'minutesSmall');
+                        }
+                    }
+                } catch (err) {
+                    console.error('[TikFinity Parse Error]', err);
+                }
+            };
+
+            ws.onclose = () => {
+                console.log('%c[TikFinity] หลุดการเชื่อมต่อ พยายามต่อใหม่ในอีก 5 วินาที...', 'color: #e74c3c;');
+                setTimeout(connectTikFinity, 5000); 
+            };
+
+            ws.onerror = (err) => {
+                ws.close();
+            };
+        }
+
+        // เริ่มทำงานระบบท่อเชื่อม TikFinity
+        connectTikFinity();
+    }
+    // =========================================================================
+
     function syncToFirebase() {
         timerRef.update({
             remainingTime: window.countdownTime,
@@ -426,7 +488,6 @@
             let currentIntegerChange = Math.round(accumulatedChange);
             let diff = currentIntegerChange - lastIntegerChange;
             
-            // 🟢 ลบคำว่า 'let' ออกเพื่อไม่ให้ตัวแปรประกาศซ้ำซ้อนจนระบบแอนิเมชันรันเลขล่ม คราวนี้เลขจะวิ่งได้สมูทเรียบเนียน
             lastIntegerChange = currentIntegerChange;
 
             window.countdownTime = Math.max(0, window.countdownTime + diff);
