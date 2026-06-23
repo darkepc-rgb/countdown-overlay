@@ -3,18 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Roulette - Sync Version</title>
+    <title>Countdown Timer with Auto Roulette (Balanced Spacing)</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <style>
         body {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
             min-height: 100vh; background-color: transparent; color: white;
-            font-family: 'Itim', cursive; text-align: center; margin: 0;
-            padding: 20px 0; box-sizing: border-box;
+            font-family: 'Itim', cursive; text-align: center; margin: 0; padding-top: 60px;
         }
+        
+        /* =================================================== */
+        /* [1] ส่วนของ TIMER STACK (ปรับระยะกระชับขึ้น) */
+        /* =================================================== */
         .timer-stack-wrapper {
             position: relative; display: flex; align-items: center; justify-content: center;
             width: 576px; height: 324px; 
+            margin-bottom: 40px;
         }
         #timer {
             position: relative; z-index: 1; font-size: 3.5rem; font-weight: bold;
@@ -29,56 +33,61 @@
             transition: opacity 0.5s ease-in-out, transform 0.3s ease-out; opacity: 1;
         }
 
+        /* =================================================== */
+        /* [2] ส่วนของ วงล้อสุ่ม ROULETTE UI (ลดระยะห่างให้พอดีสายตา) */
+        /* =================================================== */
+        .mode-indicator {
+            font-size: 22px; 
+            margin-top: 20px;
+            margin-bottom: 12px;
+            font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            letter-spacing: 1px;
+        }
+        .mode-indicator span { color: #ffaa00; text-shadow: 0 0 10px #ffaa00; }
+
         .roulette-container {
-            position: relative; width: 576px; padding: 5px 0;
-            margin-top: 18px;    
-            margin-bottom: 35px; 
+            position: relative; width: 576px; 
+            padding: 12px 0;
+            margin-bottom: 25px;
             display: flex; justify-content: center;
         }
         .pointer {
-            position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
-            color: #ff2222; font-size: 42px; z-index: 10; text-shadow: 0 2px 8px rgba(255, 0, 0, 0.8);
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            color: #ff2222; font-size: 42px; z-index: 10; text-shadow: 0 2px 8px rgba(255, 0, 0, 0.6);
         }
         .window {
-            width: 100%; overflow: hidden; background: #050505; border: 3px solid #333;
-            border-radius: 12px; padding: 15px 0; position: relative;
-            box-shadow: inset 0 0 25px rgba(0,0,0,1), 0 5px 15px rgba(0,0,0,0.5);
+            width: 100%; overflow: hidden; background: #0f0f0f; border: 3px solid #333;
+            border-radius: 12px; padding: 20px 0; position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 5px 15px rgba(0,0,0,0.5);
         }
         .window::before, .window::after {
             content: ''; position: absolute; top: 0; bottom: 0; width: 20%; z-index: 5; pointer-events: none;
         }
-        .window::before { left: 0; background: linear-gradient(to right, #050505, transparent); }
-        .window::after { right: 0; background: linear-gradient(to left, #050505, transparent); }
-         
-        .track { display: flex; transition: transform 4s cubic-bezier(0.05, 0.9, 0.1, 1); transform: translateX(0); }
+        .window::before { left: 0; background: linear-gradient(to right, #0f0f0f, transparent); }
+        .window::after { right: 0; background: linear-gradient(to left, #0f0f0f, transparent); }
+
+        .track { display: flex; transition: transform 4s cubic-bezier(0.15, 0.85, 0.15, 1); transform: translateX(0); }
         .item {
-            min-width: 160px; height: 76px; margin: 0 12px; background: #1c1c1c; 
-            border: 2px solid #3b3b3b; border-radius: 8px; display: flex; justify-content: center;
-            align-items: center; font-size: 2.35rem; font-weight: 900; box-sizing: border-box;
-            transition: transform 0.3s, box-shadow 0.3s, color 0.3s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.8); -webkit-text-stroke: 0.5px rgba(0,0,0,0.5); 
+            min-width: 120px; height: 50px; margin: 0 10px; background: #000;
+            border: 2px solid #222; border-radius: 8px; display: flex; justify-content: center;
+            align-items: center; font-size: 22px; font-weight: bold; box-sizing: border-box;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, background-color 0.4s ease;
         }
-        .item.plus { color: #39ff14; text-shadow: 0 0 5px rgba(57, 255, 20, 0.6); }
-        .item.minus { color: #ff3333; text-shadow: 0 0 5px rgba(255, 51, 51, 0.6); }
+        .item.plus { color: #39ff14; text-shadow: 0 0 5px #39ff14; }
+        .item.minus { color: #ff3333; text-shadow: 0 0 5px #ff3333; }
 
-        .instructions { font-size: 15px; color: #ccc; margin-top: 0px; margin-bottom: 15px; line-height: 1.5; text-shadow: 0 1px 3px #000; }
-        .key-badge { background: #222; color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; }
+        /* ✨ เพิ่มเอฟเฟกต์สำหรับช่องที่ชนะรางวัลให้เด้งเด่นมีมิติชัดเจน */
+        .item.winner {
+            transform: scale(1.18) !important;
+            background-color: #1a1a1a !important;
+            border-color: #ffaa00 !important;
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.6), inset 0 0 10px rgba(255, 170, 0, 0.3);
+            z-index: 15;
+        }
 
-        @keyframes pulse-soft {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.02); filter: brightness(1.1); }
-            100% { transform: scale(1); filter: brightness(1); }
-        }
-        @keyframes pulse-medium {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.05); filter: brightness(1.2); }
-            100% { transform: scale(1); filter: brightness(1); }
-        }
-        @keyframes pulse-strong {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.08); filter: brightness(1.3); }
-            100% { transform: scale(1); filter: brightness(1); }
-        }
+        @keyframes pulse-soft { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.02); filter: brightness(1.1); } 100% { transform: scale(1); filter: brightness(1); } }
+        @keyframes pulse-medium { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.05); filter: brightness(1.2); } 100% { transform: scale(1); filter: brightness(1); } }
+        @keyframes pulse-strong { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.08); filter: brightness(1.3); } 100% { transform: scale(1); filter: brightness(1); } }
         .effect-5-10 { animation: pulse-soft 0.8s infinite ease-in-out; }
         .effect-30 { animation: pulse-medium 0.5s infinite ease-in-out; }
         .effect-60 { animation: pulse-strong 0.4s infinite ease-in-out; }
@@ -87,17 +96,20 @@
         .boost-up { color: #2ecc71 !important; }
         .boost-down { color: #ff4757 !important; }
 
-        .buttons { margin-top: 20px; z-index: 10; position: relative; }
+        .instructions { font-size: 15px; color: #ccc; margin-top: 10px; margin-bottom: 20px; line-height: 1.5; text-shadow: 0 1px 3px #000; }
+        .key-badge { background: #222; color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; }
+
+        .buttons { margin-top: 12px; z-index: 10; position: relative; }
         .buttons button {
-            margin: 5px; padding: 10px 18px; font-size: 1rem; font-weight: bold;
+            margin: 4px; padding: 10px 16px; font-size: 0.95rem; font-weight: bold;
             cursor: pointer; border: 2px solid #333; background: #ffffff;
             color: #000; border-radius: 8px; font-family: 'Itim', cursive;
-            box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3); transition: all 0.1s ease;
+            box-shadow: 0 3px 0 #999, 0 4px 8px rgba(0,0,0,0.3); transition: all 0.1s ease;
         }
-        .buttons button:active { transform: translateY(3px); box-shadow: 0 1px 0 #777; }
-        #startBtn.active { background: #27ae60; color: white; border-color: #1e8449; box-shadow: 0 4px 0 #1e8449; }
-        #stopBtn.active { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: 0 4px 0 #c0392b; }
-        #resetBtn { background: #f39c12; color: white; border-color: #d35400; box-shadow: 0 4px 0 #d35400; }
+        .buttons button:active { transform: translateY(2px); box-shadow: 0 1px 0 #777; }
+        #startBtn.active { background: #27ae60; color: white; border-color: #1e8449; box-shadow: 0 3px 0 #1e8449; }
+        #stopBtn.active { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: 0 3px 0 #c0392b; }
+        #resetBtn { background: #f39c12; color: white; border-color: #d35400; box-shadow: 0 3px 0 #d35400; }
     </style>
 </head>
 <body>
@@ -108,14 +120,14 @@
             <img src="cat3-3.png" id="catImage">
         </div>
     </div>
-
+    
+    <div class="mode-indicator" id="modeIndicator">วงล้อพร้อมสุ่ม: <span>รอสัญญาณปุ่ม G1 - G3</span></div>
     <div class="roulette-container">
         <div class="pointer">▼</div>
         <div class="window" id="windowDiv">
             <div class="track" id="track"></div>
         </div>
     </div>
-
     <div class="instructions">
         <span class="key-badge">G1 (Alt+1)</span> สุ่มวินาที | 
         <span class="key-badge">G2 (Alt+2)</span> สุ่มนาทีใหญ่ | 
@@ -165,202 +177,151 @@
     const catLayer = document.getElementById('catLayer');
     const track = document.getElementById('track');
     const windowDiv = document.getElementById('windowDiv');
+    const modeIndicator = document.getElementById('modeIndicator');
     window.interval = null;
     
     let isMaster = false; 
     let activeBoosts = 0;
     let lastEventId = "INIT"; 
-    let lastSpinId = "INIT"; 
     let isChangingImage = false;
     let isSpinning = false;
-    let currentDisplayedValue = ""; 
-
-    const ITEM_TOTAL_WIDTH = 184; 
-    const ITEM_HALF_WIDTH = 92;
 
     const secondsOptions = [
-        { value: '+ 10 S', weight: 12 }, { value: '- 10 S', weight: 12 }, 
-        { value: '+ 20 S', weight: 10 }, { value: '- 20 S', weight: 10 }, 
-        { value: '+ 30 S', weight: 7 },  { value: '- 30 S', weight: 7 }, 
-        { value: '+ 40 S', weight: 4 },  { value: '- 40 S', weight: 4 }, 
-        { value: '+ 50 S', weight: 2 },  { value: '- 50 S', weight: 2 }, 
+        { value: '+ 10 S', weight: 12 }, { value: '- 10 S', weight: 12 },
+        { value: '+ 20 S', weight: 10 }, { value: '- 20 S', weight: 10 },
+        { value: '+ 30 S', weight: 7 },  { value: '- 30 S', weight: 7 },
+        { value: '+ 40 S', weight: 4 },  { value: '- 40 S', weight: 4 },
+        { value: '+ 50 S', weight: 2 },  { value: '- 50 S', weight: 2 },
         { value: '+ 60 S', weight: 1 },  { value: '- 60 S', weight: 1 }
     ];
-
     const minutesLargeOptions = [
-        { value: '+ 5 M', weight: 35 }, { value: '- 5 M', weight: 28 }, 
-        { value: '+ 10 M', weight: 23 }, { value: '- 10 M', weight: 19 }, 
-        { value: '+ 15 M', weight: 12 }, { value: '- 15 M', weight: 10 }
+        { value: '+ 5 M', weight: 33 },  { value: '- 5 M', weight: 27 },
+        { value: '+ 10 M', weight: 22 }, { value: '- 10 M', weight: 18 },
+        { value: '+ 15 M', weight: 11 }, { value: '- 15 M', weight: 9 },
+        { value: '+ 30 M', weight: 5 },  { value: '- 30 M', weight: 4 },
+        { value: '+ 60 M', weight: 3 },  { value: '- 60 M', weight: 2 }
     ];
-
     const minutesSmallOptions = [
-        { value: '+ 5 M', weight: 44 },  { value: '- 5 M', weight: 36 }, 
-        { value: '+ 10 M', weight: 22 }, { value: '- 10 M', weight: 18 }, 
-        { value: '+ 15 M', weight: 3 },  { value: '- 15 M', weight: 2 }
+        { value: '+ 5 M', weight: 44 },  { value: '- 5 M', weight: 36 },
+        { value: '+ 10 M', weight: 22 }, { value: '- 10 M', weight: 18 },
+        { value: '+ 15 M', weight: 3 },  { value: '- 15 M', weight: 2 } 
     ];
 
-    function createPool(options) { 
-        let pool = []; 
-        options.forEach(opt => { for (let i = 0; i < opt.weight; i++) { pool.push(opt.value); } }); 
-        return pool; 
+    function createPool(options) {
+        let pool = [];
+        options.forEach(opt => { for (let i = 0; i < opt.weight; i++) { pool.push(opt.value); } });
+        return pool;
     }
-
     const secondsPool = createPool(secondsOptions);
     const minutesLargePool = createPool(minutesLargeOptions);
     const minutesSmallPool = createPool(minutesSmallOptions);
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
     function playTick() {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.frequency.value = 850; osc.type = 'sine';
-        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime); 
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
         osc.start(); osc.stop(audioCtx.currentTime + 0.04);
     }
-
-    function playTickSequence(duration = 4000) {
-        const startTime = Date.now();
-        function tickLoop() {
-            if (!isSpinning) return;
-            playTick();
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            if (progress < 1) {
-                const nextDelay = 30 + Math.pow(progress, 4) * 700;
-                setTimeout(tickLoop, nextDelay);
-            }
-        }
-        tickLoop();
-    }
-
     function playWin() {
         const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.frequency.value = 1174.66; osc.type = 'triangle';
-        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.4, audioCtx.currentTime); 
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.0);
         osc.start(); osc.stop(audioCtx.currentTime + 1.0);
     }
 
-    // ฟังก์ชันสร้างรายการแบบสุ่ม 60 ช่องล่วงหน้าจากฝั่ง Master เพื่อแชร์ให้ทุกจอ
-    function generateFullTrackLayout(targetPool, targetValue) {
-        let itemsArray = [];
-        for (let i = 0; i < 60; i++) {
-            if (i === 50) {
-                itemsArray.push(targetValue);
-            } else {
-                itemsArray.push(targetPool[Math.floor(Math.random() * targetPool.length)]);
-            }
-        }
-        return itemsArray;
-    }
-
-    function setRouletteToValue(value) {
-        if (!value || value === "-") {
-            track.innerHTML = '';
-            track.style.transition = 'none';
-            track.style.transform = 'translateX(0)';
-            return;
-        }
+    function generateTrackItems(totalItems, pool) {
         track.innerHTML = '';
-        for (let i = 0; i < 60; i++) {
+        for (let i = 0; i < totalItems; i++) {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item';
-            let currentVal = (i === 50) ? value : secondsPool[Math.floor(Math.random() * secondsPool.length)];
-            itemDiv.innerText = `[ ${currentVal} ]`;
-            itemDiv.classList.add(currentVal.includes('+') ? 'plus' : 'minus');
+            const randomVal = pool[Math.floor(Math.random() * pool.length)];
+            itemDiv.innerText = `[ ${randomVal} ]`;
+            itemDiv.classList.add(randomVal.includes('+') ? 'plus' : 'minus');
             track.appendChild(itemDiv);
         }
-        track.style.transition = 'none';
-        const windowWidth = windowDiv.offsetWidth || 576;
-        const finalTranslateX = (windowWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH);
-        track.style.transform = `translateX(${finalTranslateX}px)`;
     }
 
-    // ปรับฟังก์ชัน startSpin ให้รับอาร์เรย์ trackLayout ที่ระบุตัวเลขทุกช่องมาจาก Firebase
-    function startSpin(modeName, trackLayout) {
-        if (isSpinning || !trackLayout || trackLayout.length === 0) return;
+    function startSpin(modeName, targetPool) {
+        if (isSpinning) return;
         isSpinning = true;
-        
-        track.innerHTML = '';
-        for (let i = 0; i < trackLayout.length; i++) {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'item';
-            let currentVal = trackLayout[i];
-            itemDiv.innerText = `[ ${currentVal} ]`;
-            itemDiv.classList.add(currentVal.includes('+') ? 'plus' : 'minus');
-            track.appendChild(itemDiv);
-        }
 
+        modeIndicator.innerHTML = `กำลังสุ่มโหมด: <span>${modeName}</span>`;
         track.style.transition = 'none';
         track.style.transform = 'translateX(0)';
-        track.offsetHeight; 
-        
-        const windowWidth = windowDiv.offsetWidth || 576;
-        const finalTranslateX = (windowWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH); 
-        track.style.transition = 'transform 4s cubic-bezier(0.05, 0.9, 0.1, 1)';
-        track.style.transform = `translateX(${finalTranslateX}px)`;
+        track.offsetHeight;
 
-        playTickSequence(4000);
+        const totalItems = 60;
+        generateTrackItems(totalItems, targetPool);
 
-        setTimeout(() => { 
+        const winningIndex = 50; 
+        const itemWidth = 140; 
+        const windowCenter = windowDiv.offsetWidth / 2;
+        const centerOfWinningItem = (winningIndex * itemWidth) + (itemWidth / 2);
+        const finalTranslateX = windowCenter - centerOfWinningItem;
+        const randomOffset = Math.floor(Math.random() * 30) - 15; 
+
+        track.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.15, 1)';
+        track.style.transform = `translateX(${finalTranslateX + randomOffset}px)`;
+
+        let tickInterval = setInterval(playTick, 140);
+        setTimeout(() => { clearInterval(tickInterval); tickInterval = setInterval(playTick, 280); }, 2000);
+        setTimeout(() => { clearInterval(tickInterval); tickInterval = setInterval(playTick, 480); }, 3000);
+
+        setTimeout(() => {
+            clearInterval(tickInterval);
             playWin();
-            isSpinning = false; 
-            if (track.children[50]) {
-                parseAndTriggerBoost(track.children[50].innerText);
+            isSpinning = false;
+
+            // 🛠️ แก้ไข: เปลี่ยนไปใช้คลาส .winner เพื่อล็อคอนิเมชันขยายตัวไม่ให้หายไป
+            const winningItem = track.children[winningIndex];
+            if (winningItem) {
+                winningItem.classList.add('winner');
+            }
+            
+            const rawText = winningItem ? winningItem.innerText.replace('[', '').replace(']', '').trim() : '';
+            modeIndicator.innerHTML = `สุ่มเสร็จสิ้น! ผลลัพธ์: <span>${rawText}</span>`;
+            
+            if (rawText) {
+                parseAndTriggerBoost(rawText);
             }
         }, 4000);
     }
 
     function parseAndTriggerBoost(resultText) {
-        const cleaned = resultText.replace('[', '').replace(']', '').trim();
-        currentDisplayedValue = cleaned;
-        
-        if (isMaster) {
-            timerRef.update({ lastRandomValue: cleaned });
-        }
-        
-        const parts = cleaned.split(/\s+/);
+        const parts = resultText.split(/\s+/);
         const sign = parts[0];
-        const val = parseInt(parts[1]);
+        const amount = parseInt(parts[1]);
         const unit = parts[2];
-        let totalSeconds = (unit === 'M' ? val * 60 : val);
-        if (sign === '-') totalSeconds = -totalSeconds;
-        
-        if (isMaster) {
-            window.smartBoost(totalSeconds, 2000, 'effect-30', true); 
+
+        let totalSeconds = amount;
+        if (unit === 'M') { totalSeconds = amount * 60; }
+        if (sign === '-') { totalSeconds = -totalSeconds; }
+
+        let durationMs = 1000;
+        let effectClass = 'effect-5-10';
+
+        if (unit === 'M') {
+            if (amount <= 10) { durationMs = 1000; effectClass = 'effect-5-10'; }
+            else if (amount <= 30) { durationMs = 2000; effectClass = 'effect-30'; }
+            else { durationMs = 4000; effectClass = 'effect-60'; }
         }
+
+        window.smartBoost(totalSeconds, durationMs, effectClass);
     }
 
     window.addEventListener('keydown', (e) => {
-        if (isSpinning) return;
-
-        let modeName = "";
-        let pool = null;
-        let poolType = "";
-
-        if (e.altKey && e.key === '1') { modeName = 'วินาที'; pool = secondsPool; poolType = 'seconds'; }
-        if (e.altKey && e.key === '2') { modeName = 'นาทีใหญ่'; pool = minutesLargePool; poolType = 'minutesLarge'; }
-        if (e.altKey && e.key === '3') { modeName = '10 Pok'; pool = minutesSmallPool; poolType = 'minutesSmall'; }
-
-        if (pool) {
-            isMaster = true; 
-            const chosenValue = pool[Math.floor(Math.random() * pool.length)];
-            
-            // สร้างโครงสร้างลำดับตัวเลข 60 ช่องจากฝั่งคุมเครื่องนี้เลย
-            const trackLayout = generateFullTrackLayout(pool, chosenValue);
-            const spinId = "spin_" + Date.now();
-
-            timerRef.update({
-                spinEvent: {
-                    modeName: modeName,
-                    trackLayout: trackLayout, // ส่งรายชื่อตัวเลขทั้ง 60 ช่องขึ้นคลาวด์ไปซิงค์กับจออื่น
-                    id: spinId
-                }
-            });
+        if (e.altKey && e.key === '1') {
+            e.preventDefault(); startSpin('หลักวินาที (G1)', secondsPool);
+        } else if (e.altKey && e.key === '2') {
+            e.preventDefault(); startSpin('หลักนาทีใหญ่ (G2)', minutesLargePool);
+        } else if (e.altKey && e.key === '3') {
+            e.preventDefault(); startSpin('โหมด 10 Pok (G3)', minutesSmallPool);
         }
     });
 
@@ -405,31 +366,33 @@
         timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
         catLayer.classList.add(effectClass);
 
-        const fps = 30; 
-        const totalSteps = (durationMs / 1000) * fps;
-        const incrementPerStep = totalSeconds / totalSteps;
-        let stepsTaken = 0;
-        let accumulatedChange = 0;
-        let lastIntegerChange = 0;
+        if (isThisMachineMaster) {
+            const fps = 30; 
+            const totalSteps = (durationMs / 1000) * fps;
+            const incrementPerStep = totalSeconds / totalSteps;
+            let stepsTaken = 0;
+            let accumulatedChange = 0;
+            let lastIntegerChange = 0;
 
-        let boostTask = setInterval(() => {
-            stepsTaken++;
-            accumulatedChange += incrementPerStep;
-            let currentIntegerChange = Math.round(accumulatedChange);
-            let diff = currentIntegerChange - lastIntegerChange;
-            lastIntegerChange = currentIntegerChange;
+            let boostTask = setInterval(() => {
+                stepsTaken++;
+                accumulatedChange += incrementPerStep;
+                let currentIntegerChange = Math.round(accumulatedChange);
+                let diff = currentIntegerChange - lastIntegerChange;
+                lastIntegerChange = currentIntegerChange;
 
-            window.countdownTime = Math.max(0, window.countdownTime + diff);
-            updateTimerDisplay();
+                window.countdownTime = Math.max(0, window.countdownTime + diff);
+                updateTimerDisplay();
 
-            if (stepsTaken >= totalSteps) {
-                clearInterval(boostTask);
-                if (isThisMachineMaster) {
-                    syncToFirebase(); 
+                if (stepsTaken >= totalSteps) {
+                    clearInterval(boostTask);
+                    syncToFirebase();
+                    finishBoost(effectClass);
                 }
-                finishBoost(effectClass);
-            }
-        }, 1000 / fps);
+            }, 1000 / fps);
+        } else {
+            setTimeout(() => { finishBoost(effectClass); }, durationMs);
+        }
     }
 
     function finishBoost(effectClass) {
@@ -438,14 +401,14 @@
             activeBoosts = 0;
             timerElement.classList.remove('boost-up', 'boost-down');
             catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-            isMaster = false; 
+            isMaster = false;
         }
     }
 
-    window.smartBoost = function(totalSeconds, durationMs, effectClass, keepMaster = false) {
+    window.smartBoost = function(totalSeconds, durationMs, effectClass) {
         const eventId = "ev_" + Date.now();
         lastEventId = eventId;
-        if (!keepMaster) isMaster = true; 
+        isMaster = true; 
         window.runBoostAnimation(totalSeconds, durationMs, effectClass, true);
 
         timerRef.update({
@@ -467,7 +430,7 @@
         window.interval = setInterval(countdown, 1000);
         document.getElementById('startBtn').classList.add('active');
         document.getElementById('stopBtn').classList.remove('active');
-        if (isLocal) { isMaster = true; syncToFirebase(); }
+        if (isLocal) syncToFirebase();
     }
 
     window.stopTimer = function(isLocal = true) {
@@ -477,62 +440,25 @@
         }
         document.getElementById('startBtn').classList.remove('active');
         document.getElementById('stopBtn').classList.add('active');
-        if (isLocal) { isMaster = true; syncToFirebase(); }
+        if (isLocal) syncToFirebase();
     }
 
     window.resetTimer = function() {
         window.stopTimer();
         window.countdownTime = 3 * 60 * 60;
         lastEventId = "RESET_" + Date.now();
-        currentDisplayedValue = "-";
         updateTimerDisplay();
-        
-        timerRef.update({ 
+        timerRef.set({
             remainingTime: window.countdownTime,
             isRunning: false,
-            lastRandomValue: "-",
-            spinEvent: null,
-            boostEvent: { totalSeconds: 0, durationMs: 0, effectClass: '', id: lastEventId }, 
+            boostEvent: null,
             lastActionTime: firebase.database.ServerValue.TIMESTAMP
         });
     };
 
     timerRef.on('value', (snapshot) => {
         const data = snapshot.val();
-        if (!data) return; 
-
-        // ดึงโครงสร้างชุดข้อมูลสุ่มแบบแชร์ร่วมกันมาใช้งานรันแอนิเมชัน
-        if (data.spinEvent && data.spinEvent.id !== lastSpinId) {
-            lastSpinId = data.spinEvent.id;
-            startSpin(data.spinEvent.modeName, data.spinEvent.trackLayout);
-        }
-
-        if (data.lastRandomValue && !isSpinning) {
-            if (currentDisplayedValue !== data.lastRandomValue) {
-                currentDisplayedValue = data.lastRandomValue;
-                setRouletteToValue(data.lastRandomValue);
-            }
-        }
-
-        if (data.boostEvent && data.boostEvent.id !== lastEventId) {
-            if (lastEventId === "INIT") {
-                lastEventId = data.boostEvent.id;
-            } else {
-                lastEventId = data.boostEvent.id;
-                if (data.boostEvent.totalSeconds !== 0) {
-                    if (!isMaster) {
-                        window.runBoostAnimation(
-                            data.boostEvent.totalSeconds, 
-                            data.boostEvent.durationMs, 
-                            data.boostEvent.effectClass,
-                            false 
-                        );
-                    }
-                }
-            }
-        }
-
-        if (isMaster) return; 
+        if (!data || isMaster) return;
 
         if (data.isRunning && !window.interval) {
             window.countdownTime = data.remainingTime;
@@ -545,9 +471,20 @@
             window.countdownTime = data.remainingTime;
             updateTimerDisplay();
         }
+
+        if (data.boostEvent && data.boostEvent.id !== lastEventId) {
+            if (lastEventId === "INIT") {
+                lastEventId = data.boostEvent.id;
+            } else {
+                lastEventId = data.boostEvent.id;
+                window.runBoostAnimation(data.boostEvent.totalSeconds, data.boostEvent.durationMs, data.boostEvent.effectClass, false);
+            }
+        }
     });
 
-    setTimeout(updateTimerDisplay, 100);
+    generateTrackItems(10, secondsPool);
+    track.style.transform = `translateX(${ (windowDiv.offsetWidth / 2) - 70 }px)`;
+    updateTimerDisplay();
 </script>
 </body>
 </html>
