@@ -83,7 +83,7 @@
         @keyframes pulse-soft { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.02); filter: brightness(1.1); } 100% { transform: scale(1); filter: brightness(1); } }
         @keyframes pulse-medium { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.05); filter: brightness(1.2); } 100% { transform: scale(1); filter: brightness(1); } }
         @keyframes pulse-strong { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.08); filter: brightness(1.3); } 100% { transform: scale(1); filter: brightness(1); } }
-        
+         
         .effect-5-10 { animation: pulse-soft 0.8s infinite ease-in-out; }
         .effect-30 { animation: pulse-medium 0.5s infinite ease-in-out; }
         .effect-60 { animation: pulse-strong 0.4s infinite ease-in-out; }
@@ -119,7 +119,7 @@
     </div>
 
     <div class="mode-indicator" id="modeIndicator">วงล้อพร้อมสุ่ม: <span>รอสัญญาณปุ่ม G1 - G3</span></div>
-    
+     
     <div class="roulette-container">
         <div class="pointer">▼</div>
         <div class="window" id="windowDiv">
@@ -187,6 +187,10 @@
         let activeBoosts = 0;
         let lastEventId = "INIT"; 
         let isSpinning = false;
+        
+        // ตัวแปรควบคุมการเปลี่ยนรูปภาพ (เพิ่มเข้ามาเพื่อความเสถียร)
+        let isChangingImage = false;
+        let currentCatImage = "cat3-3.png";
 
         const secondsOptions = [
             { value: '+ 10 S', weight: 12 }, { value: '- 10 S', weight: 12 }, 
@@ -310,9 +314,43 @@
             if (e.altKey && e.key === '3') startSpin('10 Pok', minutesSmallPool);
         });
 
+        // ฟังก์ชันเฟดเปลี่ยนรูปภาพอย่างนุ่มนวล
+        function fadeChangeImage(newSrc) {
+            if (currentCatImage === newSrc || isChangingImage) return;
+            isChangingImage = true;
+            currentCatImage = newSrc;
+            
+            catImage.style.opacity = 0;
+            setTimeout(() => {
+                catImage.src = newSrc;
+                catImage.style.opacity = 1;
+                isChangingImage = false;
+            }, 500);
+        }
+
+        // อัปเดตการแสดงผลเวลาพร้อมเช็คเงื่อนไขรูปภาพและสี
         function updateTimerDisplay() {
-            let h = Math.floor(window.countdownTime/3600), m = Math.floor((window.countdownTime%3600)/60), s = Math.floor(window.countdownTime%60);
+            let h = Math.floor(window.countdownTime/3600);
+            let m = Math.floor((window.countdownTime%3600)/60);
+            let s = Math.floor(window.countdownTime%60);
+            if (s < 0) s = 0;
+            
             timerElement.innerHTML = `${String(h).padStart(2,'0')} : ${String(m).padStart(2,'0')} : ${String(s).padStart(2,'0')}`;
+
+            // เงื่อนไขการเปลี่ยนสีและเปลี่ยนรูปน้องแมวตามเวลาที่เหลือ
+            if (window.countdownTime <= 1800) { 
+                // ต่ำกว่าหรือเท่ากับ 30 นาที (30 * 60 = 1800 วินาที)
+                timerElement.classList.add('red'); 
+                fadeChangeImage("cat3-1.png"); 
+            } else if (window.countdownTime <= 7200) {
+                // ต่ำกว่าหรือเท่ากับ 2 ชั่วโมง (2 * 3600 = 7200 วินาที)
+                timerElement.classList.remove('red'); 
+                fadeChangeImage("cat3-2.png"); 
+            } else {
+                // มากกว่า 2 ชั่วโมงขึ้นไป
+                timerElement.classList.remove('red'); 
+                fadeChangeImage("cat3-3.png"); 
+            }
         }
 
         window.runBoostAnimation = function(totalSeconds, durationMs, effectClass, isThisMachineMaster) {
@@ -366,7 +404,6 @@
                     }
                 });
             } finally {
-                // ยืดเวลาปลดล็อกเพื่อกันการดึงค่าเก่าจาก Firebase กลับมา
                 setTimeout(() => { isMaster = false; }, d + 1000);
             }
         }
@@ -423,7 +460,7 @@
             });
         }
 
-        // --- เพิ่มการดึงค่าเริ่มต้นตอนเปิดเว็บ (Initial Load Sync) ---
+        // --- Initial Load Sync ---
         timerRef.once('value', (snap) => {
             const data = snap.val();
             if (data && data.remainingTime != null) {
@@ -442,7 +479,6 @@
 
             const value = snap.val();
             if (value != null) {
-                // เพิ่ม Buffer เช็คความต่างเวลา เพื่อป้องกันเวลาเด้งกลับไปมาหลังจากการสุ่ม
                 if (Math.abs(window.countdownTime - Math.round(value)) > 3) {
                     window.countdownTime = Math.round(value);
                     if (window.countdownTime < 0) window.countdownTime = 0;
