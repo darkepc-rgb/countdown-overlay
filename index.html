@@ -3,94 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Roulette - Solid Version (Remember State)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
+    <title>Countdown Timer with Roulette - Upgrade Version</title>
+    <link href="https://fonts.googleapis.com/css2?family=Itim&family=Kanit:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
             min-height: 100vh; background-color: transparent; color: white;
             font-family: 'Itim', cursive; text-align: center; margin: 0;
             padding: 20px 0; box-sizing: border-box;
         }
         .timer-stack-wrapper {
-            position: relative; display: flex; align-items: center; justify-content: center;
-            width: 576px; height: 324px; 
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+            width: 576px; height: 324px;
         }
         #timer {
-            position: relative; z-index: 1; font-size: 3.5rem; font-weight: bold;
-            transition: color 0.3s ease; margin-top: 22px; margin-left: 125px; 
+            position: relative;
+            z-index: 1; font-size: 3.5rem; font-weight: bold;
+            transition: color 0.3s ease; margin-top: 22px; margin-left: 125px;
             text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0px 4px 12px rgba(0,0,0,0.9);
         }
         .cat-overlay-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; 
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none;
         }
         .cat-overlay-layer img {
-            width: 100%; height: 100%; object-fit: contain;
+            width: 100%;
+            height: 100%; object-fit: contain;
             transition: opacity 0.5s ease-in-out, transform 0.3s ease-out; opacity: 1;
         }
 
         .roulette-container {
-            position: relative; width: 576px; padding: 5px 0;
+            position: relative;
+            width: 576px; padding: 5px 0;
             margin-top: 18px;    
             margin-bottom: 35px; 
             display: flex; justify-content: center;
         }
         .pointer {
-            position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+            position: absolute;
+            top: -18px; left: 50%; transform: translateX(-50%);
             color: #ff2222; font-size: 42px; z-index: 10; text-shadow: 0 2px 8px rgba(255, 0, 0, 0.8);
         }
         .window {
-            width: 100%; overflow: hidden; background: #050505; border: 3px solid #333;
-            border-radius: 12px; padding: 15px 0; position: relative;
+            width: 100%;
+            overflow: hidden; background: #050505; border: 3px solid #333;
+            border-radius: 12px;
+            padding: 8px 0; position: relative;
             box-shadow: inset 0 0 25px rgba(0,0,0,1), 0 5px 15px rgba(0,0,0,0.5);
         }
         .window::before, .window::after {
-            content: ''; position: absolute; top: 0; bottom: 0; width: 20%; z-index: 5; pointer-events: none;
+            content: '';
+            position: absolute; top: 0; bottom: 0; width: 20%; z-index: 5; pointer-events: none;
         }
         .window::before { left: 0; background: linear-gradient(to right, #050505, transparent); }
         .window::after { right: 0; background: linear-gradient(to left, #050505, transparent); }
          
-        .track { display: flex; transition: transform 4s cubic-bezier(0.05, 0.9, 0.1, 1); transform: translateX(0); }
-        .item {
-            min-width: 160px; height: 76px; margin: 0 12px; background: #1c1c1c; 
-            border: 2px solid #3b3b3b; border-radius: 8px; display: flex; justify-content: center;
-            align-items: center; font-size: 2.35rem; font-weight: 900; box-sizing: border-box;
-            transition: transform 0.3s, box-shadow 0.3s, color 0.3s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.8); -webkit-text-stroke: 0.5px rgba(0,0,0,0.5); 
+        .track { 
+            display: flex;
+            transition: transform 4s cubic-bezier(0.05, 0.9, 0.1, 1); transform: translateX(0); 
         }
-        .item.plus { color: #39ff14; text-shadow: 0 0 5px rgba(57, 255, 20, 0.6); }
-        .item.minus { color: #ff3333; text-shadow: 0 0 5px rgba(255, 51, 51, 0.6); }
-        .item.neutral { color: #666; text-shadow: none; border-color: #2a2a2a; }
+        
+        .item {
+            position: relative;
+            font-family: 'Kanit', sans-serif;
+            min-width: 90px;
+            max-width: 90px; height: 90px; margin: 0 30px; background: #1c1c1c; 
+            border: 2px solid #3b3b3b; border-radius: 12px; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; 
+            box-sizing: border-box;
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.8); 
+            text-align: center;
+        }
+        
+        .val-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: baseline; 
+            justify-content: center;
+            margin-top: 6px; 
+        }
+        .item .number {
+            font-size: 3.2rem;
+            font-weight: 900;
+            color: #ffffff; 
+            line-height: 1;
+            text-shadow: 0 0 10px rgba(255,255,255,0.4), 2px 2px 0 #000;
+            -webkit-text-stroke: 1.5px rgba(0,0,0,0.8);
+        }
+        .item .unit {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #eeeeee;
+            margin-left: 2px;
+            text-shadow: 2px 2px 0 #000;
+            -webkit-text-stroke: 1px rgba(0,0,0,0.8);
+        }
+
+        .item .sign {
+            position: absolute;
+            z-index: 2;
+            top: 2px;
+            right: 6px;
+            font-size: 1.8rem; 
+            font-weight: 900;
+            line-height: 1;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .item.plus { 
+            border-color: #39ff14;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.8), inset 0 0 12px rgba(57, 255, 20, 0.2);
+        }
+        .item.plus .sign { color: #39ff14;
+            text-shadow: 0 0 8px #39ff14, 2px 2px 0 #000; }
+        .item.plus .number { text-shadow: 0 0 12px rgba(57,255,20,0.7), 2px 2px 0 #000;
+        }
+
+        .item.minus { 
+            border-color: #ff3333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.8), inset 0 0 12px rgba(255, 51, 51, 0.2);
+        }
+        .item.minus .sign { color: #ff3333;
+            text-shadow: 0 0 8px #ff3333, 2px 2px 0 #000; }
+        .item.minus .number { text-shadow: 0 0 12px rgba(255,51,51,0.7), 2px 2px 0 #000;
+        }
+
+        .item.neutral { 
+            border-color: #2a2a2a;
+        }
+        .item.neutral .number { color: #888; text-shadow: none; -webkit-text-stroke: 0;
+        }
+
+        .item.gold-simple, .item.gold-beautiful, .item.gold-wings,
+        .item.red-simple, .item.red-beautiful, .item.red-wings {
+            border-color: transparent !important;
+        }
+
+        .item.gold-simple { box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3), inset 0 0 8px rgba(255, 215, 0, 0.2) !important; }
+        .item.gold-beautiful { box-shadow: 0 0 16px rgba(255, 215, 0, 0.6), inset 0 0 12px rgba(255, 215, 0, 0.4) !important; animation: gold-shine 1.5s infinite alternate; }
+        .item.gold-wings { box-shadow: 0 0 25px rgba(255, 215, 0, 0.7), inset 0 0 15px rgba(255, 215, 0, 0.5) !important; }
+        
+        .item.red-simple { box-shadow: 0 4px 12px rgba(255, 51, 51, 0.3), inset 0 0 8px rgba(255, 51, 51, 0.2) !important; }
+        .item.red-beautiful { box-shadow: 0 0 16px rgba(255, 51, 51, 0.6), inset 0 0 12px rgba(255, 51, 51, 0.4) !important; animation: red-shine 1.5s infinite alternate; }
+        .item.red-wings { box-shadow: 0 0 25px rgba(255, 51, 51, 0.7), inset 0 0 15px rgba(255, 51, 51, 0.5) !important; }
+
+        @keyframes gold-shine {
+            0% { filter: brightness(1); box-shadow: 0 0 10px rgba(255,215,0,0.5); }
+            100% { filter: brightness(1.2); box-shadow: 0 0 20px rgba(255,215,0,0.8); }
+        }
+        @keyframes red-shine {
+            0% { filter: brightness(1); box-shadow: 0 0 10px rgba(255,51,51,0.5); }
+            100% { filter: brightness(1.2); box-shadow: 0 0 20px rgba(255,51,51,0.8); }
+        }
+
+        .item.gold-simple::before, .item.gold-beautiful::before, .item.gold-wings::before,
+        .item.red-simple::before, .item.red-beautiful::before, .item.red-wings::before {
+            content: '';
+            position: absolute;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .item.gold-simple::before, .item.red-simple::before {
+            top: -12px; left: -12px; right: -12px; bottom: -12px;
+        }
+        .item.gold-beautiful::before, .item.red-beautiful::before {
+            top: -18px; left: -18px; right: -18px; bottom: -18px;
+        }
+        .item.gold-wings::before, .item.red-wings::before {
+            top: -18px; bottom: -18px;
+            left: -35px; right: -35px;
+        }
+
+        .item.gold-simple::before { background-image: url('plus-gold-simple.png'); }
+        .item.gold-beautiful::before { background-image: url('plus-gold-beautiful.png'); }
+        .item.gold-wings::before { background-image: url('plus-gold-wings.png'); }
+        
+        .item.red-simple::before { background-image: url('minus-red-simple.png'); }
+        .item.red-beautiful::before { background-image: url('minus-red-beautiful.png'); }
+        .item.red-wings::before { background-image: url('minus-red-wings.png'); }
 
         .item.winner {
-            animation: win-pop 0.5s ease-out forwards;
-            z-index: 20;
-            position: relative;
+            animation: win-pop-scale 0.5s ease-out forwards;
+            z-index: 20; position: relative;
         }
-        @keyframes win-pop {
-            0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.8); border-color: #3b3b3b; }
-            50% { transform: scale(1.15); box-shadow: 0 0 25px #39ff14, inset 0 0 10px #39ff14; border-color: #39ff14; }
-            100% { transform: scale(1.08); box-shadow: 0 0 15px #39ff14; border-color: #39ff14; }
+        @keyframes win-pop-scale {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.18); }
+            100% { transform: scale(1.1); }
         }
 
-        .instructions { font-size: 15px; color: #ccc; margin-top: 0px; margin-bottom: 15px; line-height: 1.5; text-shadow: 0 1px 3px #000; }
-        .key-badge { background: #222; color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; }
+        .item.plus.winner:not(.gold-simple):not(.gold-beautiful):not(.gold-wings):not(.red-simple):not(.red-beautiful):not(.red-wings) {
+            box-shadow: 0 0 20px #39ff14, inset 0 0 10px #39ff14;
+            border-color: #39ff14;
+        }
+        .item.minus.winner:not(.gold-simple):not(.gold-beautiful):not(.gold-wings):not(.red-simple):not(.red-beautiful):not(.red-wings) {
+            box-shadow: 0 0 20px #ff3333, inset 0 0 10px #ff3333;
+            border-color: #ff3333;
+        }
 
-        @keyframes pulse-soft {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.02); filter: brightness(1.1); }
-            100% { transform: scale(1); filter: brightness(1); }
+        .item.gold-simple.winner { box-shadow: 0 0 25px #ffd700, inset 0 0 15px #ffd700 !important; }
+        .item.gold-beautiful.winner { box-shadow: 0 0 35px #ffd700, inset 0 0 20px #ffd700 !important; filter: brightness(1.3); }
+        .item.gold-wings.winner { box-shadow: 0 0 45px #ff8c00, inset 0 0 25px #ffd700 !important; filter: brightness(1.3); }
+
+        .item.red-simple.winner { box-shadow: 0 0 25px #ff3333, inset 0 0 15px #ff3333 !important; }
+        .item.red-beautiful.winner { box-shadow: 0 0 35px #ff4757, inset 0 0 20px #ff3333 !important; filter: brightness(1.3); }
+        .item.red-wings.winner { box-shadow: 0 0 45px #b30000, inset 0 0 25px #ff3333 !important; filter: brightness(1.3); }
+
+        .instructions { font-size: 15px; color: #ccc; margin-top: 0px; margin-bottom: 15px;
+            line-height: 1.5; text-shadow: 0 1px 3px #000; }
+        .key-badge { background: #222;
+            color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444;
         }
-        @keyframes pulse-medium {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.05); filter: brightness(1.2); }
-            100% { transform: scale(1); filter: brightness(1); }
-        }
-        @keyframes pulse-strong {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.08); filter: brightness(1.3); }
-            100% { transform: scale(1); filter: brightness(1); }
-        }
+
+        @keyframes pulse-soft { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.02); filter: brightness(1.1); } 100% { transform: scale(1); filter: brightness(1); } }
+        @keyframes pulse-medium { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.05); filter: brightness(1.2); } 100% { transform: scale(1); filter: brightness(1); } }
+        @keyframes pulse-strong { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.08); filter: brightness(1.3); } 100% { transform: scale(1); filter: brightness(1); } }
+        
         .effect-5-10 { animation: pulse-soft 0.8s infinite ease-in-out; }
         .effect-30 { animation: pulse-medium 0.5s infinite ease-in-out; }
         .effect-60 { animation: pulse-strong 0.4s infinite ease-in-out; }
@@ -101,10 +237,13 @@
 
         .buttons { margin-top: 20px; z-index: 10; position: relative; }
         .buttons button {
-            margin: 5px; padding: 10px 18px; font-size: 1rem; font-weight: bold;
+            margin: 5px;
+            padding: 10px 18px; font-size: 1rem; font-weight: bold;
             cursor: pointer; border: 2px solid #333; background: #ffffff;
-            color: #000; border-radius: 8px; font-family: 'Itim', cursive;
-            box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3); transition: all 0.1s ease;
+            color: #000; border-radius: 8px;
+            font-family: 'Itim', cursive;
+            box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3);
+            transition: all 0.1s ease;
         }
         .buttons button:active { transform: translateY(3px); box-shadow: 0 1px 0 #777; }
         #startBtn.active { background: #27ae60; color: white; border-color: #1e8449; box-shadow: 0 4px 0 #1e8449; }
@@ -129,9 +268,9 @@
     </div>
 
     <div class="instructions">
-        <span class="key-badge">G1 (Alt+1)</span> สุ่มวินาที | 
+        <span class="key-badge">G1 (Alt+1)</span> สุ่มวินาที |
         <span class="key-badge">G2 (Alt+2)</span> สุ่มนาทีใหญ่ | 
-        <span class="key-badge">G3 (Alt+3)</span> สุ่มโหมด 10 Pok (เรท 55/45)
+        <span class="key-badge">G3 (Alt+3)</span> โหมดวาฬ! (50/50)
     </div>
      
     <div class="buttons">
@@ -166,7 +305,6 @@
         appId: "1:1086221236719:web:5e3148af69cb7303c1de1a",
         measurementId: "G-P2TLY8RGZV"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const timerRef = db.ref('timer_data');
@@ -184,47 +322,39 @@
 
     let isMaster = false; 
     let activeBoosts = 0;
-    let lastEventId = "INIT"; 
+    let lastEventId = "INIT";
     let lastSpinId = "INIT_SPIN";
     let isChangingImage = false;
     let isSpinning = false;
     let currentDisplayedValue = ""; 
-    let isFirstLoad = true;
+    const ITEM_TOTAL_WIDTH = 150;
+    const ITEM_HALF_WIDTH = 78;
 
-    const ITEM_TOTAL_WIDTH = 184; 
-    const ITEM_HALF_WIDTH = 92;
-
-    const secondsOptions = [
-        { value: '+ 10 S', weight: 12 }, { value: '- 10 S', weight: 12 }, 
-        { value: '+ 20 S', weight: 10 }, { value: '- 20 S', weight: 10 }, 
-        { value: '+ 30 S', weight: 7 },  { value: '- 30 S', weight: 7 }, 
-        { value: '+ 40 S', weight: 4 },  { value: '- 40 S', weight: 4 }, 
-        { value: '+ 50 S', weight: 2 },  { value: '- 50 S', weight: 2 }, 
-        { value: '+ 60 S', weight: 1 },  { value: '- 60 S', weight: 1 }
+    const g1Options = [
+        { value: '-10s', weight: 20 }, { value: '-30s', weight: 15 }, { value: '-60s', weight: 5 },
+        { value: '+5s', weight: 25 }, { value: '+10s', weight: 15 }, { value: '+20s', weight: 10 },
+        { value: '+30s', weight: 5 }, { value: '+60s', weight: 3 }, { value: '+3m', weight: 2 }
     ];
-
-    const minutesLargeOptions = [
-        { value: '+ 5 M', weight: 35 }, { value: '- 5 M', weight: 28 }, 
-        { value: '+ 10 M', weight: 23 }, { value: '- 10 M', weight: 19 }, 
-        { value: '+ 15 M', weight: 12 }, { value: '- 15 M', weight: 10 }
+    const g2Options = [
+        { value: '-5m', weight: 25 }, { value: '-10m', weight: 15 },
+        { value: '+1m', weight: 25 }, { value: '+5m', weight: 20 }, { value: '+10m', weight: 10 },
+        { value: '+20m', weight: 3 }, { value: '+30m', weight: 2 }
     ];
-
-    const minutesSmallOptions = [
-        { value: '+ 5 M', weight: 44 },  { value: '- 5 M', weight: 36 }, 
-        { value: '+ 10 M', weight: 22 }, { value: '- 10 M', weight: 18 }, 
-        { value: '+ 15 M', weight: 3 },  { value: '- 15 M', weight: 2 }
+    // ปรับ G3 ใหม่เป็น 50/50%
+    const g3Options = [
+        { value: '-5m', weight: 20 }, { value: '-15m', weight: 15 }, { value: '-30m', weight: 15 }, // รวมฝั่งลบ 50
+        { value: '+1h', weight: 30 }, { value: '+2h', weight: 20 }                                  // รวมฝั่งบวก 50
     ];
 
     function createPool(options) { 
-        let pool = []; 
+        let pool = [];
         options.forEach(opt => { for (let i = 0; i < opt.weight; i++) { pool.push(opt.value); } }); 
-        return pool; 
+        return pool;
     }
 
-    const secondsPool = createPool(secondsOptions);
-    const minutesLargePool = createPool(minutesLargeOptions);
-    const minutesSmallPool = createPool(minutesSmallOptions);
-
+    const secondsPool = createPool(g1Options);
+    const minutesLargePool = createPool(g2Options);
+    const minutesSmallPool = createPool(g3Options);
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function playTick() {
@@ -253,12 +383,36 @@
     }
 
     function playWin() {
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.frequency.value = 1174.66; osc.type = 'triangle';
         gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.0);
-        osc.start(); osc.stop(audioCtx.currentTime + 1.0);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 1.0);
+    }
+
+    function applySpecialFrame(element, val) {
+        element.classList.remove('gold-simple', 'gold-beautiful', 'gold-wings', 'red-simple', 'red-beautiful', 'red-wings');
+        if (val === '+60s' || val === '+10m' || val === '+20m') element.classList.add('gold-simple');
+        else if (val === '+3m' || val === '+30m' || val === '+1h') element.classList.add('gold-beautiful');
+        else if (val === '+2h') element.classList.add('gold-wings');
+        else if (val === '-30s' || val === '-60s' || val === '-5m') element.classList.add('red-simple');
+        else if (val === '-10m' || val === '-15m') element.classList.add('red-beautiful');
+        else if (val === '-30m') element.classList.add('red-wings');
+    }
+
+    function getFormattedItemHTML(val) {
+        if (!val || val === "-" || val === "---") return `<div class="val-container"><span class="number">-</span></div>`;
+        let match = val.match(/([+-])?(\d+)([smh])/i);
+        if (match) {
+            let sign = match[1] || '';
+            let num = match[2];
+            let unit = match[3].toLowerCase();
+            return `<span class="sign">${sign}</span><div class="val-container"><span class="number">${num}</span><span class="unit">${unit}</span></div>`;
+        }
+        return `<div class="val-container"><span class="number">${val}</span></div>`;
     }
 
     function generateTrackItemsWithWinner(totalItems, pool, winnerValue) {
@@ -267,8 +421,11 @@
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item';
             const randomVal = (i === 50) ? winnerValue : pool[Math.floor(Math.random() * pool.length)];
-            itemDiv.innerText = `[ ${randomVal} ]`;
-            itemDiv.classList.add(randomVal.includes('+') ? 'plus' : 'minus');
+            itemDiv.dataset.value = randomVal;
+            let isMinus = randomVal.includes('-');
+            itemDiv.classList.add(isMinus ? 'minus' : 'plus');
+            itemDiv.innerHTML = getFormattedItemHTML(randomVal);
+            applySpecialFrame(itemDiv, randomVal);
             track.appendChild(itemDiv);
         }
     }
@@ -276,21 +433,20 @@
     function setRouletteToValue(value) {
         track.innerHTML = '';
         let targetVal = (!value || value === "-") ? "-" : value;
-         
         for (let i = 0; i < 60; i++) {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item neutral';
             let currentVal = (i === 50) ? targetVal : "-";
-            itemDiv.innerText = `[ ${currentVal} ]`;
-             
             if (targetVal !== "-") {
                 currentVal = (i === 50) ? targetVal : secondsPool[Math.floor(Math.random() * secondsPool.length)];
-                itemDiv.innerText = `[ ${currentVal} ]`;
                 itemDiv.className = 'item';
-                itemDiv.classList.add(currentVal.includes('+') ? 'plus' : 'minus');
-                 
-                if (i === 50) itemDiv.classList.add('winner'); 
+                let isMinus = currentVal.includes('-');
+                itemDiv.classList.add(isMinus ? 'minus' : 'plus');
+                applySpecialFrame(itemDiv, currentVal);
+                if (i === 50) itemDiv.classList.add('winner');
             }
+            itemDiv.dataset.value = currentVal;
+            itemDiv.innerHTML = getFormattedItemHTML(currentVal);
             track.appendChild(itemDiv);
         }
         track.style.transition = 'none';
@@ -318,7 +474,6 @@
         if (poolType === 'minutesSmall') targetPool = minutesSmallPool;
 
         generateTrackItemsWithWinner(60, targetPool, winnerValue);
-         
         const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH); 
         track.style.transition = 'transform 4s cubic-bezier(0.05, 0.9, 0.1, 1)';
         track.style.transform = `translateX(${finalTranslateX}px)`;
@@ -330,9 +485,7 @@
             isSpinning = false; 
             if (track.children[50]) {
                 track.children[50].classList.add('winner'); 
-                if (isMaster) {
-                    parseAndTriggerBoost(track.children[50].innerText);
-                }
+                if (isMaster) parseAndTriggerBoost(track.children[50].dataset.value);
             }
         }, 4000);
     }
@@ -340,14 +493,11 @@
     function triggerSpin(modeName, poolType) {
         if (isSpinning) return;
         isMaster = true; 
-         
         let targetPool = secondsPool;
         if (poolType === 'minutesLarge') targetPool = minutesLargePool;
         if (poolType === 'minutesSmall') targetPool = minutesSmallPool;
-
         const randomWinner = targetPool[Math.floor(Math.random() * targetPool.length)];
         const spinId = "spin_" + Date.now();
-
         timerRef.update({
             spinEvent: { modeName, poolType, winnerValue: randomWinner, id: spinId }
         });
@@ -356,117 +506,142 @@
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.key === '1') triggerSpin('วินาที', 'seconds');
         if (e.altKey && e.key === '2') triggerSpin('นาทีใหญ่', 'minutesLarge');
-        if (e.altKey && e.key === '3') triggerSpin('10 Pok', 'minutesSmall');
+        if (e.altKey && e.key === '3') triggerSpin('โหมดวาฬ!', 'minutesSmall');
     });
 
     function parseAndTriggerBoost(resultText) {
-        const cleaned = resultText.replace('[', '').replace(']', '').trim();
+        const cleaned = resultText.trim();
         currentDisplayedValue = cleaned;
-        localStorage.setItem('lastSpunValue', cleaned); 
+        localStorage.setItem('lastSpunValue', cleaned);
         timerRef.update({ lastRandomValue: cleaned });
-         
-        const parts = cleaned.split(/\s+/);
-        const sign = parts[0];
-        const val = parseInt(parts[1]);
-        const unit = parts[2];
-        let totalSeconds = (unit === 'M' ? val * 60 : val);
-        if (sign === '-') totalSeconds = -totalSeconds;
-         
-        window.smartBoost(totalSeconds, 2000, 'effect-30');
+        let totalSeconds = 0;
+        let effectClass = 'effect-5-10';
+        if (cleaned === '+2h') { totalSeconds = 120 * 60; effectClass = 'effect-60'; }
+        else if (cleaned === '+1h') { totalSeconds = 60 * 60; effectClass = 'effect-60'; }
+        else if (cleaned === '+30m') { totalSeconds = 30 * 60; effectClass = 'effect-30'; }
+        else if (cleaned.includes('-30m')) { totalSeconds = -30 * 60; effectClass = 'effect-30'; }
+        else if (cleaned.includes('+20m')) { totalSeconds = 20 * 60; effectClass = 'effect-30'; }
+        else if (cleaned.includes('-15m')) { totalSeconds = -15 * 60; effectClass = 'effect-30'; }
+        else if (cleaned.includes('+10m')) { totalSeconds = 10 * 60; effectClass = 'effect-5-10'; }
+        else if (cleaned.includes('-10m')) { totalSeconds = -10 * 60; effectClass = 'effect-5-10'; }
+        else if (cleaned.includes('+5m')) { totalSeconds = 5 * 60; effectClass = 'effect-5-10'; }
+        else if (cleaned.includes('-5m')) { totalSeconds = -5 * 60; effectClass = 'effect-5-10'; }
+        else if (cleaned === '+3m') { totalSeconds = 3 * 60; effectClass = 'effect-5-10'; }
+        else if (cleaned.includes('+1m')) { totalSeconds = 1 * 60; effectClass = 'effect-5-10'; }
+        else {
+            let unitMatch = cleaned.match(/([+-])(\d+)\s*([smh])/i);
+            if (unitMatch) {
+                let sign = unitMatch[1];
+                let amount = parseInt(unitMatch[2]);
+                let unit = unitMatch[3].toLowerCase();
+                if (unit === 'h') amount = amount * 3600;
+                else if (unit === 'm') amount = amount * 60;
+                totalSeconds = (sign === '-') ? -amount : amount;
+                if (Math.abs(totalSeconds) >= 3600) effectClass = 'effect-60';
+                else if (Math.abs(totalSeconds) >= 1800) effectClass = 'effect-30';
+                else effectClass = 'effect-5-10';
+            }
+        }
+        window.smartBoost(totalSeconds, 2000, effectClass);
     }
 
-    const isMasterControl = new URLSearchParams(window.location.search).get('master') === '1' || window.location.protocol === 'file:';
+// ==========================================
+    // เริ่มส่วนระบบคิวและ TikFinity ที่อัปเกรดแล้ว
+    // ==========================================
+    
+    // 1. ประกาศตัวแปรระบบคิวไว้ด้านนอกสุด (เพื่อไม่ให้กวนการกดปุ่มแมนนวล)
+    let spinQueue = []; 
+    let followedUsers = new Set(); 
 
+    // 2. ระบบรันคิวอัตโนมัติ (เช็คและปล่อยคิวทุกๆ 1 วินาที)
+    setInterval(() => {
+        // ถ้าวงล้อหยุด, อนิเมชั่นเวลาหยุด และมีคิวค้างอยู่ -> สุ่มคิวถัดไป!
+        if (!isSpinning && activeBoosts === 0 && spinQueue.length > 0) {
+            const nextSpin = spinQueue.shift(); 
+            triggerSpin(nextSpin.modeName, nextSpin.poolType);
+        }
+    }, 1000);
+
+    const isMasterControl = new URLSearchParams(window.location.search).get('master') === '1' || window.location.protocol === 'file:';
+    
     if (isMasterControl) {
         function connectTikFinity() {
             const ws = new WebSocket('ws://localhost:21213/');
-
-            ws.onopen = () => {
-                console.log('%c[TikFinity] เชื่อมต่อสำเร็จแล้ว! ระบบพร้อมสุ่มอัตโนมัติเบื้องหลัง', 'color: #2ecc71; font-weight: bold;');
-            };
-
-                    // เพิ่มตัวแปรนี้ไว้เหนือ ws.onmessage เพื่อตั้งเป้าหมายแรกที่ 1000 ไลก์
+            ws.onopen = () => { console.log('%c[TikFinity] เชื่อมต่อสำเร็จ! (ระบบคิว Combo อัตโนมัติ)', 'color: #2ecc71; font-weight: bold;'); };
             window.nextLikeTarget = 1000;
+            
+            ws.onmessage = (event) => {
+                try {
+                    const payload = JSON.parse(event.data);
+                    const eventType = payload.event || payload.type; 
 
-ws.onmessage = (event) => {
-    try {
-        const payload = JSON.parse(event.data);
-        if (isSpinning) return;
+                    // *** 1. ผู้ติดตามใหม่ (กันซ้ำ) ***
+                    if (eventType === 'follow') {
+                        const uniqueId = payload.data?.user?.uniqueId || payload.data?.uniqueId || payload.data?.nickname;
+                        if (uniqueId) {
+                            if (followedUsers.has(uniqueId)) return; // ไอดีเดิมเคยกดแล้ว ข้าม
+                            followedUsers.add(uniqueId);
+                        }
+                        spinQueue.push({ modeName: 'นาทีใหญ่', poolType: 'minutesLarge' });
+                    }
+                    // *** 2. เคาะใจ (นับรอบละ 1000) ***
+                    else if (eventType === 'like') {
+                        const totalLikes = (payload.data && (payload.data.total_likes || payload.data.totalLikeCount)) || 0;
+                        if (totalLikes >= window.nextLikeTarget) {
+                            // คำนวณว่าข้ามไปกี่พันไลก์ จะได้โยนเข้าคิวให้ครบ
+                            let times = Math.floor((totalLikes - window.nextLikeTarget + 1000) / 1000);
+                            for (let i = 0; i < times; i++) {
+                                spinQueue.push({ modeName: 'นาทีใหญ่', poolType: 'minutesLarge' });
+                            }
+                            window.nextLikeTarget += (times * 1000);
+                        }
+                    }
+                    // *** 3. ของขวัญ (เข้าคิวตามจำนวนชิ้น Combo) ***
+                    else if (eventType === 'gift') {
+                        const giftData = payload.data || {};
+                        const giftName = (giftData.gift_name || '').toLowerCase();
+                        const coinCount = giftData.coins || giftData.diamonds || 1;
+                        
+                        // ดึงจำนวนชิ้นที่ส่งมารัวๆ (รองรับตัวแปรหลายรูปแบบที่ TikFinity อาจส่งมา)
+                        const amount = giftData.amount || giftData.repeat_count || giftData.count || 1;
 
-        const eventType = payload.event || payload.type; 
+                        let targetMode = '';
+                        let targetPool = '';
 
-        // 1. ผู้ติดตามใหม่ -> G2 นาทีใหญ่
-        if (eventType === 'follow') {
-            console.log('[TikFinity] ผู้ติดตามใหม่! สุ่มนาทีใหญ่ (G2)');
-            triggerSpin('นาทีใหญ่', 'minutesLarge');
-        } 
-        // 2. เคาะใจ (เช็คยอดรวม)
-        else if (eventType === 'like') {
-            const likeData = payload.data || {};
-            const totalLikes = likeData.total_likes || likeData.totalLikeCount || 0;
+                        if (giftName.includes('heart me') || giftName.includes('ใจส้ม')) {
+                            targetMode = 'นาทีใหญ่'; targetPool = 'minutesLarge';
+                        } else {
+                            if (coinCount >= 299) { targetMode = 'โหมดวาฬ!'; targetPool = 'minutesSmall'; }
+                            else if (coinCount >= 20) { targetMode = 'นาทีใหญ่'; targetPool = 'minutesLarge'; }
+                            else if (coinCount >= 1) { targetMode = 'วินาที'; targetPool = 'seconds'; }
+                        }
 
-            if (totalLikes >= window.nextLikeTarget) {
-                console.log(`[TikFinity] เคาะใจครบ ${window.nextLikeTarget} แล้ว! สุ่มนาทีใหญ่ (G2)`);
-                triggerSpin('นาทีใหญ่', 'minutesLarge');
-                window.nextLikeTarget += 1000; 
-            }
-        }
-        // 3. ของขวัญ
-        else if (eventType === 'gift') {
-            const giftData = payload.data || {};
-            const giftName = (giftData.gift_name || '').toLowerCase(); // ทำให้เป็นตัวพิมพ์เล็กเพื่อเช็คได้ง่ายขึ้น
-            const coinCount = giftData.coins || giftData.diamonds || 1; 
-
-            console.log(`[TikFinity] ของขวัญ: ${giftName} | ราคา: ${coinCount} เหรียญ`);
-
-            // ดักจับชื่อ "Heart Me" หรือ "ใจส้ม" (รวมถึงชื่อภาษาอังกฤษหรือไทยที่อาจเป็นไปได้)
-            if (giftName.includes('heart me') || giftName.includes('ใจส้ม') || giftName.includes('orange')) {
-                console.log('[TikFinity] เจอของขวัญ Heart Me! สุ่มนาทีใหญ่ (G2)');
-                triggerSpin('นาทีใหญ่', 'minutesLarge'); 
-            }
-            // เงื่อนไขเหรียญปกติ
-            else if (coinCount >= 10) { 
-                triggerSpin('นาทีใหญ่', 'minutesLarge');
-            } 
-            else if (coinCount >= 5) {
-                triggerSpin('วินาที', 'seconds');
-            }
-        }
-    } catch (err) {
-        console.error('[TikFinity Parse Error]', err);
-    }
-};
-
-            ws.onclose = () => {
-                console.log('%c[TikFinity] หลุดการเชื่อมต่อ พยายามต่อใหม่ในอีก 5 วินาที...', 'color: #e74c3c;');
-                setTimeout(connectTikFinity, 5000); 
+                        // นำรางวัลเข้าคิว ตามจำนวนชิ้น (amount) ที่คนดูเปย์มา
+                        if (targetMode !== '') {
+                            for(let i = 0; i < amount; i++) {
+                                spinQueue.push({ modeName: targetMode, poolType: targetPool });
+                            }
+                        }
+                    }
+                } catch (err) {}
             };
-
-            ws.onerror = (err) => {
-                ws.close();
-            };
+            ws.onclose = () => setTimeout(connectTikFinity, 5000);
         }
-
         connectTikFinity();
     }
+    
+    // ==========================================
+    // จบส่วนระบบคิว (ส่วนด้านล่างคือ syncToFirebase ไม่ต้องไปยุ่งครับ)
 
     function syncToFirebase() {
-        timerRef.update({
-            remainingTime: window.countdownTime,
-            isRunning: window.interval !== null,
-            lastActionTime: firebase.database.ServerValue.TIMESTAMP
-        });
+        timerRef.update({ remainingTime: window.countdownTime, isRunning: window.interval !== null, lastActionTime: firebase.database.ServerValue.TIMESTAMP });
     }
 
     function fadeChangeImage(newSrc) {
         if (catImage.src.includes(newSrc) || isChangingImage) return;
         isChangingImage = true;
         catImage.style.opacity = 0;
-        setTimeout(() => {
-            catImage.src = newSrc;
-            catImage.style.opacity = 1;
-            isChangingImage = false;
-        }, 500);
+        setTimeout(() => { catImage.src = newSrc; catImage.style.opacity = 1; isChangingImage = false; }, 500);
     }
 
     function updateTimerDisplay() {
@@ -474,75 +649,33 @@ ws.onmessage = (event) => {
         let minutes = Math.floor((window.countdownTime % 3600) / 60);
         let seconds = Math.floor(window.countdownTime % 60);
         if (seconds < 0) seconds = 0;
-
         timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
-         
-        if (window.countdownTime <= 1800) { 
-            timerElement.classList.add('red'); fadeChangeImage("cat3-1.png");
-        } else if (window.countdownTime <= 7200) {
-            timerElement.classList.remove('red'); fadeChangeImage("cat3-2.png");
-        } else {
-            timerElement.classList.remove('red'); fadeChangeImage("cat3-3.png");
-        }
+        if (window.countdownTime <= 1800) { timerElement.classList.add('red'); fadeChangeImage("cat3-1.png"); }
+        else if (window.countdownTime <= 7200) { timerElement.classList.remove('red'); fadeChangeImage("cat3-2.png"); }
+        else { timerElement.classList.remove('red'); fadeChangeImage("cat3-3.png"); }
     }
 
     window.runBoostAnimation = function(totalSeconds, durationMs, effectClass, isThisMachineMaster) {
-        if (window.boostTask) {
-            clearInterval(window.boostTask);
-            window.boostTask = null;
-            timerElement.classList.remove('boost-up', 'boost-down');
-            catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-        }
-
-        activeBoosts = 1; 
+        if (window.boostTask) { clearInterval(window.boostTask); window.boostTask = null; timerElement.classList.remove('boost-up', 'boost-down'); catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60'); }
+        activeBoosts = 1;
         timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
         catLayer.classList.add(effectClass);
-
-        const fps = 30; 
-        const totalSteps = (durationMs / 1000) * fps;
-        const incrementPerStep = totalSeconds / totalSteps;
-        let stepsTaken = 0;
-        let accumulatedChange = 0;
-        let lastIntegerChange = 0;
-
+        const fps = 30; const totalSteps = (durationMs / 1000) * fps; const incrementPerStep = totalSeconds / totalSteps;
+        let stepsTaken = 0; let accumulatedChange = 0; let lastIntegerChange = 0;
         window.boostTask = setInterval(() => {
-            stepsTaken++;
-            accumulatedChange += incrementPerStep;
+            stepsTaken++; accumulatedChange += incrementPerStep;
             let currentIntegerChange = Math.round(accumulatedChange);
             let diff = currentIntegerChange - lastIntegerChange;
-             
             lastIntegerChange = currentIntegerChange;
-
-            window.countdownTime = Math.max(0, window.countdownTime + diff);
-            window.lastTick += diff * 1000; 
+            window.countdownTime = Math.max(0, window.countdownTime + diff); 
             updateTimerDisplay();
-
-            if (stepsTaken >= totalSteps) {
-                clearInterval(window.boostTask);
-                window.boostTask = null;
-                if (isThisMachineMaster) {
-                    syncToFirebase(); 
-                }
-                finishBoost(effectClass);
-            }
+            if (stepsTaken >= totalSteps) { clearInterval(window.boostTask); window.boostTask = null; if (isThisMachineMaster) syncToFirebase(); finishBoost(effectClass); }
         }, 1000 / fps);
     }
 
     function finishBoost(effectClass) {
-        activeBoosts = 0; 
-        timerElement.classList.remove('boost-up', 'boost-down');
-        catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-        isMaster = false;
-
-        if (!isMasterControl) {
-            setTimeout(() => {
-                if (activeBoosts === 0 && !isSpinning && window.latestFirebaseData && window.latestFirebaseData.remainingTime !== undefined) {
-                    window.countdownTime = window.latestFirebaseData.remainingTime;
-                    window.lastTick = Date.now(); 
-                    updateTimerDisplay();
-                }
-            }, 1500); 
-        }
+        activeBoosts = 0; timerElement.classList.remove('boost-up', 'boost-down'); catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60'); isMaster = false;
+        if (!isMasterControl) { setTimeout(() => { if (activeBoosts === 0 && !isSpinning && window.latestFirebaseData && window.latestFirebaseData.remainingTime !== undefined) { window.countdownTime = window.latestFirebaseData.remainingTime; updateTimerDisplay(); } }, 1500); }
     }
 
     window.smartBoost = function(totalSeconds, durationMs, effectClass) {
@@ -550,46 +683,34 @@ ws.onmessage = (event) => {
         lastEventId = eventId;
         isMaster = true; 
         window.runBoostAnimation(totalSeconds, durationMs, effectClass, true);
-
-        timerRef.update({
-            boostEvent: { totalSeconds, durationMs, effectClass, id: eventId }
-        });
+        timerRef.update({ boostEvent: { totalSeconds, durationMs, effectClass, id: eventId } });
     }
 
     function countdown() {
         if (window.countdownTime > 0) {
             const now = Date.now();
             const delta = now - window.lastTick; 
-
             if (delta >= 1000) {
                 const secondsPassed = Math.floor(delta / 1000);
                 window.countdownTime -= secondsPassed;
                 if (window.countdownTime < 0) window.countdownTime = 0;
-                
                 window.lastTick = now - (delta % 1000); 
                 updateTimerDisplay();
             }
-        } else {
-            window.stopTimer();
-        }
+        } else { window.stopTimer(); }
     }
 
     window.startTimer = function(isLocal = true) {
-        if (window.interval) clearInterval(window.interval); 
+        if (window.interval) clearInterval(window.interval);
         window.lastTick = Date.now(); 
-        
         window.interval = setInterval(countdown, 200); 
-        
         document.getElementById('startBtn').classList.add('active');
         document.getElementById('stopBtn').classList.remove('active');
         if (isLocal) syncToFirebase();
     }
 
     window.stopTimer = function(isLocal = true) {
-        if (window.interval) {
-            clearInterval(window.interval);
-            window.interval = null;
-        }
+        if (window.interval) { clearInterval(window.interval); window.interval = null; }
         document.getElementById('startBtn').classList.remove('active');
         document.getElementById('stopBtn').classList.add('active');
         if (isLocal) syncToFirebase();
@@ -597,99 +718,34 @@ ws.onmessage = (event) => {
 
     window.resetTimer = function() {
         window.stopTimer();
-        if (window.boostTask) { 
-            clearInterval(window.boostTask);
-            window.boostTask = null;
-        }
+        if (window.boostTask) { clearInterval(window.boostTask); window.boostTask = null; }
         activeBoosts = 0;
         timerElement.classList.remove('boost-up', 'boost-down');
         catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-        
         window.countdownTime = 3 * 60 * 60;
         window.lastTick = Date.now(); 
         lastEventId = "RESET_" + Date.now();
         updateTimerDisplay();
-         
-        timerRef.update({ 
-            remainingTime: window.countdownTime,
-            isRunning: false,
-            boostEvent: { totalSeconds: 0, durationMs: 0, effectClass: '', id: lastEventId },
-            lastActionTime: firebase.database.ServerValue.TIMESTAMP
-        });
+        timerRef.update({ remainingTime: window.countdownTime, isRunning: false, boostEvent: { totalSeconds: 0, durationMs: 0, effectClass: '', id: lastEventId }, lastActionTime: firebase.database.ServerValue.TIMESTAMP });
     };
 
     timerRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return; 
         window.latestFirebaseData = data; 
-
-        if (data.isRunning) {
-            if (!window.interval) {
-                window.lastTick = Date.now(); 
-                window.interval = setInterval(countdown, 1000);
-            }
-        } else {
-            if (window.interval) {
-                clearInterval(window.interval);
-                window.interval = null;
-            }
-        }
-
-        if (data.remainingTime !== undefined) {
-            let drift = Math.abs(window.countdownTime - data.remainingTime);
-            
-            if (!isMasterControl) { 
-                if (drift > 2) { 
-                    window.countdownTime = data.remainingTime;
-                    window.lastTick = Date.now(); 
-                    updateTimerDisplay();
-                }
-            }
-        }
-
-        if (data.spinEvent && data.spinEvent.id !== lastSpinId) {
-            lastSpinId = data.spinEvent.id;
-            startSpin(data.spinEvent.modeName, data.spinEvent.poolType, data.spinEvent.winnerValue);
-        }
-
-        if (data.lastRandomValue && !isSpinning) {
-            if (currentDisplayedValue !== data.lastRandomValue && data.lastRandomValue !== "-") {
-                currentDisplayedValue = data.lastRandomValue;
-                localStorage.setItem('lastSpunValue', data.lastRandomValue); 
-                setRouletteToValue(data.lastRandomValue);
-            }
-        }
-
-        if (isMaster) return; 
-
-        if (data.isRunning && !window.interval) {
-            window.startTimer(false);
-        } else if (!data.isRunning && window.interval) {
-            window.stopTimer(false);
-        }
-
-        if (!isMasterControl && !isSpinning && activeBoosts === 0) {
-            window.countdownTime = data.remainingTime !== undefined ? data.remainingTime : window.countdownTime;
-            updateTimerDisplay();
-        }
-
+        if (data.isRunning) { if (!window.interval) { window.lastTick = Date.now(); window.interval = setInterval(countdown, 200); } } else { if (window.interval) { clearInterval(window.interval); window.interval = null; } }
+        if (data.remainingTime !== undefined && !isMasterControl && Math.abs(window.countdownTime - data.remainingTime) > 2) { window.countdownTime = data.remainingTime; window.lastTick = Date.now(); updateTimerDisplay(); }
+        if (data.spinEvent && data.spinEvent.id !== lastSpinId) { lastSpinId = data.spinEvent.id; startSpin(data.spinEvent.modeName, data.spinEvent.poolType, data.spinEvent.winnerValue); }
+        if (data.lastRandomValue && !isSpinning && currentDisplayedValue !== data.lastRandomValue && data.lastRandomValue !== "-") { currentDisplayedValue = data.lastRandomValue; localStorage.setItem('lastSpunValue', data.lastRandomValue); setRouletteToValue(data.lastRandomValue); }
+        if (isMaster) return;
+        if (data.isRunning && !window.interval) window.startTimer(false);
+        else if (!data.isRunning && window.interval) window.stopTimer(false);
+        if (!isMasterControl && !isSpinning && activeBoosts === 0) { window.countdownTime = data.remainingTime !== undefined ? data.remainingTime : window.countdownTime; updateTimerDisplay(); }
         if (data.boostEvent && data.boostEvent.id !== lastEventId) {
-            if (lastEventId === "INIT") {
-                lastEventId = data.boostEvent.id;
-            } else {
-                lastEventId = data.boostEvent.id;
-                if (data.boostEvent.totalSeconds !== 0) {
-                    window.runBoostAnimation(
-                        data.boostEvent.totalSeconds, 
-                        data.boostEvent.durationMs, 
-                        data.boostEvent.effectClass,
-                        false
-                    );
-                }
-            }
+            if (lastEventId === "INIT") lastEventId = data.boostEvent.id;
+            else { lastEventId = data.boostEvent.id; if (data.boostEvent.totalSeconds !== 0) window.runBoostAnimation(data.boostEvent.totalSeconds, data.boostEvent.durationMs, data.boostEvent.effectClass, false); }
         }
     });
-
     setTimeout(updateTimerDisplay, 100);
 </script>
 </body>
