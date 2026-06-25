@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Roulette - OBS Display Version</title>
+    <title>Countdown Timer with Roulette - Upgrade Version</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&family=Kanit:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body {
@@ -57,10 +57,8 @@
             content: '';
             position: absolute; top: 0; bottom: 0; width: 20%; z-index: 5; pointer-events: none;
         }
-        .window::before { left: 0; background: linear-gradient(to right, #050505, transparent);
-        }
-        .window::after { right: 0; background: linear-gradient(to left, #050505, transparent);
-        }
+        .window::before { left: 0; background: linear-gradient(to right, #050505, transparent); }
+        .window::after { right: 0; background: linear-gradient(to left, #050505, transparent); }
          
         .track { 
             display: flex;
@@ -72,8 +70,7 @@
             font-family: 'Kanit', sans-serif;
             min-width: 90px;
             max-width: 90px; height: 90px; margin: 0 25px; background: #1c1c1c; 
-            border: 2px solid #3b3b3b; border-radius: 12px;
-            display: flex; flex-direction: column;
+            border: 2px solid #3b3b3b; border-radius: 12px; display: flex; flex-direction: column;
             justify-content: center; align-items: center; 
             box-sizing: border-box;
             transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
@@ -87,7 +84,7 @@
             display: flex;
             align-items: baseline; 
             justify-content: center;
-            margin-top: 6px;
+            margin-top: 6px; 
         }
         .item .number {
             font-size: 3.2rem;
@@ -146,31 +143,21 @@
             border-color: transparent !important;
         }
 
-        .item.gold-simple { box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3), inset 0 0 8px rgba(255, 215, 0, 0.2) !important;
-        }
-        .item.gold-beautiful { box-shadow: 0 0 16px rgba(255, 215, 0, 0.6), inset 0 0 12px rgba(255, 215, 0, 0.4) !important;
-            animation: gold-shine 1.5s infinite alternate; }
-        .item.gold-wings { box-shadow: 0 0 25px rgba(255, 215, 0, 0.7), inset 0 0 15px rgba(255, 215, 0, 0.5) !important;
-        }
+        .item.gold-simple { box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3), inset 0 0 8px rgba(255, 215, 0, 0.2) !important; }
+        .item.gold-beautiful { box-shadow: 0 0 16px rgba(255, 215, 0, 0.6), inset 0 0 12px rgba(255, 215, 0, 0.4) !important; animation: gold-shine 1.5s infinite alternate; }
+        .item.gold-wings { box-shadow: 0 0 25px rgba(255, 215, 0, 0.7), inset 0 0 15px rgba(255, 215, 0, 0.5) !important; }
         
-        .item.red-simple { box-shadow: 0 4px 12px rgba(255, 51, 51, 0.3), inset 0 0 8px rgba(255, 51, 51, 0.2) !important;
-        }
-        .item.red-beautiful { box-shadow: 0 0 16px rgba(255, 51, 51, 0.6), inset 0 0 12px rgba(255, 51, 51, 0.4) !important;
-            animation: red-shine 1.5s infinite alternate; }
-        .item.red-wings { box-shadow: 0 0 25px rgba(255, 51, 51, 0.7), inset 0 0 15px rgba(255, 51, 51, 0.5) !important;
-        }
+        .item.red-simple { box-shadow: 0 4px 12px rgba(255, 51, 51, 0.3), inset 0 0 8px rgba(255, 51, 51, 0.2) !important; }
+        .item.red-beautiful { box-shadow: 0 0 16px rgba(255, 51, 51, 0.6), inset 0 0 12px rgba(255, 51, 51, 0.4) !important; animation: red-shine 1.5s infinite alternate; }
+        .item.red-wings { box-shadow: 0 0 25px rgba(255, 51, 51, 0.7), inset 0 0 15px rgba(255, 51, 51, 0.5) !important; }
 
         @keyframes gold-shine {
-            0% { filter: brightness(1);
-            box-shadow: 0 0 10px rgba(255,215,0,0.5); }
-            100% { filter: brightness(1.2);
-            box-shadow: 0 0 20px rgba(255,215,0,0.8); }
+            0% { filter: brightness(1); box-shadow: 0 0 10px rgba(255,215,0,0.5); }
+            100% { filter: brightness(1.2); box-shadow: 0 0 20px rgba(255,215,0,0.8); }
         }
         @keyframes red-shine {
-            0% { filter: brightness(1);
-            box-shadow: 0 0 10px rgba(255,51,51,0.5); }
-            100% { filter: brightness(1.2);
-            box-shadow: 0 0 20px rgba(255,51,51,0.8); }
+            0% { filter: brightness(1); box-shadow: 0 0 10px rgba(255,51,51,0.5); }
+            100% { filter: brightness(1.2); box-shadow: 0 0 20px rgba(255,51,51,0.8); }
         }
 
         .item.gold-simple::before, .item.gold-beautiful::before, .item.gold-wings::before,
@@ -185,44 +172,32 @@
         }
 
         .item.gold-simple::before, .item.red-simple::before {
-            top: -12px;
-            left: -12px; right: -12px; bottom: -12px;
+            top: -12px; left: -12px; right: -12px; bottom: -12px;
         }
         .item.gold-beautiful::before, .item.red-beautiful::before {
-            top: -18px;
-            left: -18px; right: -18px; bottom: -18px;
+            top: -18px; left: -18px; right: -18px; bottom: -18px;
         }
         .item.gold-wings::before, .item.red-wings::before {
-            top: -18px;
-            bottom: -18px;
+            top: -18px; bottom: -18px;
             left: -35px; right: -35px;
         }
 
-        .item.gold-simple::before { background-image: url('plus-gold-simple.png');
-        }
-        .item.gold-beautiful::before { background-image: url('plus-gold-beautiful.png');
-        }
-        .item.gold-wings::before { background-image: url('plus-gold-wings.png');
-        }
+        .item.gold-simple::before { background-image: url('plus-gold-simple.png'); }
+        .item.gold-beautiful::before { background-image: url('plus-gold-beautiful.png'); }
+        .item.gold-wings::before { background-image: url('plus-gold-wings.png'); }
         
-        .item.red-simple::before { background-image: url('minus-red-simple.png');
-        }
-        .item.red-beautiful::before { background-image: url('minus-red-beautiful.png');
-        }
-        .item.red-wings::before { background-image: url('minus-red-wings.png');
-        }
+        .item.red-simple::before { background-image: url('minus-red-simple.png'); }
+        .item.red-beautiful::before { background-image: url('minus-red-beautiful.png'); }
+        .item.red-wings::before { background-image: url('minus-red-wings.png'); }
 
         .item.winner {
             animation: win-pop-scale 0.5s ease-out forwards;
             z-index: 20; position: relative;
         }
         @keyframes win-pop-scale {
-            0% { transform: scale(1);
-            }
-            50% { transform: scale(1.18);
-            }
-            100% { transform: scale(1.1);
-            }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.18); }
+            100% { transform: scale(1.1); }
         }
 
         .item.plus.winner:not(.gold-simple):not(.gold-beautiful):not(.gold-wings):not(.red-simple):not(.red-beautiful):not(.red-wings) {
@@ -234,19 +209,13 @@
             border-color: #ff3333;
         }
 
-        .item.gold-simple.winner { box-shadow: 0 0 25px #ffd700, inset 0 0 15px #ffd700 !important;
-        }
-        .item.gold-beautiful.winner { box-shadow: 0 0 35px #ffd700, inset 0 0 20px #ffd700 !important;
-            filter: brightness(1.3); }
-        .item.gold-wings.winner { box-shadow: 0 0 45px #ff8c00, inset 0 0 25px #ffd700 !important;
-            filter: brightness(1.3); }
+        .item.gold-simple.winner { box-shadow: 0 0 25px #ffd700, inset 0 0 15px #ffd700 !important; }
+        .item.gold-beautiful.winner { box-shadow: 0 0 35px #ffd700, inset 0 0 20px #ffd700 !important; filter: brightness(1.3); }
+        .item.gold-wings.winner { box-shadow: 0 0 45px #ff8c00, inset 0 0 25px #ffd700 !important; filter: brightness(1.3); }
 
-        .item.red-simple.winner { box-shadow: 0 0 25px #ff3333, inset 0 0 15px #ff3333 !important;
-        }
-        .item.red-beautiful.winner { box-shadow: 0 0 35px #ff4757, inset 0 0 20px #ff3333 !important;
-            filter: brightness(1.3); }
-        .item.red-wings.winner { box-shadow: 0 0 45px #b30000, inset 0 0 25px #ff3333 !important;
-            filter: brightness(1.3); }
+        .item.red-simple.winner { box-shadow: 0 0 25px #ff3333, inset 0 0 15px #ff3333 !important; }
+        .item.red-beautiful.winner { box-shadow: 0 0 35px #ff4757, inset 0 0 20px #ff3333 !important; filter: brightness(1.3); }
+        .item.red-wings.winner { box-shadow: 0 0 45px #b30000, inset 0 0 25px #ff3333 !important; filter: brightness(1.3); }
 
         .instructions { font-size: 15px; color: #ccc; margin-top: 0px; margin-bottom: 15px;
             line-height: 1.5; text-shadow: 0 1px 3px #000; }
@@ -254,32 +223,19 @@
             color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444;
         }
 
-        @keyframes pulse-soft { 0% { transform: scale(1); filter: brightness(1);
-        } 50% { transform: scale(1.02); filter: brightness(1.1); } 100% { transform: scale(1); filter: brightness(1);
-        } }
-        @keyframes pulse-medium { 0% { transform: scale(1); filter: brightness(1);
-        } 50% { transform: scale(1.05); filter: brightness(1.2); } 100% { transform: scale(1); filter: brightness(1);
-        } }
-        @keyframes pulse-strong { 0% { transform: scale(1); filter: brightness(1);
-        } 50% { transform: scale(1.08); filter: brightness(1.3); } 100% { transform: scale(1); filter: brightness(1);
-        } }
+        @keyframes pulse-soft { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.02); filter: brightness(1.1); } 100% { transform: scale(1); filter: brightness(1); } }
+        @keyframes pulse-medium { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.05); filter: brightness(1.2); } 100% { transform: scale(1); filter: brightness(1); } }
+        @keyframes pulse-strong { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.08); filter: brightness(1.3); } 100% { transform: scale(1); filter: brightness(1); } }
         
-        .effect-5-10 { animation: pulse-soft 0.8s infinite ease-in-out;
-        }
-        .effect-30 { animation: pulse-medium 0.5s infinite ease-in-out;
-        }
-        .effect-60 { animation: pulse-strong 0.4s infinite ease-in-out;
-        }
+        .effect-5-10 { animation: pulse-soft 0.8s infinite ease-in-out; }
+        .effect-30 { animation: pulse-medium 0.5s infinite ease-in-out; }
+        .effect-60 { animation: pulse-strong 0.4s infinite ease-in-out; }
 
-        .red { color: #ff3e3e !important;
-        }
-        .boost-up { color: #2ecc71 !important;
-        }
-        .boost-down { color: #ff4757 !important;
-        }
+        .red { color: #ff3e3e !important; }
+        .boost-up { color: #2ecc71 !important; }
+        .boost-down { color: #ff4757 !important; }
 
-        .buttons { margin-top: 20px; z-index: 10; position: relative;
-        }
+        .buttons { margin-top: 20px; z-index: 10; position: relative; }
         .buttons button {
             margin: 5px;
             padding: 10px 18px; font-size: 1rem; font-weight: bold;
@@ -289,14 +245,10 @@
             box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3);
             transition: all 0.1s ease;
         }
-        .buttons button:active { transform: translateY(3px); box-shadow: 0 1px 0 #777;
-        }
-        #startBtn.active { background: #27ae60; color: white; border-color: #1e8449;
-            box-shadow: 0 4px 0 #1e8449; }
-        #stopBtn.active { background: #e74c3c; color: white;
-            border-color: #c0392b; box-shadow: 0 4px 0 #c0392b; }
-        #resetBtn { background: #f39c12;
-            color: white; border-color: #d35400; box-shadow: 0 4px 0 #d35400; }
+        .buttons button:active { transform: translateY(3px); box-shadow: 0 1px 0 #777; }
+        #startBtn.active { background: #27ae60; color: white; border-color: #1e8449; box-shadow: 0 4px 0 #1e8449; }
+        #stopBtn.active { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: 0 4px 0 #c0392b; }
+        #resetBtn { background: #f39c12; color: white; border-color: #d35400; box-shadow: 0 4px 0 #d35400; }
     </style>
 </head>
 <body>
@@ -311,8 +263,7 @@
     <div class="roulette-container">
         <div class="pointer">▼</div>
         <div class="window" id="windowDiv">
-         
-           <div class="track" id="track"></div>
+            <div class="track" id="track"></div>
         </div>
     </div>
 
@@ -344,19 +295,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
-    // ==========================================
-    // ฝั่งแสดงผล (Client / Use) - ปรับจูนให้เบาเครื่องที่สุด
-    // ลบระบบ TikFinity ออกเพื่อไม่ให้ทำงานซ้ำซ้อนกับหน้า Master
-    // ==========================================
-    
-    // บังคับให้เป็น Client เสมอ ยกเว้นจะมี ?master=1 ต่อท้ายลิงก์จริงๆ
-    const isMasterControl = new URLSearchParams(window.location.search).get('master') === '1';
-
-    // ถ้าเป็นหน้าจอโชว์เฉยๆ (ไม่มีสิทธิ์ Master) ให้ซ่อนปุ่มกดทั้งหมดไปเลย
-    if (!isMasterControl) {
-        document.querySelectorAll('.buttons, .instructions').forEach(el => el.style.display = 'none');
-    }
-
     const firebaseConfig = {
         apiKey: "AIzaSyCTqaj2D4b5p_loXgh7jjIW9D5zfi_2dUk",
         authDomain: "countdown-timer-8dd4c.firebaseapp.com",
@@ -402,11 +340,12 @@
         { value: '+1m', weight: 25 }, { value: '+5m', weight: 20 }, { value: '+10m', weight: 10 },
         { value: '+20m', weight: 3 }, { value: '+30m', weight: 2 }
     ];
+    // ปรับ G3 ใหม่เป็น 50/50%
     const g3Options = [
-        { value: '-5m', weight: 20 }, { value: '-15m', weight: 15 }, { value: '-30m', weight: 15 }, 
-        { value: '+1h', weight: 30 }, { value: '+2h', weight: 20 }                                  
+        { value: '-5m', weight: 20 }, { value: '-15m', weight: 15 }, { value: '-30m', weight: 15 }, // รวมฝั่งลบ 50
+        { value: '+1h', weight: 30 }, { value: '+2h', weight: 20 }                                  // รวมฝั่งบวก 50
     ];
-    
+
     function createPool(options) { 
         let pool = [];
         options.forEach(opt => { for (let i = 0; i < opt.weight; i++) { pool.push(opt.value); } }); 
@@ -605,6 +544,118 @@
         }
         window.smartBoost(totalSeconds, 2000, effectClass);
     }
+// ==========================================
+    // เริ่มส่วนระบบคิวและ TikFinity (แก้ไขชื่อฟังก์ชัน + เปิดระบบแจ้ง Error)
+    // ==========================================
+    
+    // 1. ประกาศตัวแปรระบบคิวไว้ด้านนอกสุด
+    let spinQueue = []; 
+    let followedUsers = new Set(); 
+
+    // 2. ระบบรันคิวอัตโนมัติ (เช็คและปล่อยคิวทุกๆ 1 วินาที)
+    setInterval(() => {
+        // ถ้าระบบนิ่ง (ไม่ได้สุ่มอยู่ + ไม่ได้รันตัวเลขเวลา) และมีคิวค้างอยู่ -> สั่งหมุนคิวถัดไป!
+        if (!isSpinning && activeBoosts === 0 && spinQueue.length > 0) {
+            const nextSpin = spinQueue.shift(); 
+            console.log(`%c[Queue] กำลังดึงคิวออกมาทำงาน: ${nextSpin.modeName}`, 'color: #f1c40f; font-weight: bold;');
+            
+            // แก้ไขจาก triggerSpin เป็น startSpin ตามโครงสร้างเดิมของพี่
+            if (typeof startSpin === 'function') {
+                startSpin(nextSpin.modeName, nextSpin.poolType, null); 
+            } else {
+                console.error("[Queue Error] หาฟังก์ชัน startSpin ไม่เจอในไฟล์นี้!");
+            }
+        }
+    }, 1000);
+
+    const isMasterControl = new URLSearchParams(window.location.search).get('master') === '1' || window.location.protocol === 'file:';
+    
+    if (isMasterControl) {
+        function connectTikFinity() {
+            const ws = new WebSocket('ws://localhost:21213/');
+            
+            ws.onopen = () => { 
+                console.log('%c[TikFinity] เชื่อมต่อสำเร็จ! (เปิดระบบคิวและกล่องดักจับข้อผิดพลาด)', 'color: #2ecc71; font-weight: bold;'); 
+            };
+            
+            window.nextLikeTarget = 1000;
+            
+            ws.onmessage = (event) => {
+                try {
+                    const payload = JSON.parse(event.data);
+                    const eventType = payload.event || payload.type; 
+
+                    console.log(`[TikFinity] ได้รับสัญญาณ Event: ${eventType}`, payload);
+
+                    // *** 1. ผู้ติดตามใหม่ ***
+                    if (eventType === 'follow') {
+                        const uniqueId = payload.data?.user?.uniqueId || payload.data?.uniqueId || payload.data?.nickname || '';
+                        const isTestEvent = payload.isTest || payload.test || uniqueId.toLowerCase().includes('test');
+                        
+                        if (uniqueId && !isTestEvent) {
+                            if (followedUsers.has(uniqueId)) {
+                                console.log(`[TikFinity] ข้ามการสุ่ม: ไอดี ${uniqueId} เคยกดติดตามไปแล้ว`);
+                                return; 
+                            }
+                            followedUsers.add(uniqueId);
+                        }
+                        
+                        console.log(`%c[TikFinity] เพิ่มสุ่ม G2 (นาทีใหญ่) เข้าคิวสำเร็จ`, 'color: #3498db;');
+                        spinQueue.push({ modeName: 'นาทีใหญ่', poolType: 'minutesLarge' });
+                    }
+                    
+                    // *** 2. เคาะใจ ***
+                    else if (eventType === 'like') {
+                        const totalLikes = (payload.data && (payload.data.total_likes || payload.data.totalLikeCount)) || 0;
+                        if (totalLikes >= window.nextLikeTarget) {
+                            let times = Math.floor((totalLikes - window.nextLikeTarget + 1000) / 1000);
+                            for (let i = 0; i < times; i++) {
+                                spinQueue.push({ modeName: 'นาทีใหญ่', poolType: 'minutesLarge' });
+                            }
+                            console.log(`[TikFinity] ไลก์ครบเป้า! เพิ่มสุ่ม G2 เข้าคิว ${times} ครั้ง`);
+                            window.nextLikeTarget += (times * 1000);
+                        }
+                    }
+                    
+                    // *** 3. ของขวัญ Combo ***
+                    else if (eventType === 'gift') {
+                        const giftData = payload.data || {};
+                        const giftName = (giftData.gift_name || '').toLowerCase();
+                        const coinCount = giftData.coins || giftData.diamonds || 1;
+                        const amount = giftData.amount || giftData.repeat_count || giftData.count || 1;
+
+                        let targetMode = '';
+                        let targetPool = '';
+
+                        if (giftName.includes('heart me') || giftName.includes('ใจส้ม')) {
+                            targetMode = 'นาทีใหญ่'; targetPool = 'minutesLarge';
+                        } else {
+                            if (coinCount >= 299) { targetMode = 'โหมดวาฬ!'; targetPool = 'minutesSmall'; }
+                            else if (coinCount >= 20) { targetMode = 'นาทีใหญ่'; targetPool = 'minutesLarge'; }
+                            else if (coinCount >= 1) { targetMode = 'วินาที'; targetPool = 'seconds'; }
+                        }
+
+                        if (targetMode !== '') {
+                            console.log(`[TikFinity] ของขวัญเข้า! เพิ่มเข้าคิวสุ่ม [${targetMode}] จำนวน ${amount} ครั้ง`);
+                            for(let i = 0; i < amount; i++) {
+                                spinQueue.push({ modeName: targetMode, poolType: targetPool });
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error("[TikFinity Error เกิดข้อผิดพลาดตอนประมวลผลข้อมูล]", err);
+                }
+            };
+            
+            ws.onclose = () => {
+                console.log('[TikFinity] การเชื่อมต่อหลุด กำลังพยายามเชื่อมต่อใหม่ใน 5 วินาที...');
+                setTimeout(connectTikFinity, 5000);
+            };
+        }
+        connectTikFinity();
+    }
+    // ==========================================
+    // จบส่วนระบบคิว
 
     function syncToFirebase() {
         timerRef.update({ remainingTime: window.countdownTime, isRunning: window.interval !== null, lastActionTime: firebase.database.ServerValue.TIMESTAMP });
@@ -624,20 +675,16 @@
         if (seconds < 0) seconds = 0;
         timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
         if (window.countdownTime <= 1800) { timerElement.classList.add('red'); fadeChangeImage("cat3-1.png"); }
-        else if (window.countdownTime <= 7200) { timerElement.classList.remove('red');
-        fadeChangeImage("cat3-2.png"); }
-        else { timerElement.classList.remove('red'); fadeChangeImage("cat3-3.png");
-        }
+        else if (window.countdownTime <= 7200) { timerElement.classList.remove('red'); fadeChangeImage("cat3-2.png"); }
+        else { timerElement.classList.remove('red'); fadeChangeImage("cat3-3.png"); }
     }
 
     window.runBoostAnimation = function(totalSeconds, durationMs, effectClass, isThisMachineMaster) {
-        if (window.boostTask) { clearInterval(window.boostTask);
-        window.boostTask = null; timerElement.classList.remove('boost-up', 'boost-down'); catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60'); }
+        if (window.boostTask) { clearInterval(window.boostTask); window.boostTask = null; timerElement.classList.remove('boost-up', 'boost-down'); catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60'); }
         activeBoosts = 1;
         timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
         catLayer.classList.add(effectClass);
-        const fps = 30; const totalSteps = (durationMs / 1000) * fps;
-        const incrementPerStep = totalSeconds / totalSteps;
+        const fps = 30; const totalSteps = (durationMs / 1000) * fps; const incrementPerStep = totalSeconds / totalSteps;
         let stepsTaken = 0; let accumulatedChange = 0; let lastIntegerChange = 0;
         window.boostTask = setInterval(() => {
             stepsTaken++; accumulatedChange += incrementPerStep;
@@ -646,16 +693,13 @@
             lastIntegerChange = currentIntegerChange;
             window.countdownTime = Math.max(0, window.countdownTime + diff); 
             updateTimerDisplay();
-     
-        if (stepsTaken >= totalSteps) { clearInterval(window.boostTask); window.boostTask = null; if (isThisMachineMaster) syncToFirebase(); finishBoost(effectClass); }
+            if (stepsTaken >= totalSteps) { clearInterval(window.boostTask); window.boostTask = null; if (isThisMachineMaster) syncToFirebase(); finishBoost(effectClass); }
         }, 1000 / fps);
     }
 
     function finishBoost(effectClass) {
-        activeBoosts = 0; timerElement.classList.remove('boost-up', 'boost-down');
-        catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60'); isMaster = false;
-        if (!isMasterControl) { setTimeout(() => { if (activeBoosts === 0 && !isSpinning && window.latestFirebaseData && window.latestFirebaseData.remainingTime !== undefined) { window.countdownTime = window.latestFirebaseData.remainingTime; updateTimerDisplay(); } }, 1500);
-        }
+        activeBoosts = 0; timerElement.classList.remove('boost-up', 'boost-down'); catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60'); isMaster = false;
+        if (!isMasterControl) { setTimeout(() => { if (activeBoosts === 0 && !isSpinning && window.latestFirebaseData && window.latestFirebaseData.remainingTime !== undefined) { window.countdownTime = window.latestFirebaseData.remainingTime; updateTimerDisplay(); } }, 1500); }
     }
 
     window.smartBoost = function(totalSeconds, durationMs, effectClass) {
@@ -677,8 +721,7 @@
                 window.lastTick = now - (delta % 1000); 
                 updateTimerDisplay();
             }
-        } else { window.stopTimer();
-        }
+        } else { window.stopTimer(); }
     }
 
     window.startTimer = function(isLocal = true) {
@@ -691,8 +734,7 @@
     }
 
     window.stopTimer = function(isLocal = true) {
-        if (window.interval) { clearInterval(window.interval);
-        window.interval = null; }
+        if (window.interval) { clearInterval(window.interval); window.interval = null; }
         document.getElementById('startBtn').classList.remove('active');
         document.getElementById('stopBtn').classList.add('active');
         if (isLocal) syncToFirebase();
@@ -700,8 +742,7 @@
 
     window.resetTimer = function() {
         window.stopTimer();
-        if (window.boostTask) { clearInterval(window.boostTask);
-        window.boostTask = null; }
+        if (window.boostTask) { clearInterval(window.boostTask); window.boostTask = null; }
         activeBoosts = 0;
         timerElement.classList.remove('boost-up', 'boost-down');
         catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
@@ -718,24 +759,17 @@
         window.latestFirebaseData = data; 
         if (data.isRunning) { if (!window.interval) { window.lastTick = Date.now(); window.interval = setInterval(countdown, 200); } } else { if (window.interval) { clearInterval(window.interval); window.interval = null; } }
         if (data.remainingTime !== undefined && !isMasterControl && Math.abs(window.countdownTime - data.remainingTime) > 2) { window.countdownTime = data.remainingTime; window.lastTick = Date.now(); updateTimerDisplay(); }
-   
         if (data.spinEvent && data.spinEvent.id !== lastSpinId) { lastSpinId = data.spinEvent.id; startSpin(data.spinEvent.modeName, data.spinEvent.poolType, data.spinEvent.winnerValue); }
-        if (data.lastRandomValue && !isSpinning && currentDisplayedValue !== data.lastRandomValue && data.lastRandomValue !== "-") { currentDisplayedValue = data.lastRandomValue; localStorage.setItem('lastSpunValue', data.lastRandomValue);
-        setRouletteToValue(data.lastRandomValue); }
-        
+        if (data.lastRandomValue && !isSpinning && currentDisplayedValue !== data.lastRandomValue && data.lastRandomValue !== "-") { currentDisplayedValue = data.lastRandomValue; localStorage.setItem('lastSpunValue', data.lastRandomValue); setRouletteToValue(data.lastRandomValue); }
         if (isMaster) return;
-        
         if (data.isRunning && !window.interval) window.startTimer(false);
         else if (!data.isRunning && window.interval) window.stopTimer(false);
-        if (!isMasterControl && !isSpinning && activeBoosts === 0) { window.countdownTime = data.remainingTime !== undefined ?
-        data.remainingTime : window.countdownTime; updateTimerDisplay(); }
+        if (!isMasterControl && !isSpinning && activeBoosts === 0) { window.countdownTime = data.remainingTime !== undefined ? data.remainingTime : window.countdownTime; updateTimerDisplay(); }
         if (data.boostEvent && data.boostEvent.id !== lastEventId) {
             if (lastEventId === "INIT") lastEventId = data.boostEvent.id;
-            else { lastEventId = data.boostEvent.id; if (data.boostEvent.totalSeconds !== 0) window.runBoostAnimation(data.boostEvent.totalSeconds, data.boostEvent.durationMs, data.boostEvent.effectClass, false);
-            }
+            else { lastEventId = data.boostEvent.id; if (data.boostEvent.totalSeconds !== 0) window.runBoostAnimation(data.boostEvent.totalSeconds, data.boostEvent.durationMs, data.boostEvent.effectClass, false); }
         }
     });
-    
     setTimeout(updateTimerDisplay, 100);
 </script>
 </body>
