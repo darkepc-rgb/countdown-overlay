@@ -544,21 +544,27 @@
         }
         window.smartBoost(totalSeconds, 2000, effectClass);
     }
-
 // ==========================================
-    // เริ่มส่วนระบบคิวและ TikFinity ที่อัปเกรดแล้ว
+    // เริ่มส่วนระบบคิวและ TikFinity (แก้ไขชื่อฟังก์ชัน + เปิดระบบแจ้ง Error)
     // ==========================================
     
-    // 1. ประกาศตัวแปรระบบคิวไว้ด้านนอกสุด (เพื่อไม่ให้กวนการกดปุ่มแมนนวล)
+    // 1. ประกาศตัวแปรระบบคิวไว้ด้านนอกสุด
     let spinQueue = []; 
     let followedUsers = new Set(); 
 
     // 2. ระบบรันคิวอัตโนมัติ (เช็คและปล่อยคิวทุกๆ 1 วินาที)
     setInterval(() => {
-        // ถ้าวงล้อหยุด, อนิเมชั่นเวลาหยุด และมีคิวค้างอยู่ -> สุ่มคิวถัดไป!
+        // ถ้าระบบนิ่ง (ไม่ได้สุ่มอยู่ + ไม่ได้รันตัวเลขเวลา) และมีคิวค้างอยู่ -> สั่งหมุนคิวถัดไป!
         if (!isSpinning && activeBoosts === 0 && spinQueue.length > 0) {
             const nextSpin = spinQueue.shift(); 
-            triggerSpin(nextSpin.modeName, nextSpin.poolType);
+            console.log(`%c[Queue] กำลังดึงคิวออกมาทำงาน: ${nextSpin.modeName}`, 'color: #f1c40f; font-weight: bold;');
+            
+            // แก้ไขจาก triggerSpin เป็น startSpin ตามโครงสร้างเดิมของพี่
+            if (typeof startSpin === 'function') {
+                startSpin(nextSpin.modeName, nextSpin.poolType, null); 
+            } else {
+                console.error("[Queue Error] หาฟังก์ชัน startSpin ไม่เจอในไฟล์นี้!");
+            }
         }
     }, 1000);
 
@@ -567,7 +573,11 @@
     if (isMasterControl) {
         function connectTikFinity() {
             const ws = new WebSocket('ws://localhost:21213/');
-            ws.onopen = () => { console.log('%c[TikFinity] เชื่อมต่อสำเร็จ! (ระบบคิว Combo อัตโนมัติ)', 'color: #2ecc71; font-weight: bold;'); };
+            
+            ws.onopen = () => { 
+                console.log('%c[TikFinity] เชื่อมต่อสำเร็จ! (เปิดระบบคิวและกล่องดักจับข้อผิดพลาด)', 'color: #2ecc71; font-weight: bold;'); 
+            };
+            
             window.nextLikeTarget = 1000;
             
             ws.onmessage = (event) => {
@@ -575,34 +585,43 @@
                     const payload = JSON.parse(event.data);
                     const eventType = payload.event || payload.type; 
 
-                    // *** 1. ผู้ติดตามใหม่ (กันซ้ำ) ***
+                    console.log(`[TikFinity] ได้รับสัญญาณ Event: ${eventType}`, payload);
+
+                    // *** 1. ผู้ติดตามใหม่ ***
                     if (eventType === 'follow') {
-                        const uniqueId = payload.data?.user?.uniqueId || payload.data?.uniqueId || payload.data?.nickname;
-                        if (uniqueId) {
-                            if (followedUsers.has(uniqueId)) return; // ไอดีเดิมเคยกดแล้ว ข้าม
+                        const uniqueId = payload.data?.user?.uniqueId || payload.data?.uniqueId || payload.data?.nickname || '';
+                        const isTestEvent = payload.isTest || payload.test || uniqueId.toLowerCase().includes('test');
+                        
+                        if (uniqueId && !isTestEvent) {
+                            if (followedUsers.has(uniqueId)) {
+                                console.log(`[TikFinity] ข้ามการสุ่ม: ไอดี ${uniqueId} เคยกดติดตามไปแล้ว`);
+                                return; 
+                            }
                             followedUsers.add(uniqueId);
                         }
+                        
+                        console.log(`%c[TikFinity] เพิ่มสุ่ม G2 (นาทีใหญ่) เข้าคิวสำเร็จ`, 'color: #3498db;');
                         spinQueue.push({ modeName: 'นาทีใหญ่', poolType: 'minutesLarge' });
                     }
-                    // *** 2. เคาะใจ (นับรอบละ 1000) ***
+                    
+                    // *** 2. เคาะใจ ***
                     else if (eventType === 'like') {
                         const totalLikes = (payload.data && (payload.data.total_likes || payload.data.totalLikeCount)) || 0;
                         if (totalLikes >= window.nextLikeTarget) {
-                            // คำนวณว่าข้ามไปกี่พันไลก์ จะได้โยนเข้าคิวให้ครบ
                             let times = Math.floor((totalLikes - window.nextLikeTarget + 1000) / 1000);
                             for (let i = 0; i < times; i++) {
                                 spinQueue.push({ modeName: 'นาทีใหญ่', poolType: 'minutesLarge' });
                             }
+                            console.log(`[TikFinity] ไลก์ครบเป้า! เพิ่มสุ่ม G2 เข้าคิว ${times} ครั้ง`);
                             window.nextLikeTarget += (times * 1000);
                         }
                     }
-                    // *** 3. ของขวัญ (เข้าคิวตามจำนวนชิ้น Combo) ***
+                    
+                    // *** 3. ของขวัญ Combo ***
                     else if (eventType === 'gift') {
                         const giftData = payload.data || {};
                         const giftName = (giftData.gift_name || '').toLowerCase();
                         const coinCount = giftData.coins || giftData.diamonds || 1;
-                        
-                        // ดึงจำนวนชิ้นที่ส่งมารัวๆ (รองรับตัวแปรหลายรูปแบบที่ TikFinity อาจส่งมา)
                         const amount = giftData.amount || giftData.repeat_count || giftData.count || 1;
 
                         let targetMode = '';
@@ -616,22 +635,27 @@
                             else if (coinCount >= 1) { targetMode = 'วินาที'; targetPool = 'seconds'; }
                         }
 
-                        // นำรางวัลเข้าคิว ตามจำนวนชิ้น (amount) ที่คนดูเปย์มา
                         if (targetMode !== '') {
+                            console.log(`[TikFinity] ของขวัญเข้า! เพิ่มเข้าคิวสุ่ม [${targetMode}] จำนวน ${amount} ครั้ง`);
                             for(let i = 0; i < amount; i++) {
                                 spinQueue.push({ modeName: targetMode, poolType: targetPool });
                             }
                         }
                     }
-                } catch (err) {}
+                } catch (err) {
+                    console.error("[TikFinity Error เกิดข้อผิดพลาดตอนประมวลผลข้อมูล]", err);
+                }
             };
-            ws.onclose = () => setTimeout(connectTikFinity, 5000);
+            
+            ws.onclose = () => {
+                console.log('[TikFinity] การเชื่อมต่อหลุด กำลังพยายามเชื่อมต่อใหม่ใน 5 วินาที...');
+                setTimeout(connectTikFinity, 5000);
+            };
         }
         connectTikFinity();
     }
-    
     // ==========================================
-    // จบส่วนระบบคิว (ส่วนด้านล่างคือ syncToFirebase ไม่ต้องไปยุ่งครับ)
+    // จบส่วนระบบคิว
 
     function syncToFirebase() {
         timerRef.update({ remainingTime: window.countdownTime, isRunning: window.interval !== null, lastActionTime: firebase.database.ServerValue.TIMESTAMP });
