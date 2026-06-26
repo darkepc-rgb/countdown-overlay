@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Roulette - Upgrade Version</title>
+    <title>Countdown Timer with Roulette - Complete Standalone</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&family=Kanit:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body {
@@ -70,7 +70,8 @@
             font-family: 'Kanit', sans-serif;
             min-width: 90px;
             max-width: 90px; height: 90px; margin: 0 25px; background: #1c1c1c; 
-            border: 2px solid #3b3b3b; border-radius: 12px; display: flex; flex-direction: column;
+            border: 2px solid #3b3b3b; border-radius: 12px;
+            display: flex; flex-direction: column;
             justify-content: center; align-items: center; 
             box-sizing: border-box;
             transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
@@ -84,7 +85,7 @@
             display: flex;
             align-items: baseline; 
             justify-content: center;
-            margin-top: 6px; 
+            margin-top: 6px;
         }
         .item .number {
             font-size: 3.2rem;
@@ -112,31 +113,26 @@
             font-weight: 900;
             line-height: 1;
             text-shadow: 2px 2px 0 #000;
+            -webkit-text-stroke: 1px rgba(0,0,0,0.8);
         }
 
         .item.plus { 
             border-color: #39ff14;
             box-shadow: 0 4px 10px rgba(0,0,0,0.8), inset 0 0 12px rgba(57, 255, 20, 0.2);
         }
-        .item.plus .sign { color: #39ff14;
-            text-shadow: 0 0 8px #39ff14, 2px 2px 0 #000; }
-        .item.plus .number { text-shadow: 0 0 12px rgba(57,255,20,0.7), 2px 2px 0 #000;
-        }
+        .item.plus .sign { color: #39ff14; text-shadow: 0 0 8px rgba(57,255,20,0.6), 2px 2px 0 #000; }
+        .item.plus .number { text-shadow: 0 0 12px rgba(57,255,20,0.7), 2px 2px 0 #000; }
 
         .item.minus { 
             border-color: #ff3333;
             box-shadow: 0 4px 10px rgba(0,0,0,0.8), inset 0 0 12px rgba(255, 51, 51, 0.2);
         }
-        .item.minus .sign { color: #ff3333;
-            text-shadow: 0 0 8px #ff3333, 2px 2px 0 #000; }
-        .item.minus .number { text-shadow: 0 0 12px rgba(255,51,51,0.7), 2px 2px 0 #000;
-        }
+        .item.minus .sign { color: #ff3333; text-shadow: 0 0 8px rgba(255,51,51,0.6), 2px 2px 0 #000; }
+        .item.minus .number { text-shadow: 0 0 12px rgba(255,51,51,0.7), 2px 2px 0 #000; }
 
-        .item.neutral { 
-            border-color: #2a2a2a;
-        }
-        .item.neutral .number { color: #888; text-shadow: none; -webkit-text-stroke: 0;
-        }
+        .item.neutral { border-color: #2a2a2a; }
+        .item.neutral .number { color: #888; text-shadow: none; -webkit-text-stroke: 0; }
+        .item.neutral .sign { display: none; }
 
         .item.gold-simple, .item.gold-beautiful, .item.gold-wings,
         .item.red-simple, .item.red-beautiful, .item.red-wings {
@@ -162,38 +158,19 @@
 
         .item.gold-simple::before, .item.gold-beautiful::before, .item.gold-wings::before,
         .item.red-simple::before, .item.red-beautiful::before, .item.red-wings::before {
-            content: '';
-            position: absolute;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            pointer-events: none;
-            z-index: 1;
+            content: ''; position: absolute;
+            background-size: contain; background-repeat: no-repeat; background-position: center;
+            pointer-events: none; z-index: 1;
         }
 
-        .item.gold-simple::before, .item.red-simple::before {
-            top: -12px; left: -12px; right: -12px; bottom: -12px;
-        }
-        .item.gold-beautiful::before, .item.red-beautiful::before {
-            top: -18px; left: -18px; right: -18px; bottom: -18px;
-        }
-        .item.gold-wings::before, .item.red-wings::before {
-            top: -18px; bottom: -18px;
-            left: -35px; right: -35px;
-        }
+        .item.gold-simple::before { background-image: url('plus-gold-simple.png'); top: -12px; left: -12px; right: -12px; bottom: -12px; }
+        .item.gold-beautiful::before { background-image: url('plus-gold-beautiful.png'); top: -18px; left: -18px; right: -18px; bottom: -18px; }
+        .item.gold-wings::before { background-image: url('plus-gold-wings.png'); top: -18px; bottom: -18px; left: -35px; right: -35px; }
+        .item.red-simple::before { background-image: url('minus-red-simple.png'); top: -12px; left: -12px; right: -12px; bottom: -12px; }
+        .item.red-beautiful::before { background-image: url('minus-red-beautiful.png'); top: -18px; left: -18px; right: -18px; bottom: -18px; }
+        .item.red-wings::before { background-image: url('minus-red-wings.png'); top: -18px; bottom: -18px; left: -35px; right: -35px; }
 
-        .item.gold-simple::before { background-image: url('plus-gold-simple.png'); }
-        .item.gold-beautiful::before { background-image: url('plus-gold-beautiful.png'); }
-        .item.gold-wings::before { background-image: url('plus-gold-wings.png'); }
-        
-        .item.red-simple::before { background-image: url('minus-red-simple.png'); }
-        .item.red-beautiful::before { background-image: url('minus-red-beautiful.png'); }
-        .item.red-wings::before { background-image: url('minus-red-wings.png'); }
-
-        .item.winner {
-            animation: win-pop-scale 0.5s ease-out forwards;
-            z-index: 20; position: relative;
-        }
+        .item.winner { animation: win-pop-scale 0.5s ease-out forwards; z-index: 20; position: relative; }
         @keyframes win-pop-scale {
             0% { transform: scale(1); }
             50% { transform: scale(1.18); }
@@ -201,12 +178,10 @@
         }
 
         .item.plus.winner:not(.gold-simple):not(.gold-beautiful):not(.gold-wings):not(.red-simple):not(.red-beautiful):not(.red-wings) {
-            box-shadow: 0 0 20px #39ff14, inset 0 0 10px #39ff14;
-            border-color: #39ff14;
+            box-shadow: 0 0 20px #39ff14, inset 0 0 10px #39ff14; border-color: #39ff14;
         }
         .item.minus.winner:not(.gold-simple):not(.gold-beautiful):not(.gold-wings):not(.red-simple):not(.red-beautiful):not(.red-wings) {
-            box-shadow: 0 0 20px #ff3333, inset 0 0 10px #ff3333;
-            border-color: #ff3333;
+            box-shadow: 0 0 20px #ff3333, inset 0 0 10px #ff3333; border-color: #ff3333;
         }
 
         .item.gold-simple.winner { box-shadow: 0 0 25px #ffd700, inset 0 0 15px #ffd700 !important; }
@@ -217,11 +192,8 @@
         .item.red-beautiful.winner { box-shadow: 0 0 35px #ff4757, inset 0 0 20px #ff3333 !important; filter: brightness(1.3); }
         .item.red-wings.winner { box-shadow: 0 0 45px #b30000, inset 0 0 25px #ff3333 !important; filter: brightness(1.3); }
 
-        .instructions { font-size: 15px; color: #ccc; margin-top: 0px; margin-bottom: 15px;
-            line-height: 1.5; text-shadow: 0 1px 3px #000; }
-        .key-badge { background: #222;
-            color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444;
-        }
+        .instructions { font-size: 15px; color: #ccc; margin-top: 0px; margin-bottom: 15px; line-height: 1.5; text-shadow: 0 1px 3px #000; }
+        .key-badge { background: #222; color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; }
 
         @keyframes pulse-soft { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.02); filter: brightness(1.1); } 100% { transform: scale(1); filter: brightness(1); } }
         @keyframes pulse-medium { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.05); filter: brightness(1.2); } 100% { transform: scale(1); filter: brightness(1); } }
@@ -237,13 +209,10 @@
 
         .buttons { margin-top: 20px; z-index: 10; position: relative; }
         .buttons button {
-            margin: 5px;
-            padding: 10px 18px; font-size: 1rem; font-weight: bold;
+            margin: 5px; padding: 10px 18px; font-size: 1rem; font-weight: bold;
             cursor: pointer; border: 2px solid #333; background: #ffffff;
-            color: #000; border-radius: 8px;
-            font-family: 'Itim', cursive;
-            box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3);
-            transition: all 0.1s ease;
+            color: #000; border-radius: 8px; font-family: 'Itim', cursive;
+            box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3); transition: all 0.1s ease;
         }
         .buttons button:active { transform: translateY(3px); box-shadow: 0 1px 0 #777; }
         #startBtn.active { background: #27ae60; color: white; border-color: #1e8449; box-shadow: 0 4px 0 #1e8449; }
@@ -270,7 +239,7 @@
     <div class="instructions">
         <span class="key-badge">G1 (Alt+1)</span> สุ่มวินาที |
         <span class="key-badge">G2 (Alt+2)</span> สุ่มนาทีใหญ่ | 
-        <span class="key-badge">G3 (Alt+3)</span> โหมดวาฬ! (50/50)
+        <span class="key-badge">G3 (Alt+3)</span> โหมดวาฬ!
     </div>
      
     <div class="buttons">
@@ -331,19 +300,21 @@
     const ITEM_HALF_WIDTH = 72;
 
     const g1Options = [
-        { value: '-10s', weight: 20 }, { value: '-30s', weight: 15 }, { value: '-60s', weight: 5 },
-        { value: '+5s', weight: 25 }, { value: '+10s', weight: 15 }, { value: '+20s', weight: 10 },
-        { value: '+30s', weight: 5 }, { value: '+60s', weight: 3 }, { value: '+3m', weight: 2 }
+        { value: '-5s', weight: 15 }, { value: '-10s', weight: 12 }, { value: '-15s', weight: 10 }, { value: '-20s', weight: 10 },
+        { value: '-30s', weight: 7 }, { value: '-1m', weight: 4 }, { value: '-2m', weight: 2 },
+        { value: '+10s', weight: 15 }, { value: '+20s', weight: 12 }, { value: '+30s', weight: 7 },
+        { value: '+1m', weight: 4 }, { value: '+3m', weight: 2 }
     ];
+
     const g2Options = [
-        { value: '-5m', weight: 25 }, { value: '-10m', weight: 15 },
-        { value: '+1m', weight: 25 }, { value: '+5m', weight: 20 }, { value: '+10m', weight: 10 },
-        { value: '+20m', weight: 3 }, { value: '+30m', weight: 2 }
+        { value: '-5m', weight: 20 }, { value: '-10m', weight: 15 }, { value: '-15m', weight: 10 }, { value: '-20m', weight: 7 }, { value: '-30m', weight: 3 },
+        { value: '+5m', weight: 18 }, { value: '+10m', weight: 14 }, { value: '+15m', weight: 8 }, { value: '+30m', weight: 4 }, { value: '+45m', weight: 1 }
     ];
-    // ปรับ G3 ใหม่เป็น 50/50%
+
     const g3Options = [
-        { value: '-5m', weight: 20 }, { value: '-15m', weight: 15 }, { value: '-30m', weight: 15 }, // รวมฝั่งลบ 50
-        { value: '+1h', weight: 30 }, { value: '+2h', weight: 20 }                                  // รวมฝั่งบวก 50
+        { value: '-10m\u200B', weight: 15 }, { value: '-15m\u200B', weight: 12 }, { value: '-20m\u200B', weight: 10 }, { value: '-30m\u200B', weight: 8 },
+        { value: '-45m\u200B', weight: 7 }, { value: '-1h\u200B', weight: 3 },
+        { value: '+15m\u200B', weight: 19 }, { value: '+30m\u200B', weight: 14 }, { value: '+45m\u200B', weight: 8 }, { value: '+1h\u200B', weight: 3 }, { value: '+2h\u200B', weight: 1 }
     ];
 
     function createPool(options) { 
@@ -389,30 +360,52 @@
         osc.frequency.value = 1174.66; osc.type = 'triangle';
         gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.0);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 1.0);
+        osc.start(); osc.stop(audioCtx.currentTime + 1.0);
     }
 
     function applySpecialFrame(element, val) {
         element.classList.remove('gold-simple', 'gold-beautiful', 'gold-wings', 'red-simple', 'red-beautiful', 'red-wings');
-        if (val === '+60s' || val === '+10m' || val === '+20m') element.classList.add('gold-simple');
-        else if (val === '+3m' || val === '+30m' || val === '+1h') element.classList.add('gold-beautiful');
-        else if (val === '+2h') element.classList.add('gold-wings');
-        else if (val === '-30s' || val === '-60s' || val === '-5m') element.classList.add('red-simple');
-        else if (val === '-10m' || val === '-15m') element.classList.add('red-beautiful');
+        
+        if (val === '+30s') element.classList.add('gold-simple');
+        else if (val === '+1m') element.classList.add('gold-beautiful');
+        else if (val === '+3m') element.classList.add('gold-wings');
+        else if (val === '-30s') element.classList.add('red-simple');
+        else if (val === '-1m') element.classList.add('red-beautiful');
+        else if (val === '-2m') element.classList.add('red-wings');
+        
+        else if (val === '+15m') element.classList.add('gold-simple');
+        else if (val === '+30m') element.classList.add('gold-beautiful');
+        else if (val === '+45m') element.classList.add('gold-wings');
+        else if (val === '-15m') element.classList.add('red-simple');
+        else if (val === '-20m') element.classList.add('red-beautiful');
         else if (val === '-30m') element.classList.add('red-wings');
+        
+        else if (['-10m\u200B', '-15m\u200B', '-20m\u200B', '-30m\u200B'].includes(val)) element.classList.add('red-simple');
+        else if (val === '-45m\u200B') element.classList.add('red-beautiful');
+        else if (val === '-1h\u200B') element.classList.add('red-wings');
+        
+        else if (['-10m', '-15m', '-20m', '-30m'].includes(val)) element.classList.add('red-simple'); 
+        
+        else if (['+15m\u200B', '+30m\u200B'].includes(val)) element.classList.add('gold-simple');
+        else if (val === '+45m\u200B') element.classList.add('gold-beautiful');
+        else if (['+1h\u200B', '+2h\u200B'].includes(val)) element.classList.add('gold-wings');
     }
 
     function getFormattedItemHTML(val) {
         if (!val || val === "-" || val === "---") return `<div class="val-container"><span class="number">-</span></div>`;
-        let match = val.match(/([+-])?(\d+)([smh])/i);
+        let cleanVal = val.replace(/\u200B/g, ''); 
+        let match = cleanVal.match(/([+-])?(\d+)([smh])/i);
         if (match) {
             let sign = match[1] || '';
             let num = match[2];
             let unit = match[3].toLowerCase();
             return `<span class="sign">${sign}</span><div class="val-container"><span class="number">${num}</span><span class="unit">${unit}</span></div>`;
         }
-        return `<div class="val-container"><span class="number">${val}</span></div>`;
+        
+        let signMatch = cleanVal.match(/^([+-])/);
+        let fallbackSign = signMatch ? signMatch[1] : '';
+        let fallbackNum = cleanVal.replace(/[+-]/g, '');
+        return `<span class="sign">${fallbackSign}</span><div class="val-container"><span class="number">${fallbackNum}</span></div>`;
     }
 
     function generateTrackItemsWithWinner(totalItems, pool, winnerValue) {
@@ -510,152 +503,121 @@
     });
 
     function parseAndTriggerBoost(resultText) {
-        const cleaned = resultText.trim();
-        currentDisplayedValue = cleaned;
-        localStorage.setItem('lastSpunValue', cleaned);
-        timerRef.update({ lastRandomValue: cleaned });
+        const originalText = resultText.trim();
+        const cleaned = originalText.replace(/\u200B/g, ''); 
+        currentDisplayedValue = originalText;
+        localStorage.setItem('lastSpunValue', originalText);
+        timerRef.update({ lastRandomValue: originalText });
+
         let totalSeconds = 0;
         let effectClass = 'effect-5-10';
-        if (cleaned === '+2h') { totalSeconds = 120 * 60; effectClass = 'effect-60'; }
-        else if (cleaned === '+1h') { totalSeconds = 60 * 60; effectClass = 'effect-60'; }
-        else if (cleaned === '+30m') { totalSeconds = 30 * 60; effectClass = 'effect-30'; }
-        else if (cleaned.includes('-30m')) { totalSeconds = -30 * 60; effectClass = 'effect-30'; }
-        else if (cleaned.includes('+20m')) { totalSeconds = 20 * 60; effectClass = 'effect-30'; }
-        else if (cleaned.includes('-15m')) { totalSeconds = -15 * 60; effectClass = 'effect-30'; }
-        else if (cleaned.includes('+10m')) { totalSeconds = 10 * 60; effectClass = 'effect-5-10'; }
-        else if (cleaned.includes('-10m')) { totalSeconds = -10 * 60; effectClass = 'effect-5-10'; }
-        else if (cleaned.includes('+5m')) { totalSeconds = 5 * 60; effectClass = 'effect-5-10'; }
-        else if (cleaned.includes('-5m')) { totalSeconds = -5 * 60; effectClass = 'effect-5-10'; }
-        else if (cleaned === '+3m') { totalSeconds = 3 * 60; effectClass = 'effect-5-10'; }
-        else if (cleaned.includes('+1m')) { totalSeconds = 1 * 60; effectClass = 'effect-5-10'; }
-        else {
-            let unitMatch = cleaned.match(/([+-])(\d+)\s*([smh])/i);
-            if (unitMatch) {
-                let sign = unitMatch[1];
-                let amount = parseInt(unitMatch[2]);
-                let unit = unitMatch[3].toLowerCase();
-                if (unit === 'h') amount = amount * 3600;
-                else if (unit === 'm') amount = amount * 60;
-                totalSeconds = (sign === '-') ? -amount : amount;
-                if (Math.abs(totalSeconds) >= 3600) effectClass = 'effect-60';
-                else if (Math.abs(totalSeconds) >= 1800) effectClass = 'effect-30';
-                else effectClass = 'effect-5-10';
-            }
+
+        let unitMatch = cleaned.match(/([+-])(\d+)([smh])/i);
+        if (unitMatch) {
+            let sign = unitMatch[1];
+            let amount = parseInt(unitMatch[2]);
+            let unit = unitMatch[3].toLowerCase();
+            if (unit === 'h') amount = amount * 3600;
+            else if (unit === 'm') amount = amount * 60;
+            totalSeconds = (sign === '-') ? -amount : amount;
+
+            if (Math.abs(totalSeconds) >= 3600) effectClass = 'effect-60';
+            else if (Math.abs(totalSeconds) >= 1800) effectClass = 'effect-30';
+            else effectClass = 'effect-5-10';
         }
+
         window.smartBoost(totalSeconds, 2000, effectClass);
     }
-// ==========================================
-    // เริ่มส่วนระบบคิวและ TikFinity (แก้ไขชื่อฟังก์ชัน + เปิดระบบแจ้ง Error)
-    // ==========================================
-    
-    // 1. ประกาศตัวแปรระบบคิวไว้ด้านนอกสุด
-    let spinQueue = []; 
-    let followedUsers = new Set(); 
-
-    // 2. ระบบรันคิวอัตโนมัติ (เช็คและปล่อยคิวทุกๆ 1 วินาที)
-    setInterval(() => {
-        // ถ้าระบบนิ่ง (ไม่ได้สุ่มอยู่ + ไม่ได้รันตัวเลขเวลา) และมีคิวค้างอยู่ -> สั่งหมุนคิวถัดไป!
-        if (!isSpinning && activeBoosts === 0 && spinQueue.length > 0) {
-            const nextSpin = spinQueue.shift(); 
-            console.log(`%c[Queue] กำลังดึงคิวออกมาทำงาน: ${nextSpin.modeName}`, 'color: #f1c40f; font-weight: bold;');
-            
-            // แก้ไขจาก triggerSpin เป็น startSpin ตามโครงสร้างเดิมของพี่
-            if (typeof startSpin === 'function') {
-                startSpin(nextSpin.modeName, nextSpin.poolType, null); 
-            } else {
-                console.error("[Queue Error] หาฟังก์ชัน startSpin ไม่เจอในไฟล์นี้!");
-            }
-        }
-    }, 1000);
 
     const isMasterControl = new URLSearchParams(window.location.search).get('master') === '1' || window.location.protocol === 'file:';
-    
-    if (isMasterControl) {
-        function connectTikFinity() {
-            const ws = new WebSocket('ws://localhost:21213/');
-            
-            ws.onopen = () => { 
-                console.log('%c[TikFinity] เชื่อมต่อสำเร็จ! (เปิดระบบคิวและกล่องดักจับข้อผิดพลาด)', 'color: #2ecc71; font-weight: bold;'); 
-            };
-            
-            window.nextLikeTarget = 1000;
-            
-            ws.onmessage = (event) => {
-                try {
-                    const payload = JSON.parse(event.data);
-                    const eventType = payload.event || payload.type; 
 
-                    console.log(`[TikFinity] ได้รับสัญญาณ Event: ${eventType}`, payload);
+    // ----------------------------------------------------
+    // --- ระบบคิวและการเชื่อมต่อ TikFinity แบบอัตโนมัติ ---
+    // ----------------------------------------------------
+    let tikFinityQueue = [];
+    let totalLikes = 0;
 
-                    // *** 1. ผู้ติดตามใหม่ ***
-                    if (eventType === 'follow') {
-                        const uniqueId = payload.data?.user?.uniqueId || payload.data?.uniqueId || payload.data?.nickname || '';
-                        const isTestEvent = payload.isTest || payload.test || uniqueId.toLowerCase().includes('test');
-                        
-                        if (uniqueId && !isTestEvent) {
-                            if (followedUsers.has(uniqueId)) {
-                                console.log(`[TikFinity] ข้ามการสุ่ม: ไอดี ${uniqueId} เคยกดติดตามไปแล้ว`);
-                                return; 
-                            }
-                            followedUsers.add(uniqueId);
-                        }
-                        
-                        console.log(`%c[TikFinity] เพิ่มสุ่ม G2 (นาทีใหญ่) เข้าคิวสำเร็จ`, 'color: #3498db;');
-                        spinQueue.push({ modeName: 'นาทีใหญ่', poolType: 'minutesLarge' });
-                    }
-                    
-                    // *** 2. เคาะใจ ***
-                    else if (eventType === 'like') {
-                        const totalLikes = (payload.data && (payload.data.total_likes || payload.data.totalLikeCount)) || 0;
-                        if (totalLikes >= window.nextLikeTarget) {
-                            let times = Math.floor((totalLikes - window.nextLikeTarget + 1000) / 1000);
-                            for (let i = 0; i < times; i++) {
-                                spinQueue.push({ modeName: 'นาทีใหญ่', poolType: 'minutesLarge' });
-                            }
-                            console.log(`[TikFinity] ไลก์ครบเป้า! เพิ่มสุ่ม G2 เข้าคิว ${times} ครั้ง`);
-                            window.nextLikeTarget += (times * 1000);
-                        }
-                    }
-                    
-                    // *** 3. ของขวัญ Combo ***
-                    else if (eventType === 'gift') {
-                        const giftData = payload.data || {};
-                        const giftName = (giftData.gift_name || '').toLowerCase();
-                        const coinCount = giftData.coins || giftData.diamonds || 1;
-                        const amount = giftData.amount || giftData.repeat_count || giftData.count || 1;
-
-                        let targetMode = '';
-                        let targetPool = '';
-
-                        if (giftName.includes('heart me') || giftName.includes('ใจส้ม')) {
-                            targetMode = 'นาทีใหญ่'; targetPool = 'minutesLarge';
-                        } else {
-                            if (coinCount >= 299) { targetMode = 'โหมดวาฬ!'; targetPool = 'minutesSmall'; }
-                            else if (coinCount >= 20) { targetMode = 'นาทีใหญ่'; targetPool = 'minutesLarge'; }
-                            else if (coinCount >= 1) { targetMode = 'วินาที'; targetPool = 'seconds'; }
-                        }
-
-                        if (targetMode !== '') {
-                            console.log(`[TikFinity] ของขวัญเข้า! เพิ่มเข้าคิวสุ่ม [${targetMode}] จำนวน ${amount} ครั้ง`);
-                            for(let i = 0; i < amount; i++) {
-                                spinQueue.push({ modeName: targetMode, poolType: targetPool });
-                            }
-                        }
-                    }
-                } catch (err) {
-                    console.error("[TikFinity Error เกิดข้อผิดพลาดตอนประมวลผลข้อมูล]", err);
-                }
-            };
-            
-            ws.onclose = () => {
-                console.log('[TikFinity] การเชื่อมต่อหลุด กำลังพยายามเชื่อมต่อใหม่ใน 5 วินาที...');
-                setTimeout(connectTikFinity, 5000);
-            };
+    // ตัวจัดการคิว (ตรวจสอบทุกครึ่งวินาที เพื่อไม่ให้วงล้อหมุนทับกัน)
+    setInterval(() => {
+        if (tikFinityQueue.length > 0 && !isSpinning) {
+            const nextEvent = tikFinityQueue.shift();
+            triggerSpin(nextEvent.modeName, nextEvent.poolType);
         }
-        connectTikFinity();
+    }, 500);
+
+    function connectTikFinity() {
+        if (!isMasterControl) return; // ทำงานเฉพาะในหน้า Master เท่านั้น
+
+        const ws = new WebSocket('ws://localhost:21213/');
+
+        ws.onopen = () => {
+            console.log("เชื่อมต่อ TikFinity สำเร็จ พร้อมรับข้อมูล!");
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+
+                // 1. กดติดตาม -> G1
+                if (msg.event === 'follow') {
+                    tikFinityQueue.push({ modeName: 'วินาที', poolType: 'seconds' });
+                }
+
+                // 2. ใจส้ม (ระบบสมาชิก/Subscribe) -> G1
+                if (msg.event === 'subscribe') {
+                    tikFinityQueue.push({ modeName: 'วินาที', poolType: 'seconds' });
+                }
+
+                // 3. เคาะใจทุกๆ 1000 ครั้ง -> G1
+                if (msg.event === 'like') {
+                    let count = msg.data.likeCount || 1;
+                    totalLikes += count;
+                    if (totalLikes >= 1000) {
+                        let times = Math.floor(totalLikes / 1000);
+                        for (let i = 0; i < times; i++) {
+                            tikFinityQueue.push({ modeName: 'วินาที', poolType: 'seconds' });
+                        }
+                        totalLikes = totalLikes % 1000; // เก็บเศษที่เหลือไว้คำนวณรอบหน้า
+                    }
+                }
+
+                // 4. ของขวัญตามเรทราคา (G1, G2, G3)
+                if (msg.event === 'gift') {
+                    let coins = msg.data.diamonds || 0; // มูลค่าของขวัญต่อชิ้น
+                    let repeat = msg.data.repeatCount || 1; // จำนวนที่ส่งมารัวๆ แบบคอมโบ
+                    
+                    if (coins > 0) {
+                        // วนลูปจับใส่คิวตามจำนวนของขวัญที่ส่ง (ป้องกันคนปาคอมโบแล้วนับเป็นครั้งเดียว)
+                        for (let i = 0; i < repeat; i++) {
+                            if (coins >= 1 && coins <= 19) {
+                                tikFinityQueue.push({ modeName: 'วินาที', poolType: 'seconds' }); // G1
+                            } else if (coins >= 20 && coins <= 298) {
+                                tikFinityQueue.push({ modeName: 'นาทีใหญ่', poolType: 'minutesLarge' }); // G2
+                            } else if (coins >= 299) {
+                                tikFinityQueue.push({ modeName: 'โหมดวาฬ!', poolType: 'minutesSmall' }); // G3
+                            }
+                        }
+                    }
+                }
+
+            } catch (e) {
+                console.error("Error parsing TikFinity message:", e);
+            }
+        };
+
+        ws.onclose = () => {
+            console.log("หลุดการเชื่อมต่อจาก TikFinity กำลังลองใหม่ใน 5 วินาที...");
+            setTimeout(connectTikFinity, 5000); // หากหลุดให้พยายามต่อใหม่
+        };
+        
+        ws.onerror = (err) => {
+            console.log("TikFinity Error, กรุณาตรวจสอบว่าโปรแกรม TikFinity เปิดอยู่");
+        };
     }
-    // ==========================================
-    // จบส่วนระบบคิว
+
+    // เริ่มทำงาน TikFinity
+    connectTikFinity();
+    // ----------------------------------------------------
 
     function syncToFirebase() {
         timerRef.update({ remainingTime: window.countdownTime, isRunning: window.interval !== null, lastActionTime: firebase.database.ServerValue.TIMESTAMP });
@@ -684,7 +646,8 @@
         activeBoosts = 1;
         timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
         catLayer.classList.add(effectClass);
-        const fps = 30; const totalSteps = (durationMs / 1000) * fps; const incrementPerStep = totalSeconds / totalSteps;
+        const fps = 30; const totalSteps = (durationMs / 1000) * fps;
+        const incrementPerStep = totalSeconds / totalSteps;
         let stepsTaken = 0; let accumulatedChange = 0; let lastIntegerChange = 0;
         window.boostTask = setInterval(() => {
             stepsTaken++; accumulatedChange += incrementPerStep;
@@ -693,12 +656,14 @@
             lastIntegerChange = currentIntegerChange;
             window.countdownTime = Math.max(0, window.countdownTime + diff); 
             updateTimerDisplay();
+     
             if (stepsTaken >= totalSteps) { clearInterval(window.boostTask); window.boostTask = null; if (isThisMachineMaster) syncToFirebase(); finishBoost(effectClass); }
         }, 1000 / fps);
     }
 
     function finishBoost(effectClass) {
-        activeBoosts = 0; timerElement.classList.remove('boost-up', 'boost-down'); catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60'); isMaster = false;
+        activeBoosts = 0; timerElement.classList.remove('boost-up', 'boost-down');
+        catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60'); isMaster = false;
         if (!isMasterControl) { setTimeout(() => { if (activeBoosts === 0 && !isSpinning && window.latestFirebaseData && window.latestFirebaseData.remainingTime !== undefined) { window.countdownTime = window.latestFirebaseData.remainingTime; updateTimerDisplay(); } }, 1500); }
     }
 
@@ -759,6 +724,7 @@
         window.latestFirebaseData = data; 
         if (data.isRunning) { if (!window.interval) { window.lastTick = Date.now(); window.interval = setInterval(countdown, 200); } } else { if (window.interval) { clearInterval(window.interval); window.interval = null; } }
         if (data.remainingTime !== undefined && !isMasterControl && Math.abs(window.countdownTime - data.remainingTime) > 2) { window.countdownTime = data.remainingTime; window.lastTick = Date.now(); updateTimerDisplay(); }
+   
         if (data.spinEvent && data.spinEvent.id !== lastSpinId) { lastSpinId = data.spinEvent.id; startSpin(data.spinEvent.modeName, data.spinEvent.poolType, data.spinEvent.winnerValue); }
         if (data.lastRandomValue && !isSpinning && currentDisplayedValue !== data.lastRandomValue && data.lastRandomValue !== "-") { currentDisplayedValue = data.lastRandomValue; localStorage.setItem('lastSpunValue', data.lastRandomValue); setRouletteToValue(data.lastRandomValue); }
         if (isMaster) return;
