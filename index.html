@@ -299,24 +299,52 @@
 
 <script>
 
-    // ==========================================
-    // 🏆 ACHIEVEMENT HALL ADDON (JS ENGINE) 🏆
-    // ==========================================
-    let userStats = JSON.parse(localStorage.getItem('achievementUserStats')) || {};
-    let achData = JSON.parse(localStorage.getItem('achievementHallData')) || {
-        positive: { username: "-", total: 0 },
-        negative: { username: "-", total: 0 },
-        spins: { username: "-", total: 0 },
-        whale: { username: "-", total: 0 },
-        cuteWhale: { username: "-", total: 0 },
-        king: { username: "-", total: 0 } // เพิ่ม ราชาเคาะใจ
+// ==========================================
+// 🏆 ACHIEVEMENT HALL ADDON (JS ENGINE) 🏆
+// ==========================================
+
+// โหลด userStats แบบปลอดภัย
+let userStats = {};
+try {
+    userStats = JSON.parse(localStorage.getItem('achievementUserStats')) || {};
+} catch (e) {
+    console.warn('achievementUserStats corrupted', e);
+    userStats = {};
+}
+
+const defaultAchData = {
+    positive: { username: "-", total: 0 },
+    negative: { username: "-", total: 0 },
+    spins: { username: "-", total: 0 },
+    whale: { username: "-", total: 0 },
+    cuteWhale: { username: "-", total: 0 },
+    king: { username: "-", total: 0 }
+};
+
+// โหลด achievement แบบปลอดภัย
+let achData;
+try {
+    achData = {
+        ...defaultAchData,
+        ...(JSON.parse(localStorage.getItem('achievementHallData')) || {})
     };
+} catch (e) {
+    console.warn('achievementHallData corrupted', e);
+    achData = { ...defaultAchData };
+}
+
+// กันกรณีเพิ่ม Achievement ใหม่ในอนาคต
+achData.positive ??= { username: "-", total: 0 };
+achData.negative ??= { username: "-", total: 0 };
+achData.spins ??= { username: "-", total: 0 };
+achData.whale ??= { username: "-", total: 0 };
+achData.cuteWhale ??= { username: "-", total: 0 };
+achData.king ??= { username: "-", total: 0 };
 
 function saveAndRenderAch() {
-    // 1. ตรวจสอบว่า achData มีค่าไหม ถ้าไม่มีให้ใช้ object ว่างๆ แทนเพื่อกัน Error
     if (!achData) {
         console.warn("achData is not initialized yet");
-        return; 
+        return;
     }
 
     localStorage.setItem('achievementUserStats', JSON.stringify(userStats));
