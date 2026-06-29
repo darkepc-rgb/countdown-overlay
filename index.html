@@ -215,15 +215,7 @@
         </div>
     </div>
 
-    <!-- Popup UI -->
-    <div class="ach-popup" id="achPopup">
-        <div class="ach-popup-header">🏆 ACHIEVEMENT UPDATED 🏆</div>
-        <div class="ach-popup-title" id="achPopupTitle">...</div>
-        <div class="ach-popup-user" id="achPopupUser">...</div>
-        <div class="ach-popup-val" id="achPopupVal">...</div>
-    </div>
     <!-- ========================================== -->
-
 
     <div class="queue-ui" id="queueUI">
         <h3 id="resetQueueBtn" title="คลิกเพื่อล้างคิวทั้งหมด">Live Queue</h3>
@@ -325,11 +317,6 @@
         if (m > 0) res.push(`${m}m`);
         if (s > 0 && h === 0) res.push(`${s}s`);
         return sign + res.join(' ');
-    }
-
-    let popupQueue = []; let isPopupShowing = false;
-    function triggerAchPopup(title, name, valText) {
-        popupQueue.push({title, name, valText}); playAchPopup();
     }
     
     function playAchPopup() {
