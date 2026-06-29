@@ -312,28 +312,40 @@
         king: { username: "-", total: 0 } // เพิ่ม ราชาเคาะใจ
     };
 
-    function saveAndRenderAch() {
-        localStorage.setItem('achievementUserStats', JSON.stringify(userStats));
-        localStorage.setItem('achievementHallData', JSON.stringify(achData));
-        
-        document.getElementById('ach-user-pos').innerText = achData.positive.username;
-        document.getElementById('ach-val-pos').innerText = formatAchTime(achData.positive.total, '+');
-        
-        document.getElementById('ach-user-neg').innerText = achData.negative.username;
-        document.getElementById('ach-val-neg').innerText = formatAchTime(achData.negative.total, '-');
-        
-        document.getElementById('ach-user-spin').innerText = achData.spins.username;
-        document.getElementById('ach-val-spin').innerText = achData.spins.total + ' ครั้ง';
-        
-        document.getElementById('ach-user-whale').innerText = achData.whale.username;
-        document.getElementById('ach-val-whale').innerText = achData.whale.total.toLocaleString() + ' Coin';
-        
-        document.getElementById('ach-user-cute').innerText = achData.cuteWhale.username;
-        document.getElementById('ach-val-cute').innerText = achData.cuteWhale.total.toLocaleString() + ' Coin';
-        
-        document.getElementById('ach-user-king').innerText = achData.king.username;
-        document.getElementById('ach-val-king').innerText = achData.king.total.toLocaleString() + ' ใจ';
+function saveAndRenderAch() {
+    // 1. ตรวจสอบว่า achData มีค่าไหม ถ้าไม่มีให้ใช้ object ว่างๆ แทนเพื่อกัน Error
+    if (!achData) {
+        console.warn("achData is not initialized yet");
+        return; 
     }
+
+    localStorage.setItem('achievementUserStats', JSON.stringify(userStats));
+    localStorage.setItem('achievementHallData', JSON.stringify(achData));
+    
+    // 2. ใช้ฟังก์ชันช่วยดึงค่าเพื่อป้องกัน Error ย่อย (เช่น achData.positive อาจจะเป็น undefined)
+    const setAch = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = val || "-";
+    };
+
+    setAch('ach-user-pos', achData.positive?.username);
+    setAch('ach-val-pos', formatAchTime(achData.positive?.total || 0, '+'));
+    
+    setAch('ach-user-neg', achData.negative?.username);
+    setAch('ach-val-neg', formatAchTime(achData.negative?.total || 0, '-'));
+    
+    setAch('ach-user-spin', achData.spins?.username);
+    setAch('ach-val-spin', (achData.spins?.total || 0) + ' ครั้ง');
+    
+    setAch('ach-user-whale', achData.whale?.username);
+    setAch('ach-val-whale', (achData.whale?.total || 0).toLocaleString() + ' Coin');
+    
+    setAch('ach-user-cute', achData.cuteWhale?.username);
+    setAch('ach-val-cute', (achData.cuteWhale?.total || 0).toLocaleString() + ' Coin');
+    
+    setAch('ach-user-king', achData.king?.username);
+    setAch('ach-val-king', (achData.king?.total || 0).toLocaleString() + ' ใจ');
+}
 
     function formatAchTime(sec, sign) {
                      // คำนวณชั่วโมง นาที วินาที
