@@ -10,40 +10,58 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             min-height: 100vh; background-color: transparent; color: white; 
             font-family: 'Itim', cursive; text-align: center; margin: 0; padding: 20px 0; 
-            padding-top: 50px; /* ลดลงจาก 100px เหลือ 50px เพื่อดึงเวลานับถอยหลังและวงล้อขึ้นไป */
+            padding-top: 10px; /* ลดลงจาก 100px เหลือ 50px เพื่อดึงเวลานับถอยหลังและวงล้อขึ้นไป */
             box-sizing: border-box; 
         }
 
+    /* --- 🏆 UI Achievement Hall (ขยายเป็น 220x290 ตามโจทย์) --- */
         .ach-container {
-            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            width: max-content; /* เปลี่ยนเป็น max-content ให้กรอบบีบแคบลงพอดีเนื้อหา */
-            display: flex; justify-content: center; align-items: center; gap: 4px;
-            background: linear-gradient(180deg, rgba(15,15,15,0.95), rgba(0,0,0,0.85));
-            border-bottom: 2px solid #b8860b; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;
-            padding: 4px 15px; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2); z-index: 1000;
-            font-family: 'Kanit', sans-serif; overflow: hidden;
-        }
-        
+            position: fixed;
+            bottom: 20px; right: 20px;
+            background: linear-gradient(135deg, rgba(15, 15, 15, 0.95), rgba(30, 30, 30, 0.9));
+            border-radius: 15px;
+            border: none;
+            padding: 15px; 
+            width: 220px; 
+            height: 290px; 
+            font-family: 'Itim', cursive; 
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.3), inset 0 0 10px rgba(255, 170, 0, 0.1);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }    
+
         .ach-header {
-            font-size: 0.95rem; font-weight: 900; color: #ffd700; text-transform: uppercase;
-            text-shadow: 0 2px 4px #000; padding: 0 10px; border-right: 2px dashed #555; white-space: nowrap;
+            font-size: 1.3rem; /* ขยายฟอนต์หัวข้อขึ้นเล็กน้อย */
+            font-weight: bold; color: #ffd700; text-transform: uppercase;
+            text-shadow: 1px 1px 2px #000; padding-bottom: 8px; border-bottom: 1px dashed #555; 
+            margin-bottom: 10px; text-align: center;
         }
-        
+
+        .ach-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            gap: 8px; /* เพิ่มช่องว่างระหว่างช่องให้ดูโปร่งขึ้น */
+            flex-grow: 1;
+        }
+
         .ach-slot {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: rgba(30, 30, 30, 0.6); border: 1px solid #444; border-radius: 6px;
-            padding: 2px 8px; min-width: 100px; /* ลดความกว้างขั้นต่ำลงเพื่อให้กรอบรวมแคบลง */
-            flex-grow: 1; transition: all 0.3s;
+            background: rgba(30, 30, 30, 0.5); border-radius: 8px;
+            padding: 4px; /* เพิ่มพื้นที่ padding ภายในช่อง */
+            transition: all 0.3s;
         }
-        .ach-slot:hover { background: rgba(50, 50, 50, 0.8); border-color: #ffd700; }
-        .ach-title { font-size: 0.75rem; color: #bbb; display: flex; gap: 5px; align-items: center; margin-bottom: -2px; }
-        .ach-val { font-size: 0.9rem; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; }
-        .ach-user { font-size: 0.8rem; color: #f39c12; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold; }
 
+        /* ขยายขนาดตัวอักษรภายในช่องตามสัดส่วน */
+        .ach-title { font-size: 0.85rem; color: #bbb; margin-bottom: 3px; }
+        .ach-val { font-size: 1.05rem; font-weight: bold; color: #fff; line-height: 1.2; }
+        .ach-user { font-size: 0.9rem; color: #f39c12; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold; }
         /* --- UI หน้าจอแสดงคิว (ขยับตำแหน่งลงมา) --- */
         .queue-ui { 
             position: absolute; 
-            top: 85px !important; /* ปรับจาก 60px เป็น 85px เพื่อดึงลงมาหลบ Achievement */
+            top: 10px !important;
+            margin-bottom: 5px; /* ลดพื้นที่ว่างระหว่างคิวกับนาฬิกาให้เหลือน้อยที่สุด */
             left: 50%; transform: translateX(-50%); 
             background: rgba(15, 15, 15, 0.9); border: 2px solid #444; border-radius: 50px; 
             padding: 10px 25px; width: max-content; font-family: 'Kanit', sans-serif; 
@@ -57,7 +75,7 @@
         .queue-total-wrap { border-left: 2px dashed #555; padding-left: 20px; color: #ffaa00; }
         .queue-total-wrap .queue-val { color: #ffaa00; background: #3a2500; border-color: #f39c12; }
 
-        .timer-stack-wrapper { position: relative; display: flex; align-items: center; justify-content: center; width: 576px; height: 324px; margin-top: 20px; }
+        .timer-stack-wrapper { position: relative; display: flex; align-items: center; justify-content: center; width: 576px; height: 324px; margin-top: 5px; }
         #timer { position: relative; z-index: 1; font-size: 3.5rem; font-weight: bold; transition: color 0.3s ease; margin-top: 22px; margin-left: 125px; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0px 4px 12px rgba(0,0,0,0.9); }
         .cat-overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
         .cat-overlay-layer img { width: 100%; height: 100%; object-fit: contain; transition: opacity 0.5s ease-in-out, transform 0.3s ease-out; opacity: 1; }
@@ -150,30 +168,32 @@
         #stopBtn.active { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: 0 4px 0 #c0392b; }
         #resetBtn { background: #f39c12; color: white; border-color: #d35400; box-shadow: 0 4px 0 #d35400; }
 
-        /* --- 🎁 UI คู่มือของขวัญ --- */
+/* --- 🎁 UI คู่มือของขวัญ (ปรับสเกลภายในให้พอดีกับ 220x290) --- */
         .gift-guide-widget {
             position: fixed;
             bottom: 20px; left: 20px;
             background: linear-gradient(135deg, rgba(15, 15, 15, 0.95), rgba(30, 30, 30, 0.9));
-            border: 2px solid #ffaa00; border-radius: 15px;
-            padding: 15px 15px 25px 15px; 
-            width: 190px; 
-            height: 230px; 
+            border-radius: 15px;
+            border: none;
+            padding: 15px;
+            width: 220px; 
+            height: 290px; 
             font-family: 'Itim', cursive; 
             box-shadow: 0 0 15px rgba(255, 170, 0, 0.3), inset 0 0 10px rgba(255, 170, 0, 0.1);
             z-index: 100;
             display: flex;
             flex-direction: column;
         }
-        .guide-header { font-size: 1.1rem; color: #ffaa00; font-weight: bold; border-bottom: 1px dashed #555; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+        .guide-header { font-size: 1.3rem; color: #ffaa00; font-weight: bold; border-bottom: 1px dashed #555; padding-bottom: 8px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
         .guide-content { display: flex; flex-direction: column; align-items: center; flex-grow: 1; }
-        .guide-title { font-size: 1.2rem; font-weight: bold; margin: 0; color: #39ff14; }
-        .guide-desc-container { height: 40px; display: flex; align-items: center; margin-top: 5px; }
-        .guide-desc { font-size: 0.9rem; color: #ccc; line-height: 1.4; text-align: center; }
-        .guide-range { font-size: 1rem; font-weight: bold; color: #fff; margin-top: 8px; margin-bottom: 10px; background: rgba(0,0,0,0.7); padding: 6px 12px; border-radius: 8px; border: 2px solid #ff3333; box-shadow: 0 4px 10px rgba(0,0,0,0.6); letter-spacing: 0.5px; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); transition: all 0.3s ease; }
-        .guide-progress { display: flex; gap: 6px; justify-content: center; position: absolute; bottom: 10px; left: 0; width: 100%; }
-        .dot { width: 8px; height: 8px; background: #444; border-radius: 50%; transition: 0.3s; }
+        .guide-title { font-size: 1.4rem; font-weight: bold; margin: 0; color: #39ff14; }
+        .guide-desc-container { height: 60px; display: flex; align-items: center; margin-top: 10px; }
+        .guide-desc { font-size: 1.3rem; color: #ccc; line-height: 1.1; text-align: center; }
+        .guide-range { font-size: 1.15rem; font-weight: bold; color: #fff; margin-top: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.7); padding: 8px 16px; border-radius: 10px; border: 2px solid #ff3333; box-shadow: 0 4px 10px rgba(0,0,0,0.6); letter-spacing: 0.5px; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+        .guide-progress { display: flex; gap: 8px; justify-content: center; position: absolute; bottom: 12px; left: 0; width: 100%; }
+        .dot { width: 10px; height: 10px; background: #444; border-radius: 50%; transition: 0.3s; }
         .dot.active { background: #ffaa00; box-shadow: 0 0 5px #ffaa00; transform: scale(1.2); }
+
     </style>
 </head>
 <body>
@@ -183,38 +203,39 @@
     <!-- ========================================== -->
     <div class="ach-container" id="achievementHall">
         <div class="ach-header">🏆 Achievement Hall</div>
-        
-        <div class="ach-slot">
-            <div class="ach-title">🍀 โชคดีที่สุด</div>
-            <div class="ach-val" id="ach-val-pos" style="color:#39ff14;">+0s</div>
-            <div class="ach-user" id="ach-user-pos">-</div>
-        </div>
-        
-        <div class="ach-slot">
-            <div class="ach-title">💀 ดวงซวยที่สุด</div>
-            <div class="ach-val" id="ach-val-neg" style="color:#ff3333;">-0s</div>
-            <div class="ach-user" id="ach-user-neg">-</div>
-        </div>
-        
-        <div class="ach-slot">
-            <div class="ach-title">🎰 นักเสี่ยงโชค</div>
-            <div class="ach-val" id="ach-val-spin" style="color:#00ccff;">0 ครั้ง</div>
-            <div class="ach-user" id="ach-user-spin">-</div>
-        </div>
-        
-        <div class="ach-slot">
-            <div class="ach-title">🐳 วาฬยักษ์</div>
-            <div class="ach-val" id="ach-val-whale" style="color:#ffcc00;">0 Coin</div>
-            <div class="ach-user" id="ach-user-whale">-</div>
-        </div>
-
-        <div class="ach-slot">
-            <div class="ach-title">🐋 วาฬน่ารัก</div>
-            <div class="ach-val" id="ach-val-cute" style="color:#ff66b2;">0 Coin</div>
-            <div class="ach-user" id="ach-user-cute">-</div>
+        <div class="ach-grid">
+            <div class="ach-slot">
+                <div class="ach-title">🍀 โชคดีสุด</div>
+                <div class="ach-val" id="ach-val-pos" style="color:#39ff14;">+ 00:00:00 h</div>
+                <div class="ach-user" id="ach-user-pos">-</div>
+            </div>
+            <div class="ach-slot">
+                <div class="ach-title">💀 ดวงซวยสุด</div>
+                <div class="ach-val" id="ach-val-neg" style="color:#ff3333;">- 00:00:00 h</div>
+                <div class="ach-user" id="ach-user-neg">-</div>
+            </div>
+            <div class="ach-slot">
+                <div class="ach-title">🎰 สิงนักปั่น</div>
+                <div class="ach-val" id="ach-val-spin" style="color:#00ccff;">0 ครั้ง</div>
+                <div class="ach-user" id="ach-user-spin">-</div>
+            </div>
+            <div class="ach-slot">
+                <div class="ach-title">🐳 วาฬยักษ์</div>
+                <div class="ach-val" id="ach-val-whale" style="color:#ffcc00;">0 Coin</div>
+                <div class="ach-user" id="ach-user-whale">-</div>
+            </div>
+            <div class="ach-slot">
+                <div class="ach-title">🐋 วาฬน่ารัก</div>
+                <div class="ach-val" id="ach-val-cute" style="color:#ff66b2;">0 Coin</div>
+                <div class="ach-user" id="ach-user-cute">-</div>
+            </div>
+            <div class="ach-slot">
+                <div class="ach-title">💖 ราชาเคาะใจ</div>
+                <div class="ach-val" id="ach-val-king" style="color:#ff4757;">0 ใจ</div>
+                <div class="ach-user" id="ach-user-king">-</div>
+            </div>
         </div>
     </div>
-
     <!-- ========================================== -->
 
     <div class="queue-ui" id="queueUI">
@@ -263,7 +284,7 @@
     </div>
 
     <div class="gift-guide-widget">
-        <div class="guide-header">🌟 ร่วมสนุกกับ Live 🌟</div>
+        <div class="guide-header">🌟 ร่วมสนุกกับ Live</div>
         <div class="guide-content">
             <div id="guideImgContainer"></div>
             <h3 id="guideTitle" class="guide-title"></h3>
@@ -277,6 +298,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
+
     // ==========================================
     // 🏆 ACHIEVEMENT HALL ADDON (JS ENGINE) 🏆
     // ==========================================
@@ -286,7 +308,8 @@
         negative: { username: "-", total: 0 },
         spins: { username: "-", total: 0 },
         whale: { username: "-", total: 0 },
-        cuteWhale: { username: "-", total: 0 }
+        cuteWhale: { username: "-", total: 0 },
+        king: { username: "-", total: 0 } // เพิ่ม ราชาเคาะใจ
     };
 
     function saveAndRenderAch() {
@@ -307,38 +330,29 @@
         
         document.getElementById('ach-user-cute').innerText = achData.cuteWhale.username;
         document.getElementById('ach-val-cute').innerText = achData.cuteWhale.total.toLocaleString() + ' Coin';
+        
+        document.getElementById('ach-user-king').innerText = achData.king.username;
+        document.getElementById('ach-val-king').innerText = achData.king.total.toLocaleString() + ' ใจ';
     }
 
     function formatAchTime(sec, sign) {
-        if (sec === 0) return sign + "0s";
-        let h = Math.floor(sec / 3600); let m = Math.floor((sec % 3600) / 60); let s = sec % 60;
-        let res = [];
-        if (h > 0) res.push(`${h}h`);
-        if (m > 0) res.push(`${m}m`);
-        if (s > 0 && h === 0) res.push(`${s}s`);
-        return sign + res.join(' ');
-    }
+                     // คำนวณชั่วโมง นาที วินาที
+        let h = Math.floor(sec / 3600); 
+        let m = Math.floor((sec % 3600) / 60); 
+        let s = sec % 60;
     
-    function playAchPopup() {
-        if (isPopupShowing || popupQueue.length === 0) return;
-        isPopupShowing = true; const current = popupQueue.shift();
-        
-        document.getElementById('achPopupTitle').innerText = current.title;
-        document.getElementById('achPopupUser').innerText = current.name;
-        document.getElementById('achPopupVal').innerText = current.valText;
-        
-        const popupEl = document.getElementById('achPopup');
-        popupEl.classList.add('show');
-        
-        setTimeout(() => {
-            popupEl.classList.remove('show');
-            setTimeout(() => { isPopupShowing = false; playAchPopup(); }, 500);
-        }, 3000);
+                     // เติมเลข 0 ด้านหน้าถ้าตัวเลขมีหลักเดียว (เช่น 1 จะกลายเป็น 01)
+        let hh = String(h).padStart(2, '0');
+        let mm = String(m).padStart(2, '0');
+        let ss = String(s).padStart(2, '0');
+    
+                    // จัดรูปแบบให้เป็น เครื่องหมาย + เว้นวรรค + HH:MM:SS + h
+        return `${sign} ${hh}:${mm}:${ss} h`;
     }
 
     function ensureUser(username) {
         if (!userStats[username]) {
-            userStats[username] = { positiveTime: 0, negativeTime: 0, totalSpins: 0, totalCoins: 0, biggestSingleGift: 0 };
+            userStats[username] = { positiveTime: 0, negativeTime: 0, totalSpins: 0, totalCoins: 0, biggestSingleGift: 0, totalLikes: 0 };
         }
     }
 
@@ -346,7 +360,6 @@
         if (!username || username === 'Admin') return;
         ensureUser(username);
         
-        // แปลงเวลาเหมือนฟังก์ชัน parseAndTriggerBoost
         let cleaned = timeString.trim().replace(/\u200B/g, '');
         let match = cleaned.match(/([+-])(\d+)([smh])/i);
         if (match) {
@@ -357,13 +370,11 @@
                 userStats[username].positiveTime += seconds;
                 if (userStats[username].positiveTime > achData.positive.total) {
                     achData.positive.username = username; achData.positive.total = userStats[username].positiveTime;
-                    triggerAchPopup('🍀 โชคดีที่สุดคนใหม่!', username, formatAchTime(achData.positive.total, '+'));
                 }
             } else {
                 userStats[username].negativeTime += seconds;
                 if (userStats[username].negativeTime > achData.negative.total) {
                     achData.negative.username = username; achData.negative.total = userStats[username].negativeTime;
-                    triggerAchPopup('💀 ดวงซวยที่สุดคนใหม่!', username, formatAchTime(achData.negative.total, '-'));
                 }
             }
         }
@@ -371,7 +382,6 @@
         userStats[username].totalSpins += 1;
         if (userStats[username].totalSpins > achData.spins.total) {
             achData.spins.username = username; achData.spins.total = userStats[username].totalSpins;
-            triggerAchPopup('🎰 นักเสี่ยงโชคคนใหม่!', username, achData.spins.total + ' ครั้ง');
         }
         saveAndRenderAch();
     }
@@ -380,26 +390,31 @@
         if (!username || totalCoins <= 0) return;
         ensureUser(username);
         
-        // 🐳 วาฬยักษ์ (Total Coins)
         userStats[username].totalCoins += totalCoins;
         if (userStats[username].totalCoins > achData.whale.total) {
             achData.whale.username = username; achData.whale.total = userStats[username].totalCoins;
-            triggerAchPopup('🐳 วาฬยักษ์คนใหม่!', username, achData.whale.total.toLocaleString() + ' Coin');
         }
 
-        // 🐋 วาฬน่ารัก (Biggest Single Gift)
         if (singleCoinValue > achData.cuteWhale.total) {
             achData.cuteWhale.username = username; achData.cuteWhale.total = singleCoinValue;
             userStats[username].biggestSingleGift = Math.max(userStats[username].biggestSingleGift, singleCoinValue);
-            triggerAchPopup('🐋 วาฬน่ารักคนใหม่!', username, achData.cuteWhale.total.toLocaleString() + ' Coin');
+        }
+        saveAndRenderAch();
+    }
+
+    // ฟังก์ชันใหม่: คำนวณราชาเคาะใจ
+    function processLikeAchievement(username, likes) {
+        if (!username || username === 'Admin' || likes <= 0) return;
+        ensureUser(username);
+        userStats[username].totalLikes += likes;
+        if (userStats[username].totalLikes > achData.king.total) {
+            achData.king.username = username; achData.king.total = userStats[username].totalLikes;
         }
         saveAndRenderAch();
     }
     
-    // โหลดหน้าเว็บครั้งแรกให้ Render ทันที
     saveAndRenderAch();
     // ==========================================
-
 
     // --- 1. การเชื่อมต่อ Firebase ---
     const firebaseConfig = {
@@ -611,20 +626,21 @@ function playSpinSound(element) {
 
         playTickSequence(2000);
 
-        setTimeout(() => { 
-            isSpinning = false; checkIfBusy(); 
-            if (track.children[50]) {
-                track.children[50].classList.add('winner'); playSpinSound(track.children[50]); 
-                if (isMaster) {
-                    parseAndTriggerBoost(track.children[50].dataset.value);
-                    // 🏆 HOOK: นำข้อมูลสุ่มส่งเข้า Achievement Hall
-                    if (window.currentSpinUser) {
-                        processSpinAchievement(window.currentSpinUser, track.children[50].dataset.value);
-                        window.currentSpinUser = null; // Reset หลังใช้เสร็จ
-                    }
+    setTimeout(() => { 
+        isSpinning = false; checkIfBusy(); 
+        if (track.children[50]) {
+            track.children[50].classList.add('winner'); playSpinSound(track.children[50]); 
+            if (isMaster) {
+                parseAndTriggerBoost(track.children[50].dataset.value);
+                // 🏆 HOOK: นำข้อมูลสุ่มส่งเข้า Achievement Hall
+                if (window.currentSpinUser) {
+                    processSpinAchievement(window.currentSpinUser, track.children[50].dataset.value);
                 }
             }
-        }, 2000);
+        }
+        // 🧹 ย้ายมาไว้ตรงนี้! เพื่อให้มั่นใจว่าถูกลบค่าทิ้งทุกครั้งไม่ว่าจะเกิดอะไรขึ้น
+        window.currentSpinUser = null; 
+    }, 2000);
     }
 
     window.addEventListener('keydown', (e) => {
@@ -707,6 +723,10 @@ function playSpinSound(element) {
                 if (msg.event === 'like') {
                    let count = msg.data.likeCount || msg.data.count || msg.data.likeCnt || 1;
                    totalLikes += count; let triggered = false;
+
+                   // 🏆 HOOK: อัปเดตข้อมูลราชาเคาะใจ
+                   processLikeAchievement(userName, count);
+
                    while(totalLikes >= 1000){
                        totalLikes -= 1000; totalLikeStack += 1000; triggered = true; 
                        tikFinityQueue.push({ modeName:'วินาที', poolType:'seconds', source:'like', user: userName }); // 🏆 HOOK: แนบ user
@@ -815,23 +835,45 @@ function playSpinSound(element) {
         }
     }
 
-    window.manualBoostUI = function(totalSeconds, durationMs, effectClass) {
-        if (checkIfBusy()) return;
-        const eventId = generateId("ev_"); lastEventId = eventId; isMaster = true; 
-        window.smartBoost(totalSeconds, durationMs, effectClass, true);
-        timerRef.update({ boostEvent: { totalSeconds, durationMs, effectClass, id: eventId } });
-    }
+        // 🛡️ 1. เพิ่มตัวแปรเก็บเวลาไว้ด้านบนของฟังก์ชัน
+        let lastManualClick = 0; 
+    
+                    // 2. ฟังก์ชันที่ปรับปรุงระบบกันคนกดปุ่มรัวๆ แล้ว
+        window.manualBoostUI = function(totalSeconds, durationMs, effectClass) {
+            const now = Date.now();
+                                // ถ้ากดซ้ำภายใน 1 วินาที (1000ms) ให้ยกเลิกคำสั่งนั้นไปเลย
+            if (now - lastManualClick < 1000) return; 
+            lastManualClick = now;
+
+            if (checkIfBusy()) return;
+            const eventId = generateId("ev_"); lastEventId = eventId; isMaster = true; 
+            window.smartBoost(totalSeconds, durationMs, effectClass, true);
+            timerRef.update({ boostEvent: { totalSeconds, durationMs, effectClass, id: eventId } });
+        }
 
     function countdown() {
         if (window.countdownTime > 0) {
-            const now = Date.now(); const delta = now - window.lastTick; 
+            const now = Date.now();
+            const delta = now - window.lastTick; 
             if (delta >= 1000) {
                 const secondsPassed = Math.floor(delta / 1000);
-                window.countdownTime -= secondsPassed;
+            
+                // 🛑 เพิ่มจุดที่ 1: หยุดหักเวลาหากระบบกำลังรันแอนิเมชันบวก/ลบเวลา
+                if (activeBoosts === 0) {
+                    window.countdownTime -= secondsPassed;
+                }
+            
                 if (window.countdownTime < 0) window.countdownTime = 0;
-                window.lastTick = now - (delta % 1000); updateTimerDisplay();
+                window.lastTick = now - (delta % 1000); 
+            
+                // 🛑 เพิ่มจุดที่ 2: อัปเดตหน้าจอเฉพาะตอนที่ไม่ได้รันแอนิเมชัน
+                if (activeBoosts === 0) {
+                    updateTimerDisplay();
+                }
             }
-        } else { window.stopTimer(); }
+        } else { 
+            window.stopTimer();
+        }
     }
 
     window.startTimer = function(isLocal = true) {
@@ -904,7 +946,7 @@ const guideData = [
     { imgs: ['G1-1.png', 'G1-2.png', 'G1-3.png'], title: '📣 ร่วมสนุก! G1 (วินาที)', desc: '+Follow / 🧡 Heart Me<br>เคาะใจ 1,000 ใจ', range: '-30s ถึง +3m', color: '#ffcc00' },
     { img: 'G1-4.png', title: '🎯 G1 (วินาที)', desc: 'สนับสนุน 1-19 Coin<br>( มาวัดดวงกัน>_< )', range: '-30s ถึง +3m', color: '#39ff14' },
     { img: 'G2-1.png', title: '🚀 G2 (นาที)', desc: 'สนับสนุน 20-198 Coin<br>( ปรับเวลาหนักขึ้น T-T )', range: '-30m ถึง +45m', color: '#00ccff' },
-    { img: 'G3-1.png', title: '🐳 G3 (Big-Time!)', desc: 'สนับสนุน 199 Coin ขึ้นไป<br>( ลุ้นแจ็คพอต Big Time )', range: '-45m ถึง +2h', color: '#ff3333' }
+    { img: 'G3-1.png', title: '🐳 G3 (Big-Time!)', desc: 'สนับสนุน 199 Coin ขึ้นไป<br>( แจ็คพอต Big Time )', range: '-45m ถึง +2h', color: '#ff3333' }
 ];
 
 function renderGiftGuide(index) {
