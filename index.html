@@ -3,165 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown Timer with Roulette - Complete Standalone</title>
+    <title>Countdown Timer with Roulette & Queue System (Pro Streamer)</title>
     <link href="https://fonts.googleapis.com/css2?family=Itim&family=Kanit:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body {
-            display: flex;
-            flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; background-color: transparent; color: white;
-            font-family: 'Itim', cursive; text-align: center; margin: 0;
-            padding: 20px 0; box-sizing: border-box;
-        }
-        .timer-stack-wrapper {
-            position: relative;
-            display: flex; align-items: center; justify-content: center;
-            width: 576px; height: 324px;
-        }
-        #timer {
-            position: relative;
-            z-index: 1; font-size: 3.5rem; font-weight: bold;
-            transition: color 0.3s ease; margin-top: 22px; margin-left: 125px;
-            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0px 4px 12px rgba(0,0,0,0.9);
-        }
-        .cat-overlay-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none;
-        }
-        .cat-overlay-layer img {
-            width: 100%;
-            height: 100%; object-fit: contain;
-            transition: opacity 0.5s ease-in-out, transform 0.3s ease-out; opacity: 1;
+        body { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            min-height: 100vh; background-color: transparent; color: white; 
+            font-family: 'Itim', cursive; text-align: center; margin: 0; padding: 20px 0; 
+            padding-top: 50px; /* ลดลงจาก 100px เหลือ 50px เพื่อดึงเวลานับถอยหลังและวงล้อขึ้นไป */
+            box-sizing: border-box; 
         }
 
-        .roulette-container {
-            position: relative;
-            width: 576px; padding: 5px 0;
-            margin-top: 18px;    
-            margin-bottom: 35px; 
-            display: flex; justify-content: center;
+        .ach-container {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: max-content; /* เปลี่ยนเป็น max-content ให้กรอบบีบแคบลงพอดีเนื้อหา */
+            display: flex; justify-content: center; align-items: center; gap: 4px;
+            background: linear-gradient(180deg, rgba(15,15,15,0.95), rgba(0,0,0,0.85));
+            border-bottom: 2px solid #b8860b; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;
+            padding: 4px 15px; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2); z-index: 1000;
+            font-family: 'Kanit', sans-serif; overflow: hidden;
         }
-        .pointer {
-            position: absolute;
-            top: -18px; left: 50%; transform: translateX(-50%);
-            color: #ff2222; font-size: 42px; z-index: 10; text-shadow: 0 2px 8px rgba(255, 0, 0, 0.8);
+        
+        .ach-header {
+            font-size: 0.95rem; font-weight: 900; color: #ffd700; text-transform: uppercase;
+            text-shadow: 0 2px 4px #000; padding: 0 10px; border-right: 2px dashed #555; white-space: nowrap;
         }
-        .window {
-            width: 100%;
-            overflow: hidden; background: #050505; border: 3px solid #333;
-            border-radius: 12px;
-            padding: 8px 0; position: relative;
-            box-shadow: inset 0 0 25px rgba(0,0,0,1), 0 5px 15px rgba(0,0,0,0.5);
+        
+        .ach-slot {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(30, 30, 30, 0.6); border: 1px solid #444; border-radius: 6px;
+            padding: 2px 8px; min-width: 100px; /* ลดความกว้างขั้นต่ำลงเพื่อให้กรอบรวมแคบลง */
+            flex-grow: 1; transition: all 0.3s;
         }
-        .window::before, .window::after {
-            content: '';
-            position: absolute; top: 0; bottom: 0; width: 20%; z-index: 5; pointer-events: none;
+        .ach-slot:hover { background: rgba(50, 50, 50, 0.8); border-color: #ffd700; }
+        .ach-title { font-size: 0.75rem; color: #bbb; display: flex; gap: 5px; align-items: center; margin-bottom: -2px; }
+        .ach-val { font-size: 0.9rem; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; }
+        .ach-user { font-size: 0.8rem; color: #f39c12; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold; }
+
+        /* --- UI หน้าจอแสดงคิว (ขยับตำแหน่งลงมา) --- */
+        .queue-ui { 
+            position: absolute; 
+            top: 85px !important; /* ปรับจาก 60px เป็น 85px เพื่อดึงลงมาหลบ Achievement */
+            left: 50%; transform: translateX(-50%); 
+            background: rgba(15, 15, 15, 0.9); border: 2px solid #444; border-radius: 50px; 
+            padding: 10px 25px; width: max-content; font-family: 'Kanit', sans-serif; 
+            white-space: nowrap; box-shadow: 0 4px 15px rgba(0,0,0,0.7); z-index: 100; 
+            display: flex; align-items: center; justify-content: center; gap: 20px; 
         }
+        .queue-ui h3 { margin: 0; font-size: 1.1rem; color: #f39c12; border-right: 2px solid #555; padding-right: 15px; letter-spacing: 1px; cursor: pointer; transition: 0.2s; }
+        .queue-ui h3:hover { color: #ffd700; transform: scale(1.05); }
+        .queue-item { display: flex; align-items: center; gap: 8px; font-size: 1rem; color: #ddd; }
+        .queue-val { font-weight: bold; color: #39ff14; background: #222; padding: 2px 10px; border-radius: 12px; border: 1px solid #444; min-width: 15px; text-align: center; }
+        .queue-total-wrap { border-left: 2px dashed #555; padding-left: 20px; color: #ffaa00; }
+        .queue-total-wrap .queue-val { color: #ffaa00; background: #3a2500; border-color: #f39c12; }
+
+        .timer-stack-wrapper { position: relative; display: flex; align-items: center; justify-content: center; width: 576px; height: 324px; margin-top: 20px; }
+        #timer { position: relative; z-index: 1; font-size: 3.5rem; font-weight: bold; transition: color 0.3s ease; margin-top: 22px; margin-left: 125px; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0px 4px 12px rgba(0,0,0,0.9); }
+        .cat-overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        .cat-overlay-layer img { width: 100%; height: 100%; object-fit: contain; transition: opacity 0.5s ease-in-out, transform 0.3s ease-out; opacity: 1; }
+
+        .roulette-container { position: relative; width: 576px; padding: 5px 0; margin-top: 50px; margin-bottom: 35px; display: flex; justify-content: center; }
+        
+        /* --- 🌟 ป้ายชื่อคนส่งล่าสุด (เหนือลูกศร) --- */
+        .last-action-box { position: absolute; top: -65px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #8b0000, #ff3333, #8b0000); border: 2px solid #ffd700; border-radius: 20px; padding: 5px 18px; font-family: 'Kanit', sans-serif; color: white; font-size: 1.1rem; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.8), 0 0 15px rgba(255, 215, 0, 0.5); z-index: 15; display: flex; gap: 10px; align-items: center; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .last-action-box.pop { transform: translateX(-50%) scale(1.15); }
+        .action-badge { background: #ffd700; color: #000; padding: 2px 10px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; }
+        .action-name { font-weight: bold; text-shadow: 1px 1px 2px #000; letter-spacing: 0.5px; }
+
+        .pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); color: #ffd700; font-size: 42px; z-index: 10; text-shadow: 0 2px 8px rgba(255, 215, 0, 0.8); }
+        
+        .window { width: 100%; overflow: hidden; background: #050505; border: 3px solid #333; border-radius: 12px; padding: 8px 0; position: relative; box-shadow: inset 0 0 25px rgba(0,0,0,1), 0 5px 15px rgba(0,0,0,0.5); }
+        .window::before, .window::after { content: ''; position: absolute; top: 0; bottom: 0; width: 20%; z-index: 5; pointer-events: none; }
         .window::before { left: 0; background: linear-gradient(to right, #050505, transparent); }
         .window::after { right: 0; background: linear-gradient(to left, #050505, transparent); }
          
-        .track { 
-            display: flex;
-            transition: transform 4s cubic-bezier(0.05, 0.9, 0.1, 1); transform: translateX(0); 
-        }
+        .track { display: flex; transition: transform 2s cubic-bezier(0.1, 0.9, 0.2, 1); transform: translateX(0); }
+        .item { position: relative; font-family: 'Kanit', sans-serif; min-width: 90px; max-width: 90px; height: 90px; margin: 0 25px; background: #1c1c1c; border: 2px solid #3b3b3b; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box; transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.8); text-align: center; }
         
-        .item {
-            position: relative;
-            font-family: 'Kanit', sans-serif;
-            min-width: 90px;
-            max-width: 90px; height: 90px; margin: 0 25px; background: #1c1c1c; 
-            border: 2px solid #3b3b3b; border-radius: 12px;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center; 
-            box-sizing: border-box;
-            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.8); 
-            text-align: center;
-        }
-        
-        .val-container {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            align-items: baseline; 
-            justify-content: center;
-            margin-top: 6px;
-        }
-        .item .number {
-            font-size: 3.2rem;
-            font-weight: 900;
-            color: #ffffff; 
-            line-height: 1;
-            text-shadow: 0 0 10px rgba(255,255,255,0.4), 2px 2px 0 #000;
-            -webkit-text-stroke: 1.5px rgba(0,0,0,0.8);
-        }
-        .item .unit {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #eeeeee;
-            margin-left: 2px;
-            text-shadow: 2px 2px 0 #000;
-            -webkit-text-stroke: 1px rgba(0,0,0,0.8);
-        }
+        .val-container { position: relative; z-index: 2; display: flex; align-items: baseline; justify-content: center; margin-top: 6px; }
+        .item .number { font-size: 3.2rem; font-weight: 900; color: #ffffff; line-height: 1; text-shadow: 0 0 10px rgba(255,255,255,0.4), 2px 2px 0 #000; -webkit-text-stroke: 1.5px rgba(0,0,0,0.8); }
+        .item .unit { font-size: 1.4rem; font-weight: 700; color: #eeeeee; margin-left: 2px; text-shadow: 2px 2px 0 #000; -webkit-text-stroke: 1px rgba(0,0,0,0.8); }
+        .item .sign { position: absolute; z-index: 2; top: 2px; right: 6px; font-size: 1.8rem; font-weight: 900; line-height: 1; text-shadow: 2px 2px 0 #000; -webkit-text-stroke: 1px rgba(0,0,0,0.8); }
 
-        .item .sign {
-            position: absolute;
-            z-index: 2;
-            top: 2px;
-            right: 6px;
-            font-size: 1.8rem; 
-            font-weight: 900;
-            line-height: 1;
-            text-shadow: 2px 2px 0 #000;
-            -webkit-text-stroke: 1px rgba(0,0,0,0.8);
-        }
-
-        .item.plus { 
-            border-color: #39ff14;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.8), inset 0 0 12px rgba(57, 255, 20, 0.2);
-        }
+        .item.plus { border-color: #39ff14; box-shadow: 0 4px 10px rgba(0,0,0,0.8), inset 0 0 12px rgba(57, 255, 20, 0.2); }
         .item.plus .sign { color: #39ff14; text-shadow: 0 0 8px rgba(57,255,20,0.6), 2px 2px 0 #000; }
         .item.plus .number { text-shadow: 0 0 12px rgba(57,255,20,0.7), 2px 2px 0 #000; }
-
-        .item.minus { 
-            border-color: #ff3333;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.8), inset 0 0 12px rgba(255, 51, 51, 0.2);
-        }
+        .item.minus { border-color: #ff3333; box-shadow: 0 4px 10px rgba(0,0,0,0.8), inset 0 0 12px rgba(255, 51, 51, 0.2); }
         .item.minus .sign { color: #ff3333; text-shadow: 0 0 8px rgba(255,51,51,0.6), 2px 2px 0 #000; }
         .item.minus .number { text-shadow: 0 0 12px rgba(255,51,51,0.7), 2px 2px 0 #000; }
-
         .item.neutral { border-color: #2a2a2a; }
         .item.neutral .number { color: #888; text-shadow: none; -webkit-text-stroke: 0; }
         .item.neutral .sign { display: none; }
 
         .item.gold-simple, .item.gold-beautiful, .item.gold-wings,
-        .item.red-simple, .item.red-beautiful, .item.red-wings {
-            border-color: transparent !important;
-        }
+        .item.red-simple, .item.red-beautiful, .item.red-wings { border-color: transparent !important; }
 
         .item.gold-simple { box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3), inset 0 0 8px rgba(255, 215, 0, 0.2) !important; }
         .item.gold-beautiful { box-shadow: 0 0 16px rgba(255, 215, 0, 0.6), inset 0 0 12px rgba(255, 215, 0, 0.4) !important; animation: gold-shine 1.5s infinite alternate; }
         .item.gold-wings { box-shadow: 0 0 25px rgba(255, 215, 0, 0.7), inset 0 0 15px rgba(255, 215, 0, 0.5) !important; }
-        
         .item.red-simple { box-shadow: 0 4px 12px rgba(255, 51, 51, 0.3), inset 0 0 8px rgba(255, 51, 51, 0.2) !important; }
         .item.red-beautiful { box-shadow: 0 0 16px rgba(255, 51, 51, 0.6), inset 0 0 12px rgba(255, 51, 51, 0.4) !important; animation: red-shine 1.5s infinite alternate; }
         .item.red-wings { box-shadow: 0 0 25px rgba(255, 51, 51, 0.7), inset 0 0 15px rgba(255, 51, 51, 0.5) !important; }
 
-        @keyframes gold-shine {
-            0% { filter: brightness(1); box-shadow: 0 0 10px rgba(255,215,0,0.5); }
-            100% { filter: brightness(1.2); box-shadow: 0 0 20px rgba(255,215,0,0.8); }
-        }
-        @keyframes red-shine {
-            0% { filter: brightness(1); box-shadow: 0 0 10px rgba(255,51,51,0.5); }
-            100% { filter: brightness(1.2); box-shadow: 0 0 20px rgba(255,51,51,0.8); }
-        }
+        @keyframes gold-shine { 0% { filter: brightness(1); box-shadow: 0 0 10px rgba(255,215,0,0.5); } 100% { filter: brightness(1.2); box-shadow: 0 0 20px rgba(255,215,0,0.8); } }
+        @keyframes red-shine { 0% { filter: brightness(1); box-shadow: 0 0 10px rgba(255,51,51,0.5); } 100% { filter: brightness(1.2); box-shadow: 0 0 20px rgba(255,51,51,0.8); } }
 
         .item.gold-simple::before, .item.gold-beautiful::before, .item.gold-wings::before,
         .item.red-simple::before, .item.red-beautiful::before, .item.red-wings::before {
-            content: ''; position: absolute;
-            background-size: contain; background-repeat: no-repeat; background-position: center;
-            pointer-events: none; z-index: 1;
-        }
+            content: ''; position: absolute; background-size: contain; background-repeat: no-repeat; background-position: center; pointer-events: none; z-index: 1; }
 
         .item.gold-simple::before { background-image: url('plus-gold-simple.png'); top: -12px; left: -12px; right: -12px; bottom: -12px; }
         .item.gold-beautiful::before { background-image: url('plus-gold-beautiful.png'); top: -18px; left: -18px; right: -18px; bottom: -18px; }
@@ -171,29 +120,16 @@
         .item.red-wings::before { background-image: url('minus-red-wings.png'); top: -18px; bottom: -18px; left: -35px; right: -35px; }
 
         .item.winner { animation: win-pop-scale 0.5s ease-out forwards; z-index: 20; position: relative; }
-        @keyframes win-pop-scale {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.18); }
-            100% { transform: scale(1.1); }
-        }
+        @keyframes win-pop-scale { 0% { transform: scale(1); } 50% { transform: scale(1.18); } 100% { transform: scale(1.1); } }
 
-        .item.plus.winner:not(.gold-simple):not(.gold-beautiful):not(.gold-wings):not(.red-simple):not(.red-beautiful):not(.red-wings) {
-            box-shadow: 0 0 20px #39ff14, inset 0 0 10px #39ff14; border-color: #39ff14;
-        }
-        .item.minus.winner:not(.gold-simple):not(.gold-beautiful):not(.gold-wings):not(.red-simple):not(.red-beautiful):not(.red-wings) {
-            box-shadow: 0 0 20px #ff3333, inset 0 0 10px #ff3333; border-color: #ff3333;
-        }
-
+        .item.plus.winner:not(.gold-simple):not(.gold-beautiful):not(.gold-wings):not(.red-simple):not(.red-beautiful):not(.red-wings) { box-shadow: 0 0 20px #39ff14, inset 0 0 10px #39ff14; border-color: #39ff14; }
+        .item.minus.winner:not(.gold-simple):not(.gold-beautiful):not(.gold-wings):not(.red-simple):not(.red-beautiful):not(.red-wings) { box-shadow: 0 0 20px #ff3333, inset 0 0 10px #ff3333; border-color: #ff3333; }
         .item.gold-simple.winner { box-shadow: 0 0 25px #ffd700, inset 0 0 15px #ffd700 !important; }
         .item.gold-beautiful.winner { box-shadow: 0 0 35px #ffd700, inset 0 0 20px #ffd700 !important; filter: brightness(1.3); }
         .item.gold-wings.winner { box-shadow: 0 0 45px #ff8c00, inset 0 0 25px #ffd700 !important; filter: brightness(1.3); }
-
         .item.red-simple.winner { box-shadow: 0 0 25px #ff3333, inset 0 0 15px #ff3333 !important; }
         .item.red-beautiful.winner { box-shadow: 0 0 35px #ff4757, inset 0 0 20px #ff3333 !important; filter: brightness(1.3); }
         .item.red-wings.winner { box-shadow: 0 0 45px #b30000, inset 0 0 25px #ff3333 !important; filter: brightness(1.3); }
-
-        .instructions { font-size: 15px; color: #ccc; margin-top: 0px; margin-bottom: 15px; line-height: 1.5; text-shadow: 0 1px 3px #000; }
-        .key-badge { background: #222; color: #ffaa00; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; }
 
         @keyframes pulse-soft { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.02); filter: brightness(1.1); } 100% { transform: scale(1); filter: brightness(1); } }
         @keyframes pulse-medium { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.05); filter: brightness(1.2); } 100% { transform: scale(1); filter: brightness(1); } }
@@ -202,44 +138,118 @@
         .effect-5-10 { animation: pulse-soft 0.8s infinite ease-in-out; }
         .effect-30 { animation: pulse-medium 0.5s infinite ease-in-out; }
         .effect-60 { animation: pulse-strong 0.4s infinite ease-in-out; }
-
         .red { color: #ff3e3e !important; }
         .boost-up { color: #2ecc71 !important; }
         .boost-down { color: #ff4757 !important; }
 
         .buttons { margin-top: 20px; z-index: 10; position: relative; }
-        .buttons button {
-            margin: 5px; padding: 10px 18px; font-size: 1rem; font-weight: bold;
-            cursor: pointer; border: 2px solid #333; background: #ffffff;
-            color: #000; border-radius: 8px; font-family: 'Itim', cursive;
-            box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3); transition: all 0.1s ease;
-        }
+        .buttons button { margin: 5px; padding: 10px 18px; font-size: 1rem; font-weight: bold; cursor: pointer; border: 2px solid #333; background: #ffffff; color: #000; border-radius: 8px; font-family: 'Itim', cursive; box-shadow: 0 4px 0 #999, 0 6px 10px rgba(0,0,0,0.3); transition: all 0.1s ease; }
         .buttons button:active { transform: translateY(3px); box-shadow: 0 1px 0 #777; }
+        .buttons button:disabled { opacity: 0.4; cursor: not-allowed; } 
         #startBtn.active { background: #27ae60; color: white; border-color: #1e8449; box-shadow: 0 4px 0 #1e8449; }
         #stopBtn.active { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: 0 4px 0 #c0392b; }
         #resetBtn { background: #f39c12; color: white; border-color: #d35400; box-shadow: 0 4px 0 #d35400; }
+
+        /* --- 🎁 UI คู่มือของขวัญ --- */
+        .gift-guide-widget {
+            position: fixed;
+            bottom: 20px; left: 20px;
+            background: linear-gradient(135deg, rgba(15, 15, 15, 0.95), rgba(30, 30, 30, 0.9));
+            border: 2px solid #ffaa00; border-radius: 15px;
+            padding: 15px 15px 25px 15px; 
+            width: 190px; 
+            height: 230px; 
+            font-family: 'Itim', cursive; 
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.3), inset 0 0 10px rgba(255, 170, 0, 0.1);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+        .guide-header { font-size: 1.1rem; color: #ffaa00; font-weight: bold; border-bottom: 1px dashed #555; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+        .guide-content { display: flex; flex-direction: column; align-items: center; flex-grow: 1; }
+        .guide-title { font-size: 1.2rem; font-weight: bold; margin: 0; color: #39ff14; }
+        .guide-desc-container { height: 40px; display: flex; align-items: center; margin-top: 5px; }
+        .guide-desc { font-size: 0.9rem; color: #ccc; line-height: 1.4; text-align: center; }
+        .guide-range { font-size: 1rem; font-weight: bold; color: #fff; margin-top: 8px; margin-bottom: 10px; background: rgba(0,0,0,0.7); padding: 6px 12px; border-radius: 8px; border: 2px solid #ff3333; box-shadow: 0 4px 10px rgba(0,0,0,0.6); letter-spacing: 0.5px; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); transition: all 0.3s ease; }
+        .guide-progress { display: flex; gap: 6px; justify-content: center; position: absolute; bottom: 10px; left: 0; width: 100%; }
+        .dot { width: 8px; height: 8px; background: #444; border-radius: 50%; transition: 0.3s; }
+        .dot.active { background: #ffaa00; box-shadow: 0 0 5px #ffaa00; transform: scale(1.2); }
     </style>
 </head>
 <body>
 
-    <div class="timer-stack-wrapper">
-        <div id="timer">03 : 00 : 00</div>
-        <div class="cat-overlay-layer" id="catLayer">
-            <img src="cat3-3.png" id="catImage">
+    <!-- ========================================== -->
+    <!-- 🏆 ACHIEVEMENT HALL ADDON (HTML) 🏆 -->
+    <!-- ========================================== -->
+    <div class="ach-container" id="achievementHall">
+        <div class="ach-header">🏆 Achievement Hall</div>
+        
+        <div class="ach-slot">
+            <div class="ach-title">🍀 โชคดีที่สุด</div>
+            <div class="ach-val" id="ach-val-pos" style="color:#39ff14;">+0s</div>
+            <div class="ach-user" id="ach-user-pos">-</div>
+        </div>
+        
+        <div class="ach-slot">
+            <div class="ach-title">💀 ดวงซวยที่สุด</div>
+            <div class="ach-val" id="ach-val-neg" style="color:#ff3333;">-0s</div>
+            <div class="ach-user" id="ach-user-neg">-</div>
+        </div>
+        
+        <div class="ach-slot">
+            <div class="ach-title">🎰 นักเสี่ยงโชค</div>
+            <div class="ach-val" id="ach-val-spin" style="color:#00ccff;">0 ครั้ง</div>
+            <div class="ach-user" id="ach-user-spin">-</div>
+        </div>
+        
+        <div class="ach-slot">
+            <div class="ach-title">🐳 วาฬยักษ์</div>
+            <div class="ach-val" id="ach-val-whale" style="color:#ffcc00;">0 Coin</div>
+            <div class="ach-user" id="ach-user-whale">-</div>
+        </div>
+
+        <div class="ach-slot">
+            <div class="ach-title">🐋 วาฬน่ารัก</div>
+            <div class="ach-val" id="ach-val-cute" style="color:#ff66b2;">0 Coin</div>
+            <div class="ach-user" id="ach-user-cute">-</div>
         </div>
     </div>
 
+    <!-- Popup UI -->
+    <div class="ach-popup" id="achPopup">
+        <div class="ach-popup-header">🏆 ACHIEVEMENT UPDATED 🏆</div>
+        <div class="ach-popup-title" id="achPopupTitle">...</div>
+        <div class="ach-popup-user" id="achPopupUser">...</div>
+        <div class="ach-popup-val" id="achPopupVal">...</div>
+    </div>
+    <!-- ========================================== -->
+
+
+    <div class="queue-ui" id="queueUI">
+        <h3 id="resetQueueBtn" title="คลิกเพื่อล้างคิวทั้งหมด">Live Queue</h3>
+        <div class="queue-item"><span>Follow:</span> <span class="queue-val" id="q-follow">0</span></div>
+        <div class="queue-item"><span>Like:</span> <span class="queue-val" id="q-like">0 / 0</span></div>
+        <div class="queue-item"><span>G1 (วิ):</span> <span class="queue-val" id="q-g1">0</span></div>
+        <div class="queue-item"><span>G2 (นาที):</span> <span class="queue-val" id="q-g2">0</span></div>
+        <div class="queue-item"><span>G3 (วาฬ):</span> <span class="queue-val" id="q-g3">0</span></div>
+        <div class="queue-item queue-total-wrap"><span>รวมทั้งหมด:</span> <span class="queue-val" id="q-total">0</span></div>
+    </div>
+
+    <div class="timer-stack-wrapper">
+        <div id="timer">03 : 00 : 00</div>
+        <div class="cat-overlay-layer" id="catLayer"><img src="cat3-3.png" id="catImage"></div>
+    </div>
+
     <div class="roulette-container">
+        <div class="last-action-box" id="lastActionBox">
+            <span class="action-badge">🎮 รอรับการสนับสนุน</span> 
+            <span class="action-name" id="lastActionName">พร้อมลุย!</span>
+        </div>
+
         <div class="pointer">▼</div>
         <div class="window" id="windowDiv">
             <div class="track" id="track"></div>
         </div>
-    </div>
-
-    <div class="instructions">
-        <span class="key-badge">G1 (Alt+1)</span> สุ่มวินาที |
-        <span class="key-badge">G2 (Alt+2)</span> สุ่มนาทีใหญ่ | 
-        <span class="key-badge">G3 (Alt+3)</span> โหมดวาฬ!
     </div>
      
     <div class="buttons">
@@ -259,11 +269,152 @@
         <button id="resetBtn" onclick="resetTimer()">รีเซต</button>
         <button id="startBtn" onclick="startTimer()">เริ่ม</button>
     </div>
+
+    <div class="gift-guide-widget">
+        <div class="guide-header">🌟 ร่วมสนุกกับ Live 🌟</div>
+        <div class="guide-content">
+            <div id="guideImgContainer"></div>
+            <h3 id="guideTitle" class="guide-title"></h3>
+            <div class="guide-desc-container"><div id="guideDesc" class="guide-desc"></div></div>
+            <div id="guideRange" class="guide-range"></div>
+        </div>
+        <div id="guideDots" class="guide-progress"><span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
      
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
+    // ==========================================
+    // 🏆 ACHIEVEMENT HALL ADDON (JS ENGINE) 🏆
+    // ==========================================
+    let userStats = JSON.parse(localStorage.getItem('achievementUserStats')) || {};
+    let achData = JSON.parse(localStorage.getItem('achievementHallData')) || {
+        positive: { username: "-", total: 0 },
+        negative: { username: "-", total: 0 },
+        spins: { username: "-", total: 0 },
+        whale: { username: "-", total: 0 },
+        cuteWhale: { username: "-", total: 0 }
+    };
+
+    function saveAndRenderAch() {
+        localStorage.setItem('achievementUserStats', JSON.stringify(userStats));
+        localStorage.setItem('achievementHallData', JSON.stringify(achData));
+        
+        document.getElementById('ach-user-pos').innerText = achData.positive.username;
+        document.getElementById('ach-val-pos').innerText = formatAchTime(achData.positive.total, '+');
+        
+        document.getElementById('ach-user-neg').innerText = achData.negative.username;
+        document.getElementById('ach-val-neg').innerText = formatAchTime(achData.negative.total, '-');
+        
+        document.getElementById('ach-user-spin').innerText = achData.spins.username;
+        document.getElementById('ach-val-spin').innerText = achData.spins.total + ' ครั้ง';
+        
+        document.getElementById('ach-user-whale').innerText = achData.whale.username;
+        document.getElementById('ach-val-whale').innerText = achData.whale.total.toLocaleString() + ' Coin';
+        
+        document.getElementById('ach-user-cute').innerText = achData.cuteWhale.username;
+        document.getElementById('ach-val-cute').innerText = achData.cuteWhale.total.toLocaleString() + ' Coin';
+    }
+
+    function formatAchTime(sec, sign) {
+        if (sec === 0) return sign + "0s";
+        let h = Math.floor(sec / 3600); let m = Math.floor((sec % 3600) / 60); let s = sec % 60;
+        let res = [];
+        if (h > 0) res.push(`${h}h`);
+        if (m > 0) res.push(`${m}m`);
+        if (s > 0 && h === 0) res.push(`${s}s`);
+        return sign + res.join(' ');
+    }
+
+    let popupQueue = []; let isPopupShowing = false;
+    function triggerAchPopup(title, name, valText) {
+        popupQueue.push({title, name, valText}); playAchPopup();
+    }
+    
+    function playAchPopup() {
+        if (isPopupShowing || popupQueue.length === 0) return;
+        isPopupShowing = true; const current = popupQueue.shift();
+        
+        document.getElementById('achPopupTitle').innerText = current.title;
+        document.getElementById('achPopupUser').innerText = current.name;
+        document.getElementById('achPopupVal').innerText = current.valText;
+        
+        const popupEl = document.getElementById('achPopup');
+        popupEl.classList.add('show');
+        
+        setTimeout(() => {
+            popupEl.classList.remove('show');
+            setTimeout(() => { isPopupShowing = false; playAchPopup(); }, 500);
+        }, 3000);
+    }
+
+    function ensureUser(username) {
+        if (!userStats[username]) {
+            userStats[username] = { positiveTime: 0, negativeTime: 0, totalSpins: 0, totalCoins: 0, biggestSingleGift: 0 };
+        }
+    }
+
+    function processSpinAchievement(username, timeString) {
+        if (!username || username === 'Admin') return;
+        ensureUser(username);
+        
+        // แปลงเวลาเหมือนฟังก์ชัน parseAndTriggerBoost
+        let cleaned = timeString.trim().replace(/\u200B/g, '');
+        let match = cleaned.match(/([+-])(\d+)([smh])/i);
+        if (match) {
+            let sign = match[1]; let amount = parseInt(match[2]); let unit = match[3].toLowerCase();
+            let seconds = unit === 'h' ? amount * 3600 : (unit === 'm' ? amount * 60 : amount);
+            
+            if (sign === '+') {
+                userStats[username].positiveTime += seconds;
+                if (userStats[username].positiveTime > achData.positive.total) {
+                    achData.positive.username = username; achData.positive.total = userStats[username].positiveTime;
+                    triggerAchPopup('🍀 โชคดีที่สุดคนใหม่!', username, formatAchTime(achData.positive.total, '+'));
+                }
+            } else {
+                userStats[username].negativeTime += seconds;
+                if (userStats[username].negativeTime > achData.negative.total) {
+                    achData.negative.username = username; achData.negative.total = userStats[username].negativeTime;
+                    triggerAchPopup('💀 ดวงซวยที่สุดคนใหม่!', username, formatAchTime(achData.negative.total, '-'));
+                }
+            }
+        }
+        
+        userStats[username].totalSpins += 1;
+        if (userStats[username].totalSpins > achData.spins.total) {
+            achData.spins.username = username; achData.spins.total = userStats[username].totalSpins;
+            triggerAchPopup('🎰 นักเสี่ยงโชคคนใหม่!', username, achData.spins.total + ' ครั้ง');
+        }
+        saveAndRenderAch();
+    }
+
+    function processGiftAchievement(username, totalCoins, singleCoinValue) {
+        if (!username || totalCoins <= 0) return;
+        ensureUser(username);
+        
+        // 🐳 วาฬยักษ์ (Total Coins)
+        userStats[username].totalCoins += totalCoins;
+        if (userStats[username].totalCoins > achData.whale.total) {
+            achData.whale.username = username; achData.whale.total = userStats[username].totalCoins;
+            triggerAchPopup('🐳 วาฬยักษ์คนใหม่!', username, achData.whale.total.toLocaleString() + ' Coin');
+        }
+
+        // 🐋 วาฬน่ารัก (Biggest Single Gift)
+        if (singleCoinValue > achData.cuteWhale.total) {
+            achData.cuteWhale.username = username; achData.cuteWhale.total = singleCoinValue;
+            userStats[username].biggestSingleGift = Math.max(userStats[username].biggestSingleGift, singleCoinValue);
+            triggerAchPopup('🐋 วาฬน่ารักคนใหม่!', username, achData.cuteWhale.total.toLocaleString() + ' Coin');
+        }
+        saveAndRenderAch();
+    }
+    
+    // โหลดหน้าเว็บครั้งแรกให้ Render ทันที
+    saveAndRenderAch();
+    // ==========================================
+
+
+    // --- 1. การเชื่อมต่อ Firebase ---
     const firebaseConfig = {
         apiKey: "AIzaSyCTqaj2D4b5p_loXgh7jjIW9D5zfi_2dUk",
         authDomain: "countdown-timer-8dd4c.firebaseapp.com",
@@ -278,54 +429,98 @@
     const db = firebase.database();
     const timerRef = db.ref('timer_data');
 
+    // --- 2. ตัวแปรหลัก ---
     window.countdownTime = 3 * 60 * 60;
     const timerElement = document.getElementById('timer');
     const catImage = document.getElementById('catImage');
     const catLayer = document.getElementById('catLayer');
     const track = document.getElementById('track');
     const windowDiv = document.getElementById('windowDiv');
-    
-    window.interval = null;
-    window.boostTask = null; 
-    window.lastTick = Date.now();
+    const likeSound = new Audio('like1000.mp3');
+    likeSound.volume = 1.0;
 
-    let isMaster = false; 
-    let activeBoosts = 0;
-    let lastEventId = "INIT";
-    let lastSpinId = "INIT_SPIN";
-    let isChangingImage = false;
-    let isSpinning = false;
-    let currentDisplayedValue = ""; 
-    const ITEM_TOTAL_WIDTH = 140;
-    const ITEM_HALF_WIDTH = 72;
+    document.body.addEventListener('mousedown', () => {
+        audioCtx.resume();
+        likeSound.play().then(() => { likeSound.pause(); likeSound.currentTime = 0; }).catch(() => {});
+    }, { once: true });
+    window.interval = null; window.boostTask = null; window.lastTick = Date.now();
+    let isMaster = false; let activeBoosts = 0;
+    let lastEventId = "INIT"; let lastSpinId = "INIT_SPIN";
+    let isChangingImage = false; let isSpinning = false; let currentDisplayedValue = "";
+    const ITEM_TOTAL_WIDTH = 140; const ITEM_HALF_WIDTH = 72;
 
-    const g1Options = [
-        { value: '-5s', weight: 15 }, { value: '-10s', weight: 12 }, { value: '-15s', weight: 10 }, { value: '-20s', weight: 10 },
-        { value: '-30s', weight: 7 }, { value: '-1m', weight: 4 }, { value: '-2m', weight: 2 },
-        { value: '+10s', weight: 15 }, { value: '+20s', weight: 12 }, { value: '+30s', weight: 7 },
-        { value: '+1m', weight: 4 }, { value: '+3m', weight: 2 }
-    ];
-
-    const g2Options = [
-        { value: '-5m', weight: 20 }, { value: '-10m', weight: 15 }, { value: '-15m', weight: 10 }, { value: '-20m', weight: 7 }, { value: '-30m', weight: 3 },
-        { value: '+5m', weight: 18 }, { value: '+10m', weight: 14 }, { value: '+15m', weight: 8 }, { value: '+30m', weight: 4 }, { value: '+45m', weight: 1 }
-    ];
-
-    const g3Options = [
-        { value: '-10m\u200B', weight: 15 }, { value: '-15m\u200B', weight: 12 }, { value: '-20m\u200B', weight: 10 }, { value: '-30m\u200B', weight: 8 },
-        { value: '-45m\u200B', weight: 7 }, { value: '-1h\u200B', weight: 3 },
-        { value: '+15m\u200B', weight: 19 }, { value: '+30m\u200B', weight: 14 }, { value: '+45m\u200B', weight: 8 }, { value: '+1h\u200B', weight: 3 }, { value: '+2h\u200B', weight: 1 }
-    ];
-
-    function createPool(options) { 
-        let pool = [];
-        options.forEach(opt => { for (let i = 0; i < opt.weight; i++) { pool.push(opt.value); } }); 
-        return pool;
+    const generateId = (prefix) => prefix + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+    function updateLastAction(badgeText, nameText) {
+        const box = document.getElementById('lastActionBox');
+        box.innerHTML = `<span class="action-badge">${badgeText}</span> <span class="action-name">${nameText}</span>`;
+        box.classList.remove('pop'); void box.offsetWidth; box.classList.add('pop');
     }
 
-    const secondsPool = createPool(g1Options);
-    const minutesLargePool = createPool(g2Options);
-    const minutesSmallPool = createPool(g3Options);
+    let cachedButtons = null;
+    function checkIfBusy() {
+        const isBusy = isSpinning || activeBoosts > 0;
+        if (!cachedButtons) cachedButtons = document.querySelectorAll('.buttons button');
+        cachedButtons.forEach(btn => {
+            if(btn.id !== 'startBtn' && btn.id !== 'stopBtn' && btn.id !== 'resetBtn') {
+                btn.disabled = isBusy; btn.style.opacity = isBusy ? '0.4' : '1'; btn.style.cursor = isBusy ? 'not-allowed' : 'pointer';
+            }
+        });
+        return isBusy;
+    }
+
+// --- ระบบเสียงรางวัล ---
+const soundFiles = {
+    'gold-wings': { src: 'dun-dun-dun-sound-effect-brass_8nFBccR.mp3', vol: 1 },
+    'red-wings': { src: 'yeah-boiii-i-i-i.mp3', vol: 1 },
+    'gold-beautiful': { src: 'tf_nemesis.mp3', vol: 1 },
+    'red-beautiful': { src: 'taco-bell-bong-sfx.mp3', vol: 1 },
+    'gold-simple': { src: 'wrong-answer-sound-effect.mp3', vol: 1 },
+    'red-simple': { src: 'punch-gaming-sound-effect-hd_RzlG1GE.mp3', vol: 1 }
+};
+
+const resultSounds = {};
+Object.keys(soundFiles).forEach(key => {
+    const audio = new Audio(soundFiles[key].src);
+    audio.volume = soundFiles[key].vol;
+    resultSounds[key] = audio;
+});
+
+function playSpinSound(element) {
+    Object.values(resultSounds).forEach(audio => { audio.pause(); audio.currentTime = 0; });
+    let soundToPlay = null;
+    if (element.classList.contains('gold-wings')) soundToPlay = resultSounds['gold-wings'];
+    else if (element.classList.contains('red-wings')) soundToPlay = resultSounds['red-wings'];
+    else if (element.classList.contains('gold-beautiful')) soundToPlay = resultSounds['gold-beautiful'];
+    else if (element.classList.contains('red-beautiful')) soundToPlay = resultSounds['red-beautiful'];
+    else if (element.classList.contains('gold-simple')) soundToPlay = resultSounds['gold-simple'];
+    else if (element.classList.contains('red-simple')) soundToPlay = resultSounds['red-simple'];
+    if (soundToPlay) soundToPlay.play().catch(e => console.error("เล่นเสียงไม่ได้:", e));
+}
+
+    const g1Options = [
+        { value: '-5s', weight: 18 }, { value: '-10s', weight: 15 }, { value: '-15s', weight: 12 },
+        { value: '-20s', weight: 8 }, { value: '-30s', weight: 5 }, { value: '-1m', weight: 2 },
+        { value: '+10s', weight: 15 }, { value: '+20s', weight: 12 }, { value: '+30s', weight: 8 },
+        { value: '+1m', weight: 4 }, { value: '+3m', weight: 1 }
+    ];
+    const g2Options = [
+        { value: '-3m', weight: 18 }, { value: '-5m', weight: 15 }, { value: '-10m', weight: 12 },
+        { value: '-15m', weight: 8 }, { value: '-20m', weight: 5 }, { value: '-30m', weight: 2 },
+        { value: '+5m', weight: 15 }, { value: '+10m', weight: 13 }, { value: '+15m', weight: 8 },
+        { value: '+30m', weight: 3 }, { value: '+45m', weight: 1 }
+    ];
+    const g3Options = [
+        { value: '-15m\u200B', weight: 18 }, { value: '-20m\u200B', weight: 15 }, { value: '-25m\u200B', weight: 12 },
+        { value: '-30m\u200B', weight: 8 }, { value: '-35m\u200B', weight: 5 }, { value: '-45m\u200B', weight: 2 },
+        { value: '+20m\u200B', weight: 16 }, { value: '+30m\u200B', weight: 12 }, { value: '+45m\u200B', weight: 7 },
+        { value: '+1h\u200B', weight: 4 }, { value: '+2h\u200B', weight: 1 }
+    ];
+    function createPool(options) { 
+        let pool = [];
+        options.forEach(opt => { for (let i = 0; i < opt.weight; i++) { pool.push(opt.value); } }); return pool;
+    }
+
+    const secondsPool = createPool(g1Options); const minutesLargePool = createPool(g2Options); const minutesUltraPool = createPool(g3Options);
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function playTick() {
@@ -338,7 +533,7 @@
         osc.start(); osc.stop(audioCtx.currentTime + 0.04);
     }
 
-    function playTickSequence(duration = 4000) {
+    function playTickSequence(duration = 2000) {
         const startTime = Date.now();
         function tickLoop() {
             if (!isSpinning) return;
@@ -346,64 +541,32 @@
             const elapsed = Date.now() - startTime;
             const progress = Math.min(elapsed / duration, 1);
             if (progress < 1) {
-                const nextDelay = 30 + Math.pow(progress, 4) * 700;
+                const nextDelay = 20 + Math.pow(progress, 3) * 500;
                 setTimeout(tickLoop, nextDelay);
             }
         }
         tickLoop();
     }
 
-    function playWin() {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.frequency.value = 1174.66; osc.type = 'triangle';
-        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.0);
-        osc.start(); osc.stop(audioCtx.currentTime + 1.0);
-    }
-
     function applySpecialFrame(element, val) {
         element.classList.remove('gold-simple', 'gold-beautiful', 'gold-wings', 'red-simple', 'red-beautiful', 'red-wings');
-        
-        if (val === '+30s') element.classList.add('gold-simple');
-        else if (val === '+1m') element.classList.add('gold-beautiful');
-        else if (val === '+3m') element.classList.add('gold-wings');
-        else if (val === '-30s') element.classList.add('red-simple');
-        else if (val === '-1m') element.classList.add('red-beautiful');
-        else if (val === '-2m') element.classList.add('red-wings');
-        
-        else if (val === '+15m') element.classList.add('gold-simple');
-        else if (val === '+30m') element.classList.add('gold-beautiful');
-        else if (val === '+45m') element.classList.add('gold-wings');
-        else if (val === '-15m') element.classList.add('red-simple');
-        else if (val === '-20m') element.classList.add('red-beautiful');
-        else if (val === '-30m') element.classList.add('red-wings');
-        
-        else if (['-10m\u200B', '-15m\u200B', '-20m\u200B', '-30m\u200B'].includes(val)) element.classList.add('red-simple');
-        else if (val === '-45m\u200B') element.classList.add('red-beautiful');
-        else if (val === '-1h\u200B') element.classList.add('red-wings');
-        
-        else if (['-10m', '-15m', '-20m', '-30m'].includes(val)) element.classList.add('red-simple'); 
-        
-        else if (['+15m\u200B', '+30m\u200B'].includes(val)) element.classList.add('gold-simple');
-        else if (val === '+45m\u200B') element.classList.add('gold-beautiful');
-        else if (['+1h\u200B', '+2h\u200B'].includes(val)) element.classList.add('gold-wings');
+        if (val === '+30s') element.classList.add('gold-simple'); else if (val === '+1m') element.classList.add('gold-beautiful'); else if (val === '+3m') element.classList.add('gold-wings');
+        else if (val === '-20s') element.classList.add('red-simple'); else if (val === '-30s') element.classList.add('red-beautiful'); else if (val === '-1m') element.classList.add('red-wings');
+        else if (val === '+15m') element.classList.add('gold-simple'); else if (val === '+30m') element.classList.add('gold-beautiful'); else if (val === '+45m') element.classList.add('gold-wings');
+        else if (val === '-15m') element.classList.add('red-simple'); else if (val === '-20m') element.classList.add('red-beautiful'); else if (val === '-30m') element.classList.add('red-wings');
+        else if (['-15m\u200B', '-20m\u200B'].includes(val)) element.classList.add('red-simple'); else if (['-25m\u200B', '-30m\u200B'].includes(val)) element.classList.add('red-beautiful'); else if (['-35m\u200B', '-45m\u200B'].includes(val)) element.classList.add('red-wings');       
+        else if (['+20m\u200B', '+30m\u200B'].includes(val)) element.classList.add('gold-simple');
+        else if (['+45m\u200B', '+1h\u200B'].includes(val)) element.classList.add('gold-beautiful'); else if (val === '+2h\u200B') element.classList.add('gold-wings');
     }
 
     function getFormattedItemHTML(val) {
         if (!val || val === "-" || val === "---") return `<div class="val-container"><span class="number">-</span></div>`;
-        let cleanVal = val.replace(/\u200B/g, ''); 
-        let match = cleanVal.match(/([+-])?(\d+)([smh])/i);
+        let cleanVal = val.replace(/\u200B/g, ''); let match = cleanVal.match(/([+-])?(\d+)([smh])/i);
         if (match) {
-            let sign = match[1] || '';
-            let num = match[2];
-            let unit = match[3].toLowerCase();
+            let sign = match[1] || ''; let num = match[2]; let unit = match[3].toLowerCase();
             return `<span class="sign">${sign}</span><div class="val-container"><span class="number">${num}</span><span class="unit">${unit}</span></div>`;
         }
-        
-        let signMatch = cleanVal.match(/^([+-])/);
-        let fallbackSign = signMatch ? signMatch[1] : '';
+        let signMatch = cleanVal.match(/^([+-])/); let fallbackSign = signMatch ? signMatch[1] : '';
         let fallbackNum = cleanVal.replace(/[+-]/g, '');
         return `<span class="sign">${fallbackSign}</span><div class="val-container"><span class="number">${fallbackNum}</span></div>`;
     }
@@ -417,9 +580,7 @@
             itemDiv.dataset.value = randomVal;
             let isMinus = randomVal.includes('-');
             itemDiv.classList.add(isMinus ? 'minus' : 'plus');
-            itemDiv.innerHTML = getFormattedItemHTML(randomVal);
-            applySpecialFrame(itemDiv, randomVal);
-            track.appendChild(itemDiv);
+            itemDiv.innerHTML = getFormattedItemHTML(randomVal); applySpecialFrame(itemDiv, randomVal); track.appendChild(itemDiv);
         }
     }
 
@@ -432,15 +593,12 @@
             let currentVal = (i === 50) ? targetVal : "-";
             if (targetVal !== "-") {
                 currentVal = (i === 50) ? targetVal : secondsPool[Math.floor(Math.random() * secondsPool.length)];
-                itemDiv.className = 'item';
-                let isMinus = currentVal.includes('-');
-                itemDiv.classList.add(isMinus ? 'minus' : 'plus');
+                itemDiv.className = 'item'; let isMinus = currentVal.includes('-'); itemDiv.classList.add(isMinus ? 'minus' : 'plus');
                 applySpecialFrame(itemDiv, currentVal);
                 if (i === 50) itemDiv.classList.add('winner');
             }
             itemDiv.dataset.value = currentVal;
-            itemDiv.innerHTML = getFormattedItemHTML(currentVal);
-            track.appendChild(itemDiv);
+            itemDiv.innerHTML = getFormattedItemHTML(currentVal); track.appendChild(itemDiv);
         }
         track.style.transition = 'none';
         const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH);
@@ -448,192 +606,179 @@
     }
 
     let localLastSpun = localStorage.getItem('lastSpunValue');
-    if (localLastSpun) {
-        currentDisplayedValue = localLastSpun;
-        setRouletteToValue(localLastSpun);
-    } else {
-        setRouletteToValue("-");
-    }
+    if (localLastSpun) { currentDisplayedValue = localLastSpun; setRouletteToValue(localLastSpun); } else { setRouletteToValue("-"); }
 
     function startSpin(modeName, poolType, winnerValue) {
         if (isSpinning) return;
-        isSpinning = true;
-        track.style.transition = 'none';
-        track.style.transform = 'translateX(0)';
-        track.offsetHeight; 
+        isSpinning = true; checkIfBusy(); 
+        
+        track.style.transition = 'none'; track.style.transform = 'translateX(0)'; track.offsetHeight; 
          
         let targetPool = secondsPool;
-        if (poolType === 'minutesLarge') targetPool = minutesLargePool;
-        if (poolType === 'minutesSmall') targetPool = minutesSmallPool;
+        if (poolType === 'minutesLarge') targetPool = minutesLargePool; if (poolType === 'minutesUltra') targetPool = minutesUltraPool;
 
         generateTrackItemsWithWinner(60, targetPool, winnerValue);
         const finalTranslateX = (windowDiv.offsetWidth / 2) - ((50 * ITEM_TOTAL_WIDTH) + ITEM_HALF_WIDTH); 
-        track.style.transition = 'transform 4s cubic-bezier(0.05, 0.9, 0.1, 1)';
+        track.style.transition = 'transform 2s cubic-bezier(0.1, 0.9, 0.2, 1)';
         track.style.transform = `translateX(${finalTranslateX}px)`;
 
-        playTickSequence(4000);
+        playTickSequence(2000);
 
         setTimeout(() => { 
-            playWin();
-            isSpinning = false; 
+            isSpinning = false; checkIfBusy(); 
             if (track.children[50]) {
-                track.children[50].classList.add('winner'); 
-                if (isMaster) parseAndTriggerBoost(track.children[50].dataset.value);
+                track.children[50].classList.add('winner'); playSpinSound(track.children[50]); 
+                if (isMaster) {
+                    parseAndTriggerBoost(track.children[50].dataset.value);
+                    // 🏆 HOOK: นำข้อมูลสุ่มส่งเข้า Achievement Hall
+                    if (window.currentSpinUser) {
+                        processSpinAchievement(window.currentSpinUser, track.children[50].dataset.value);
+                        window.currentSpinUser = null; // Reset หลังใช้เสร็จ
+                    }
+                }
             }
-        }, 4000);
-    }
-
-    function triggerSpin(modeName, poolType) {
-        if (isSpinning) return;
-        isMaster = true; 
-        let targetPool = secondsPool;
-        if (poolType === 'minutesLarge') targetPool = minutesLargePool;
-        if (poolType === 'minutesSmall') targetPool = minutesSmallPool;
-        const randomWinner = targetPool[Math.floor(Math.random() * targetPool.length)];
-        const spinId = "spin_" + Date.now();
-        timerRef.update({
-            spinEvent: { modeName, poolType, winnerValue: randomWinner, id: spinId }
-        });
+        }, 2000);
     }
 
     window.addEventListener('keydown', (e) => {
-        if (e.altKey && e.key === '1') triggerSpin('วินาที', 'seconds');
-        if (e.altKey && e.key === '2') triggerSpin('นาทีใหญ่', 'minutesLarge');
-        if (e.altKey && e.key === '3') triggerSpin('โหมดวาฬ!', 'minutesSmall');
+        if (checkIfBusy()) return;
+        if (e.altKey && e.key === '1') { tikFinityQueue.push({ modeName: 'วินาที', poolType: 'seconds', source: 'g1', user: 'Admin' }); updateLastAction('⚙️ แมนนวล', 'แมวแดงกดให้><"'); }
+        if (e.altKey && e.key === '2') { tikFinityQueue.push({ modeName: 'นาทีใหญ่', poolType: 'minutesLarge', source: 'g2', user: 'Admin' }); updateLastAction('⚙️ แมนนวล', 'แมวแดงกดให้><"'); }
+        if (e.altKey && e.key === '3') { tikFinityQueue.push({ modeName: 'โหมดวาฬ!', poolType: 'minutesUltra', source: 'g3', user: 'Admin' }); updateLastAction('⚙️ แมนนวล', 'แมวแดงกดให้><"'); }
+        updateQueueUI();
     });
 
     function parseAndTriggerBoost(resultText) {
         const originalText = resultText.trim();
-        const cleaned = originalText.replace(/\u200B/g, ''); 
-        currentDisplayedValue = originalText;
-        localStorage.setItem('lastSpunValue', originalText);
-        timerRef.update({ lastRandomValue: originalText });
+        const cleaned = originalText.replace(/\u200B/g, '');
+        currentDisplayedValue = originalText; localStorage.setItem('lastSpunValue', originalText); timerRef.update({ lastRandomValue: originalText });
 
         let totalSeconds = 0;
         let effectClass = 'effect-5-10';
-
         let unitMatch = cleaned.match(/([+-])(\d+)([smh])/i);
         if (unitMatch) {
             let sign = unitMatch[1];
-            let amount = parseInt(unitMatch[2]);
-            let unit = unitMatch[3].toLowerCase();
+            let amount = parseInt(unitMatch[2]); let unit = unitMatch[3].toLowerCase();
             if (unit === 'h') amount = amount * 3600;
             else if (unit === 'm') amount = amount * 60;
             totalSeconds = (sign === '-') ? -amount : amount;
-
-            if (Math.abs(totalSeconds) >= 3600) effectClass = 'effect-60';
-            else if (Math.abs(totalSeconds) >= 1800) effectClass = 'effect-30';
-            else effectClass = 'effect-5-10';
+            if (Math.abs(totalSeconds) >= 3600) effectClass = 'effect-60'; else if (Math.abs(totalSeconds) >= 1800) effectClass = 'effect-30'; else effectClass = 'effect-5-10';
         }
-
-        window.smartBoost(totalSeconds, 2000, effectClass);
+        window.smartBoost(totalSeconds, 2000, effectClass, true);
     }
 
     const isMasterControl = new URLSearchParams(window.location.search).get('master') === '1' || window.location.protocol === 'file:';
-
-    // ----------------------------------------------------
-    // --- ระบบคิวและการเชื่อมต่อ TikFinity แบบอัตโนมัติ ---
-    // ----------------------------------------------------
     let tikFinityQueue = [];
-    let totalLikes = 0;
+    let totalLikes = 0; let totalLikeStack = 0;
 
-    // ตัวจัดการคิว (ตรวจสอบทุกครึ่งวินาที เพื่อไม่ให้วงล้อหมุนทับกัน)
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('resetQueueBtn').addEventListener('click', () => {
+            if(confirm('ล้างคิวทั้งหมด และรีเซ็ตสถานะ?')) {
+                tikFinityQueue = []; totalLikes = 0; totalLikeStack = 0; updateQueueUI(); timerRef.update({ spinEvent: null, boostEvent: null });
+            }
+        });
+    });
+    
+    function updateQueueUI() {
+        let counts = { follow: 0, like: 0, g1: 0, g2: 0, g3: 0 };
+        tikFinityQueue.forEach(task => { if (counts[task.source] !== undefined) counts[task.source]++; });
+        document.getElementById('q-follow').innerText = counts.follow; document.getElementById('q-like').innerText = `${totalLikes} / ${totalLikeStack}`;
+        document.getElementById('q-g1').innerText = counts.g1;
+        document.getElementById('q-g2').innerText = counts.g2; document.getElementById('q-g3').innerText = counts.g3;
+        document.getElementById('q-total').innerText = tikFinityQueue.length;
+    }
+
     setInterval(() => {
-        if (tikFinityQueue.length > 0 && !isSpinning) {
-            const nextEvent = tikFinityQueue.shift();
-            triggerSpin(nextEvent.modeName, nextEvent.poolType);
+        if (tikFinityQueue.length > 0 && !checkIfBusy()) {
+            let task = tikFinityQueue.shift(); updateQueueUI(); isMaster = true; 
+            
+            // 🏆 HOOK: บันทึกชื่อคนที่จะสุ่มรอบนี้ไว้ชั่วคราว
+            window.currentSpinUser = task.user || 'Admin';
+
+            let pool = secondsPool;
+            if (task.poolType === 'minutesLarge') pool = minutesLargePool; if (task.poolType === 'minutesUltra') pool = minutesUltraPool;
+           
+            const winnerValue = pool[Math.floor(Math.random() * pool.length)]; const spinId = generateId("spin_queue_"); 
+            timerRef.update({ spinEvent: { modeName: task.modeName, poolType: task.poolType, winnerValue: winnerValue, id: spinId } });
         }
-    }, 500);
+    }, 200);
 
     function connectTikFinity() {
-        if (!isMasterControl) return; // ทำงานเฉพาะในหน้า Master เท่านั้น
-
+        if (!isMasterControl) return;
         const ws = new WebSocket('ws://localhost:21213/');
-
-        ws.onopen = () => {
-            console.log("เชื่อมต่อ TikFinity สำเร็จ พร้อมรับข้อมูล!");
-        };
-
+        ws.onopen = () => { console.log("เชื่อมต่อ TikFinity สำเร็จ พร้อมรับข้อมูล!"); };
         ws.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data);
+                const userName = msg.data.nickname || msg.data.uniqueId || 'คนดูที่น่ารัก';
 
-                // 1. กดติดตาม -> G1
                 if (msg.event === 'follow') {
-                    tikFinityQueue.push({ modeName: 'วินาที', poolType: 'seconds' });
+                    tikFinityQueue.push({ modeName: 'วินาที', poolType: 'seconds', source: 'follow', user: userName }); // 🏆 HOOK: แนบ user
+                    updateLastAction('🎉 ผู้ติดตามใหม่', userName); updateQueueUI();
                 }
-
-                // 2. ใจส้ม (ระบบสมาชิก/Subscribe) -> G1
-                if (msg.event === 'subscribe') {
-                    tikFinityQueue.push({ modeName: 'วินาที', poolType: 'seconds' });
-                }
-
-                // 3. เคาะใจทุกๆ 1000 ครั้ง -> G1
+                
                 if (msg.event === 'like') {
-                    let count = msg.data.likeCount || 1;
-                    totalLikes += count;
-                    if (totalLikes >= 1000) {
-                        let times = Math.floor(totalLikes / 1000);
-                        for (let i = 0; i < times; i++) {
-                            tikFinityQueue.push({ modeName: 'วินาที', poolType: 'seconds' });
-                        }
-                        totalLikes = totalLikes % 1000; // เก็บเศษที่เหลือไว้คำนวณรอบหน้า
-                    }
+                   let count = msg.data.likeCount || msg.data.count || msg.data.likeCnt || 1;
+                   totalLikes += count; let triggered = false;
+                   while(totalLikes >= 1000){
+                       totalLikes -= 1000; totalLikeStack += 1000; triggered = true; 
+                       tikFinityQueue.push({ modeName:'วินาที', poolType:'seconds', source:'like', user: userName }); // 🏆 HOOK: แนบ user
+                   }
+                   if(triggered) {
+                       updateLastAction('💖 เคาะใจรัวๆ', userName);
+                       if(typeof likeSound !== 'undefined' && likeSound){ likeSound.currentTime = 0; likeSound.play().catch(()=>{}); }
+                   }
+                   updateQueueUI();
                 }
-
-                // 4. ของขวัญตามเรทราคา (G1, G2, G3)
+                
                 if (msg.event === 'gift') {
-                    let coins = msg.data.diamonds || 0; // มูลค่าของขวัญต่อชิ้น
-                    let repeat = msg.data.repeatCount || 1; // จำนวนที่ส่งมารัวๆ แบบคอมโบ
+                    const data = msg.data;
+                    const giftName = data.giftDetails ? data.giftDetails.giftName : data.giftName; const repeatCount = data.repeatCount || 1;
+                    const giftType = data.giftDetails ? data.giftDetails.giftType : data.giftType; const repeatEnd = data.repeatEnd;
+                    let coins = data.diamondCount || (data.giftDetails && data.giftDetails.diamondCount) || data.diamonds || 0;
                     
-                    if (coins > 0) {
-                        // วนลูปจับใส่คิวตามจำนวนของขวัญที่ส่ง (ป้องกันคนปาคอมโบแล้วนับเป็นครั้งเดียว)
-                        for (let i = 0; i < repeat; i++) {
-                            if (coins >= 1 && coins <= 19) {
-                                tikFinityQueue.push({ modeName: 'วินาที', poolType: 'seconds' }); // G1
-                            } else if (coins >= 20 && coins <= 298) {
-                                tikFinityQueue.push({ modeName: 'นาทีใหญ่', poolType: 'minutesLarge' }); // G2
-                            } else if (coins >= 299) {
-                                tikFinityQueue.push({ modeName: 'โหมดวาฬ!', poolType: 'minutesSmall' }); // G3
-                            }
-                        }
+                    if (coins === 0 && giftName !== 'Heart Me') return;
+                    if (giftType === 1 && !repeatEnd) return;
+                    
+                    let spinsPerGift = 0; let modeName = ''; let poolType = ''; let source = 'g1';
+                    
+                    if (giftName === 'Heart Me') { modeName = 'วินาที'; poolType = 'seconds'; spinsPerGift = 2; source = 'g1'; } 
+                    else if (coins >= 199) { modeName = 'โหมดวาฬ!'; poolType = 'minutesUltra'; spinsPerGift = Math.max(1,Math.floor(coins/199)); source = 'g3'; } 
+                    else if (coins >= 20) { modeName = 'นาทีใหญ่'; poolType = 'minutesLarge'; spinsPerGift = Math.floor(coins / 20); source = 'g2'; } 
+                    else { modeName = 'วินาที'; poolType = 'seconds'; spinsPerGift = 1; source = 'g1'; }
+
+                    let totalSpins = spinsPerGift * repeatCount;
+                    for (let i = 0; i < totalSpins; i++) { 
+                        tikFinityQueue.push({ modeName: modeName, poolType: poolType, source: source, user: userName }); // 🏆 HOOK: แนบ user
                     }
+                    
+                    updateLastAction(`🎁 ส่ง ${giftName} x${repeatCount}`, userName);
+                    
+                    // 🏆 HOOK: ส่งข้อมูล Coin เข้า Achievement Hall ทันที
+                    if (coins > 0) {
+                        processGiftAchievement(userName, coins * repeatCount, coins);
+                    }
+                    
+                    updateQueueUI();
                 }
-
-            } catch (e) {
-                console.error("Error parsing TikFinity message:", e);
-            }
+            } catch (e) { console.error("Error parsing TikFinity message:", e); }
         };
-
-        ws.onclose = () => {
-            console.log("หลุดการเชื่อมต่อจาก TikFinity กำลังลองใหม่ใน 5 วินาที...");
-            setTimeout(connectTikFinity, 5000); // หากหลุดให้พยายามต่อใหม่
-        };
-        
-        ws.onerror = (err) => {
-            console.log("TikFinity Error, กรุณาตรวจสอบว่าโปรแกรม TikFinity เปิดอยู่");
-        };
+        ws.onclose = () => { setTimeout(connectTikFinity, 5000); };
     }
-
-    // เริ่มทำงาน TikFinity
     connectTikFinity();
-    // ----------------------------------------------------
 
-    function syncToFirebase() {
-        timerRef.update({ remainingTime: window.countdownTime, isRunning: window.interval !== null, lastActionTime: firebase.database.ServerValue.TIMESTAMP });
+    function syncToFirebase() { timerRef.update({ remainingTime: window.countdownTime, isRunning: window.interval !== null, lastActionTime: firebase.database.ServerValue.TIMESTAMP });
     }
 
     function fadeChangeImage(newSrc) {
         if (catImage.src.includes(newSrc) || isChangingImage) return;
-        isChangingImage = true;
-        catImage.style.opacity = 0;
+        isChangingImage = true; catImage.style.opacity = 0;
         setTimeout(() => { catImage.src = newSrc; catImage.style.opacity = 1; isChangingImage = false; }, 500);
     }
 
     function updateTimerDisplay() {
         let hours = Math.floor(window.countdownTime / 3600);
-        let minutes = Math.floor((window.countdownTime % 3600) / 60);
-        let seconds = Math.floor(window.countdownTime % 60);
+        let minutes = Math.floor((window.countdownTime % 3600) / 60); let seconds = Math.floor(window.countdownTime % 60);
         if (seconds < 0) seconds = 0;
         timerElement.innerHTML = `${String(hours).padStart(2, '0')} : ${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
         if (window.countdownTime <= 1800) { timerElement.classList.add('red'); fadeChangeImage("cat3-1.png"); }
@@ -641,102 +786,165 @@
         else { timerElement.classList.remove('red'); fadeChangeImage("cat3-3.png"); }
     }
 
-    window.runBoostAnimation = function(totalSeconds, durationMs, effectClass, isThisMachineMaster) {
-        if (window.boostTask) { clearInterval(window.boostTask); window.boostTask = null; timerElement.classList.remove('boost-up', 'boost-down'); catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60'); }
-        activeBoosts = 1;
-        timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down');
-        catLayer.classList.add(effectClass);
-        const fps = 30; const totalSteps = (durationMs / 1000) * fps;
-        const incrementPerStep = totalSeconds / totalSteps;
+    window.smartBoost = function(totalSeconds, durationMs, effectClass, isThisMachineMaster, force = false) {
+        if (!force && checkIfBusy()) return;
+        if (window.boostTask) { 
+            clearInterval(window.boostTask); window.boostTask = null;
+            timerElement.classList.remove('boost-up', 'boost-down'); catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60'); 
+        }
+        
+        activeBoosts = 1; checkIfBusy();
+        timerElement.classList.add(totalSeconds > 0 ? 'boost-up' : 'boost-down'); catLayer.classList.add(effectClass);
+        
+        const fps = 30;
+        const totalSteps = (durationMs / 1000) * fps; const incrementPerStep = totalSeconds / totalSteps;
         let stepsTaken = 0; let accumulatedChange = 0; let lastIntegerChange = 0;
+        
         window.boostTask = setInterval(() => {
             stepsTaken++; accumulatedChange += incrementPerStep;
             let currentIntegerChange = Math.round(accumulatedChange);
-            let diff = currentIntegerChange - lastIntegerChange;
-            lastIntegerChange = currentIntegerChange;
+            let diff = currentIntegerChange - lastIntegerChange; lastIntegerChange = currentIntegerChange;
             window.countdownTime = Math.max(0, window.countdownTime + diff); 
             updateTimerDisplay();
      
-            if (stepsTaken >= totalSteps) { clearInterval(window.boostTask); window.boostTask = null; if (isThisMachineMaster) syncToFirebase(); finishBoost(effectClass); }
+            if (stepsTaken >= totalSteps) { 
+                clearInterval(window.boostTask); window.boostTask = null; 
+                if (isThisMachineMaster) syncToFirebase(); 
+                finishBoost(); 
+            }
         }, 1000 / fps);
     }
 
-    function finishBoost(effectClass) {
-        activeBoosts = 0; timerElement.classList.remove('boost-up', 'boost-down');
+    function finishBoost() {
+        activeBoosts = 0; checkIfBusy();
+        timerElement.classList.remove('boost-up', 'boost-down');
         catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60'); isMaster = false;
-        if (!isMasterControl) { setTimeout(() => { if (activeBoosts === 0 && !isSpinning && window.latestFirebaseData && window.latestFirebaseData.remainingTime !== undefined) { window.countdownTime = window.latestFirebaseData.remainingTime; updateTimerDisplay(); } }, 1500); }
+        if (!isMasterControl) { 
+            setTimeout(() => { 
+                if (activeBoosts === 0 && !isSpinning && window.latestFirebaseData && window.latestFirebaseData.remainingTime !== undefined) { 
+                    window.countdownTime = window.latestFirebaseData.remainingTime; updateTimerDisplay(); 
+                } 
+            }, 1500);
+        }
     }
 
-    window.smartBoost = function(totalSeconds, durationMs, effectClass) {
-        const eventId = "ev_" + Date.now();
-        lastEventId = eventId;
-        isMaster = true; 
-        window.runBoostAnimation(totalSeconds, durationMs, effectClass, true);
+    window.manualBoostUI = function(totalSeconds, durationMs, effectClass) {
+        if (checkIfBusy()) return;
+        const eventId = generateId("ev_"); lastEventId = eventId; isMaster = true; 
+        window.smartBoost(totalSeconds, durationMs, effectClass, true);
         timerRef.update({ boostEvent: { totalSeconds, durationMs, effectClass, id: eventId } });
     }
 
     function countdown() {
         if (window.countdownTime > 0) {
-            const now = Date.now();
-            const delta = now - window.lastTick; 
+            const now = Date.now(); const delta = now - window.lastTick; 
             if (delta >= 1000) {
                 const secondsPassed = Math.floor(delta / 1000);
                 window.countdownTime -= secondsPassed;
                 if (window.countdownTime < 0) window.countdownTime = 0;
-                window.lastTick = now - (delta % 1000); 
-                updateTimerDisplay();
+                window.lastTick = now - (delta % 1000); updateTimerDisplay();
             }
         } else { window.stopTimer(); }
     }
 
     window.startTimer = function(isLocal = true) {
         if (window.interval) clearInterval(window.interval);
-        window.lastTick = Date.now(); 
-        window.interval = setInterval(countdown, 200); 
-        document.getElementById('startBtn').classList.add('active');
-        document.getElementById('stopBtn').classList.remove('active');
+        window.lastTick = Date.now(); window.interval = setInterval(countdown, 200); 
+        document.getElementById('startBtn').classList.add('active'); document.getElementById('stopBtn').classList.remove('active');
         if (isLocal) syncToFirebase();
     }
 
     window.stopTimer = function(isLocal = true) {
         if (window.interval) { clearInterval(window.interval); window.interval = null; }
-        document.getElementById('startBtn').classList.remove('active');
-        document.getElementById('stopBtn').classList.add('active');
+        document.getElementById('startBtn').classList.remove('active'); document.getElementById('stopBtn').classList.add('active');
         if (isLocal) syncToFirebase();
     }
 
     window.resetTimer = function() {
         window.stopTimer();
         if (window.boostTask) { clearInterval(window.boostTask); window.boostTask = null; }
-        activeBoosts = 0;
-        timerElement.classList.remove('boost-up', 'boost-down');
-        catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
-        window.countdownTime = 3 * 60 * 60;
-        window.lastTick = Date.now(); 
-        lastEventId = "RESET_" + Date.now();
-        updateTimerDisplay();
+        activeBoosts = 0; checkIfBusy();
+        timerElement.classList.remove('boost-up', 'boost-down'); catLayer.classList.remove('effect-5-10', 'effect-30', 'effect-60');
+        window.countdownTime = 3 * 60 * 60; window.lastTick = Date.now(); lastEventId = "RESET_" + Date.now(); updateTimerDisplay();
         timerRef.update({ remainingTime: window.countdownTime, isRunning: false, boostEvent: { totalSeconds: 0, durationMs: 0, effectClass: '', id: lastEventId }, lastActionTime: firebase.database.ServerValue.TIMESTAMP });
     };
-
+    
     timerRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return; 
-        window.latestFirebaseData = data; 
-        if (data.isRunning) { if (!window.interval) { window.lastTick = Date.now(); window.interval = setInterval(countdown, 200); } } else { if (window.interval) { clearInterval(window.interval); window.interval = null; } }
-        if (data.remainingTime !== undefined && !isMasterControl && Math.abs(window.countdownTime - data.remainingTime) > 2) { window.countdownTime = data.remainingTime; window.lastTick = Date.now(); updateTimerDisplay(); }
+        const data = snapshot.val(); if (!data) return; window.latestFirebaseData = data; 
+        
+        if (data.isRunning) { if (!window.interval) { window.lastTick = Date.now(); window.interval = setInterval(countdown, 200); } } 
+        else { if (window.interval) { clearInterval(window.interval); window.interval = null; } }
+        
+        if (data.remainingTime !== undefined && !isMasterControl && Math.abs(window.countdownTime - data.remainingTime) > 2) { 
+            window.countdownTime = data.remainingTime; window.lastTick = Date.now(); updateTimerDisplay(); 
+        }
    
-        if (data.spinEvent && data.spinEvent.id !== lastSpinId) { lastSpinId = data.spinEvent.id; startSpin(data.spinEvent.modeName, data.spinEvent.poolType, data.spinEvent.winnerValue); }
-        if (data.lastRandomValue && !isSpinning && currentDisplayedValue !== data.lastRandomValue && data.lastRandomValue !== "-") { currentDisplayedValue = data.lastRandomValue; localStorage.setItem('lastSpunValue', data.lastRandomValue); setRouletteToValue(data.lastRandomValue); }
+        if (data.spinEvent && data.spinEvent.id !== lastSpinId) { 
+            lastSpinId = data.spinEvent.id; startSpin(data.spinEvent.modeName, data.spinEvent.poolType, data.spinEvent.winnerValue); 
+        }
+        
+        if (data.lastRandomValue && !isSpinning && currentDisplayedValue !== data.lastRandomValue && data.lastRandomValue !== "-") { 
+            currentDisplayedValue = data.lastRandomValue; localStorage.setItem('lastSpunValue', data.lastRandomValue); setRouletteToValue(data.lastRandomValue);
+        }
+        
         if (isMaster) return;
         if (data.isRunning && !window.interval) window.startTimer(false);
         else if (!data.isRunning && window.interval) window.stopTimer(false);
-        if (!isMasterControl && !isSpinning && activeBoosts === 0) { window.countdownTime = data.remainingTime !== undefined ? data.remainingTime : window.countdownTime; updateTimerDisplay(); }
+        if (!isMasterControl && !isSpinning && activeBoosts === 0) { 
+            window.countdownTime = data.remainingTime !== undefined ? data.remainingTime : window.countdownTime; updateTimerDisplay();
+        }
+        
         if (data.boostEvent && data.boostEvent.id !== lastEventId) {
             if (lastEventId === "INIT") lastEventId = data.boostEvent.id;
-            else { lastEventId = data.boostEvent.id; if (data.boostEvent.totalSeconds !== 0) window.runBoostAnimation(data.boostEvent.totalSeconds, data.boostEvent.durationMs, data.boostEvent.effectClass, false); }
+            else { 
+                lastEventId = data.boostEvent.id;
+                if (data.boostEvent.totalSeconds !== 0) window.smartBoost(data.boostEvent.totalSeconds, data.boostEvent.durationMs, data.boostEvent.effectClass, false, true);
+            }
         }
     });
     setTimeout(updateTimerDisplay, 100);
+    document.querySelectorAll('.buttons button').forEach(btn => {
+        if(btn.id !== 'startBtn' && btn.id !== 'stopBtn' && btn.id !== 'resetBtn') {
+            const attr = btn.getAttribute('onclick');
+            if(attr && attr.includes('smartBoost')) { btn.setAttribute('onclick', attr.replace('smartBoost', 'manualBoostUI')); }
+        }
+    });
+
+// ====================================================
+// --- ระบบหน้าต่างคู่มือของขวัญ (Gift Guide Widget) ---
+// ====================================================
+const guideData = [
+    { imgs: ['G1-1.png', 'G1-2.png', 'G1-3.png'], title: '📣 ร่วมสนุก! G1 (วินาที)', desc: '+Follow / 🧡 Heart Me<br>เคาะใจ 1,000 ใจ', range: '-30s ถึง +3m', color: '#ffcc00' },
+    { img: 'G1-4.png', title: '🎯 G1 (วินาที)', desc: 'สนับสนุน 1-19 Coin<br>( มาวัดดวงกัน>_< )', range: '-30s ถึง +3m', color: '#39ff14' },
+    { img: 'G2-1.png', title: '🚀 G2 (นาที)', desc: 'สนับสนุน 20-198 Coin<br>( ปรับเวลาหนักขึ้น T-T )', range: '-30m ถึง +45m', color: '#00ccff' },
+    { img: 'G3-1.png', title: '🐳 G3 (Big-Time!)', desc: 'สนับสนุน 199 Coin ขึ้นไป<br>( ลุ้นแจ็คพอต Big Time )', range: '-45m ถึง +2h', color: '#ff3333' }
+];
+
+function renderGiftGuide(index) {
+    const data = guideData[index];
+    const imgContainer = document.getElementById('guideImgContainer'); 
+    
+    if (data.imgs) {
+        imgContainer.innerHTML = `<div style="display:flex; justify-content:center; gap:5px; margin-bottom:8px; height: 55px; align-items: center;">${data.imgs.map(src => `<img src="${src}" style="width:45px; height:45px; object-fit:contain;">`).join('')}</div>`;
+    } else {
+        imgContainer.innerHTML = `<div style="display:flex; justify-content:center; gap:5px; margin-bottom:8px; height: 55px; align-items: center;"><img src="${data.img}" style="width:55px; height:55px; object-fit:contain;"></div>`;
+    }
+
+    const titleEl = document.getElementById('guideTitle');
+    titleEl.innerHTML = data.title; titleEl.style.color = data.color;
+    document.getElementById('guideDesc').innerHTML = data.desc;
+    
+    const rangeEl = document.getElementById('guideRange');
+    rangeEl.innerHTML = data.range; rangeEl.style.borderColor = data.color; rangeEl.style.boxShadow = `0 0 12px ${data.color}80, inset 0 0 5px ${data.color}40`;
+
+    const dots = document.getElementById('guideDots').children;
+    for(let i = 0; i < dots.length; i++) { dots[i].className = (i === index) ? 'dot active' : 'dot'; }
+}
+
+let currentGuideIndex = 0;
+setInterval(() => { currentGuideIndex = (currentGuideIndex + 1) % guideData.length; renderGiftGuide(currentGuideIndex); }, 5000);
+renderGiftGuide(0);
+
 </script>
 </body>
 </html>
